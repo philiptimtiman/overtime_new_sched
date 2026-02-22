@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Truly Centered</title>
-  <meta name="description" content="Balanced centered layout; Add form inputs disabled when locked; iOS-safe date input; main content visually centered." />
+  <title>Overtime Scheduler — iOS Date Overlap Fix</title>
+  <meta name="description" content="Single-file overtime scheduler with robust iOS-safe date input (no overlap), centered layout, locked-by-default behavior." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -19,7 +19,7 @@
     input,button,select,textarea{font-family:inherit;font-size:16px}
     a{color:inherit}
 
-    /* Page wrapper: center everything and keep symmetric gutters */
+    /* Page wrapper */
     .page{
       width:100%;
       max-width:var(--page-max);
@@ -32,13 +32,7 @@
       align-items:stretch;
     }
 
-    /*
-      Layout approach:
-      - Use a 3-column grid to visually center the main area:
-        left spacer | main content (entries) | right sidebar
-      - The left and right spacers are flexible so the main column stays centered.
-      - On narrow screens the grid collapses to a single column.
-    */
+    /* 3-column centering grid */
     .container {
       width:100%;
       display:grid;
@@ -48,12 +42,11 @@
       justify-items:stretch;
     }
 
-    /* Place main and sidebar into the center column using subgrid wrappers */
+    .header-wrap { grid-column:2; width:100%; }
     .main { grid-column:2; display:grid; grid-template-columns: 1fr; gap:16px; }
     .sidebar { grid-column:3; width:100%; max-width:var(--right-col); justify-self:center; }
 
-    /* Header spans full width but content is centered inside the center column */
-    .header-wrap { grid-column:2; width:100%; }
+    /* Header */
     .header-card{
       border-radius:var(--radius);
       padding:14px;
@@ -66,7 +59,6 @@
       gap:12px;
       min-height:72px;
     }
-
     .title-block{display:flex;flex-direction:column;gap:4px}
     .title-block h1{font-size:18px;margin:0}
     .title-block p{margin:0;color:var(--muted);font-size:13px}
@@ -82,7 +74,7 @@
     .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
     .list{display:flex;flex-direction:column;gap:12px}
 
-    /* Row layout */
+    /* Rows */
     .item{
       padding:10px;border-radius:12px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);
       display:grid;grid-template-columns:1fr 140px 1fr 120px;gap:10px;align-items:center;min-width:0;
@@ -95,7 +87,7 @@
     .item.editing .value{display:none}
     .item.editing .field input{display:block}
 
-    /* Add form (in sidebar) */
+    /* Sidebar Add form */
     #formCard{width:100%}
     #formCard .card{padding:12px}
     #formCard strong{ text-align:center; display:block; margin:0 0 8px 0; }
@@ -110,22 +102,56 @@
     .form-actions { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
     .form-actions .btn[disabled]{opacity:0.45;pointer-events:none}
 
-    /* iOS-safe date input */
-    .add-row input[type="date"]{
-      width:100%;min-width:0;box-sizing:border-box;padding:10px 12px;height:var(--input-h);border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);font-size:15px;text-align:center;-webkit-appearance:textfield;appearance:textfield;overflow:visible;
+    /* --- KEY FIX: date input wrapper to avoid overlap on iOS --- */
+    /* Wrap the date input so we can reserve space for the native calendar icon */
+    .date-wrap{ position:relative; display:block; width:100%; }
+    .date-wrap input[type="date"]{
+      width:100%;
+      min-width:0;
+      box-sizing:border-box;
+      padding:10px 44px 10px 12px; /* extra right padding to avoid calendar icon overlap */
+      height:var(--input-h);
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.04);
+      background:transparent;
+      color:var(--text);
+      font-size:15px;
+      text-align:center;
+      -webkit-appearance: textfield; /* reduce iOS internal padding */
+      appearance: textfield;
+      overflow:visible;
     }
-    .add-row input[type="date"]::-webkit-datetime-edit,
-    .add-row input[type="date"]::-webkit-datetime-edit-fields-wrapper,
-    .add-row input[type="date"]::-webkit-datetime-edit-text,
-    .add-row input[type="date"]::-webkit-datetime-edit-month-field,
-    .add-row input[type="date"]::-webkit-datetime-edit-day-field,
-    .add-row input[type="date"]::-webkit-datetime-edit-year-field { padding:0;margin:0;line-height:1.1; }
-    .add-row input[type="date"]::-webkit-calendar-picker-indicator{position:relative;right:0;opacity:0.95;cursor:pointer;padding:6px;}
+
+    /* Position the calendar indicator visually inside the input without pushing content */
+    /* Note: browsers vary — this is defensive and works well on modern iOS Safari */
+    .date-wrap input[type="date"]::-webkit-calendar-picker-indicator{
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width:28px;
+      height:28px;
+      opacity:0.95;
+      cursor:pointer;
+      padding:4px;
+    }
+
+    /* Remove internal edit padding that iOS sometimes adds */
+    .date-wrap input[type="date"]::-webkit-datetime-edit,
+    .date-wrap input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+    .date-wrap input[type="date"]::-webkit-datetime-edit-text,
+    .date-wrap input[type="date"]::-webkit-datetime-edit-month-field,
+    .date-wrap input[type="date"]::-webkit-datetime-edit-day-field,
+    .date-wrap input[type="date"]::-webkit-datetime-edit-year-field {
+      padding:0;
+      margin:0;
+      line-height:1.1;
+    }
 
     /* Defensive */
     .item, .field, .add-row, .container, #formCard { min-width:0; }
 
-    /* Responsive: collapse to single column and keep everything centered */
+    /* Responsive: collapse to single column and keep centered */
     @media (max-width:980px){
       .container { grid-template-columns: 1fr; }
       .header-wrap { grid-column:1; }
@@ -138,6 +164,14 @@
       .actions{flex-direction:row;justify-content:center;width:100%}
       .item.editing .actions{order:2}
       .page{padding:12px}
+    }
+
+    @media (max-width:420px){
+      .header-card{padding-left:10px;padding-right:10px}
+      .page{padding-left:10px;padding-right:10px}
+      /* On very narrow screens, remove native appearance to avoid extra chrome */
+      .date-wrap input[type="date"]{-webkit-appearance:none;appearance:none;padding-right:12px}
+      .date-wrap input[type="date"]::-webkit-calendar-picker-indicator{display:none}
     }
 
     /* Visual disabled style for lock-guard elements */
@@ -193,7 +227,10 @@
             <div class="add-row" style="margin-top:8px;">
               <div>
                 <label for="overtime_date">Date</label>
-                <input id="overtime_date" name="overtime_date" class="lock-guard" type="date" autocomplete="bday" />
+                <!-- date-wrap prevents native calendar icon from overlapping the text -->
+                <div class="date-wrap">
+                  <input id="overtime_date" name="overtime_date" class="lock-guard" type="date" autocomplete="bday" />
+                </div>
               </div>
               <div>
                 <label for="notes">Notes</label>
