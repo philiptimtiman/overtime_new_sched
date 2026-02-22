@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Search & Edit Enabled Fix</title>
-  <meta name="description" content="Overtime scheduler — search always enabled; edit/add/delete properly guarded and not accidentally disabled by global CSS." />
+  <title>Overtime Scheduler — Default Locked</title>
+  <meta name="description" content="Single-file overtime scheduler: default locked on load, centered Add form, search enabled, guarded edit actions." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -12,35 +12,26 @@
       --shadow: 0 8px 30px rgba(2,6,23,0.6); --input-h:44px; --gap:12px;
       --action-col:140px; --date-col:160px; --radius:12px; --pad:18px;
     }
-
-    /* Reset & base */
-    *,*::before,*::after{box-sizing:border-box}
+    *{box-sizing:border-box}
     html,body{height:100%;margin:0;padding:var(--pad);background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased}
     input,button,select,textarea{font-family:inherit;font-size:16px}
-    a{color:inherit}
-
-    /* Layout */
     .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
 
-    /* Header */
     .header-card{grid-column:1/-1;border-radius:var(--radius);padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:84px}
     .title-block{display:flex;flex-direction:column;gap:4px}
     h1{font-size:20px;margin:0}
     p.lead{margin:0;color:var(--muted);font-size:13px}
 
     .controls{display:flex;gap:8px;align-items:center;min-width:0}
-    /* Search must always be interactive — do not let .locked disable it */
     .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:var(--text);height:var(--input-h);flex:1 1 auto;min-width:0}
     .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
     .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
     .btn.ghost{background:transparent;border:0;color:var(--muted);padding:8px 10px;border-radius:8px;cursor:pointer}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger);padding:8px 10px;border-radius:8px}
 
-    /* Cards and list */
     .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
     .list{display:flex;flex-direction:column;gap:12px}
 
-    /* Row layout */
     .item{padding:12px;border-radius:12px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);display:grid;grid-template-columns:1fr var(--date-col) 1fr var(--action-col);gap:12px;align-items:center;min-width:0}
     .field{display:flex;flex-direction:column;gap:6px;min-width:0}
     .value{padding:10px 12px;border-radius:10px;min-height:var(--input-h);display:flex;align-items:center;justify-content:center;color:var(--text);background:transparent;border:1px solid rgba(255,255,255,0.02);box-sizing:border-box;word-break:break-word;text-align:center}
@@ -50,7 +41,7 @@
     .item.editing .value{display:none}
     .item.editing .field input{display:block}
 
-    /* Add form */
+    /* Add form centered inputs and placeholders */
     #formCard input[type="text"], #formCard input[type="date"], #formCard textarea{
       padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);width:100%;font-size:16px;box-sizing:border-box;text-align:center;min-width:0;display:block;
     }
@@ -62,31 +53,17 @@
     .add-row input[type="date"]{max-width:100%;width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;background-clip:padding-box}
     .add-row input[type="date"]::-webkit-calendar-picker-indicator{position:relative;right:0;opacity:0.95;cursor:pointer}
 
-    /* Center labels in the Add form */
     #formCard label { text-align:center; }
-
     .form-actions { margin-top:6px; display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-start; }
     @media (max-width:760px){ .form-actions { justify-content:center; } }
 
     footer.site-footer{grid-column:1/-1;margin-top:12px;text-align:center;color:var(--muted);font-size:13px}
 
-    /* Modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
     .modal{background:var(--card);padding:18px;border-radius:12px;min-width:260px;max-width:520px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06);z-index:10000}
 
-    /*
-      Locking behavior:
-      - We intentionally do NOT disable all inputs/buttons via a global selector like `.locked input`.
-      - Instead, elements that should be disabled when locked get the class `lock-guard`.
-      - This prevents accidental disabling of the search box or other controls that must remain interactive.
-    */
-    .locked .lock-guard {
-      opacity: 0.45;
-      pointer-events: none;
-    }
-
-    /* Accessibility: also set disabled attribute via JS for screen readers */
-    /* Responsive */
+    /* Locking: only elements with .lock-guard are disabled when locked */
+    .locked .lock-guard { opacity:0.45; pointer-events:none; }
     @media (max-width:760px){
       .container{grid-template-columns:1fr;gap:12px;padding:12px}
       .header-card{flex-direction:column;align-items:stretch;gap:12px;padding:14px}
@@ -96,9 +73,6 @@
       .actions{flex-direction:row;justify-content:center;width:100%}
       .item.editing .actions{order:2}
     }
-
-    /* small polish */
-    .actions button{white-space:nowrap}
   </style>
 </head>
 <body>
@@ -106,7 +80,7 @@
     <header class="header-card" role="banner" aria-label="Application header">
       <div class="title-block" aria-hidden="true">
         <h1>Overtime Scheduler</h1>
-        <p class="lead">Unlock to enable Add / Edit / Delete. Lock state persists across refresh.</p>
+        <p class="lead">Unlock to enable Add / Edit / Delete. Default is Locked on first load.</p>
       </div>
 
       <div class="controls" role="group" aria-label="Search and lock controls">
@@ -116,7 +90,6 @@
           <div id="lockDot" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
           <div id="lockText" style="color:var(--muted);font-size:13px">Locked</div>
         </div>
-        <!-- Unlock/Lock button remains interactive; it toggles the lock state -->
         <button id="lockToggle" class="btn secondary" title="Lock or unlock actions">Unlock</button>
       </div>
     </header>
@@ -137,7 +110,6 @@
       <form id="addForm" autocomplete="off" novalidate>
         <div style="display:flex;flex-direction:column;gap:6px">
           <label for="name" style="font-size:13px;color:var(--muted);margin:0">Name</label>
-          <!-- Add form container is a lock-guard so Add/Reset are disabled when locked -->
           <input id="name" name="name" type="text" placeholder="Employee name" required autocomplete="name" />
         </div>
 
@@ -182,7 +154,7 @@
   </div>
 
   <script type="module">
-    // Replace these with your real Supabase values
+    // Replace with your Supabase values if used
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
     const SUPABASE_URL = 'https://bisvmgjgyvludhqsvvcn.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
@@ -219,19 +191,14 @@
     function updateGuardedControls() {
       const guarded = document.querySelectorAll('.lock-guard');
       guarded.forEach(el => {
-        if (unlocked) {
-          el.removeAttribute('disabled');
-        } else {
-          el.setAttribute('disabled', 'true');
-        }
+        if (unlocked) el.removeAttribute('disabled');
+        else el.setAttribute('disabled','true');
       });
 
-      // Also ensure row action buttons (Edit/Delete) are guarded when locked.
-      // We mark them with data-action and toggle disabled attribute here.
+      // Row action buttons
       const rowActionButtons = rowsEl.querySelectorAll('[data-action]');
       rowActionButtons.forEach(btn => {
         const action = btn.dataset.action;
-        // Only guard edit/save/cancel/delete actions (not search)
         if (['edit','delete','save','cancel'].includes(action)) {
           if (unlocked) btn.removeAttribute('disabled');
           else btn.setAttribute('disabled','true');
@@ -253,20 +220,12 @@
         lockText.textContent = 'Locked';
         lockToggle.textContent = 'Unlock';
       }
-
-      // Search must remain enabled always — ensure it's not disabled by JS
-      if (searchInput) {
-        searchInput.disabled = false;
-        searchInput.setAttribute('aria-disabled','false');
-        searchInput.tabIndex = 0;
-      }
-
-      // Update guarded controls (visual + disabled attribute)
+      // Ensure search remains enabled
+      if (searchInput) { searchInput.disabled = false; searchInput.setAttribute('aria-disabled','false'); searchInput.tabIndex = 0; }
       updateGuardedControls();
-
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
-    function readPersistedUnlocked(){ const v = safeGetLocal(LOCAL_KEY); if (v === 'true') return true; if (v === 'false') return false; return false; }
+    function readPersistedUnlocked(){ const v = safeGetLocal(LOCAL_KEY); if (v === 'true') return true; if (v === 'false') return false; return null; }
 
     // Modal controls
     function openModal(){ pwInput.value=''; pwError.style.display='none'; modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); pwInput.focus(); }
@@ -286,7 +245,6 @@
           pwError.textContent = `Server: ${msg}`;
           return;
         }
-        // success -> mark unlocked locally
         setUnlockedState(true, true);
         closeModal();
       } catch (err) {
@@ -328,11 +286,10 @@
       if(!items.length){ emptyEl.style.display = 'block'; return; }
       emptyEl.style.display = 'none';
       items.forEach(row => rowsEl.appendChild(createRowElement(row)));
-      // After rendering, ensure guarded controls reflect current lock state
       updateGuardedControls();
     }
 
-    // Load rows from Supabase
+    // Load rows
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -429,7 +386,6 @@
       if (dateInput) dateInput.value = row.overtime_date || '';
       if (notesInput) notesInput.value = row.notes || '';
       if (nameInput) { nameInput.focus(); setTimeout(()=> nameInput.scrollIntoView({behavior:'smooth', block:'center'}), 120); }
-      // Update guarded controls (save/cancel should be enabled when unlocked)
       updateGuardedControls();
     }
 
@@ -494,16 +450,18 @@
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
-    // Lock toggle: opens modal only when locked
+    // Lock toggle
     lockToggle.addEventListener('click', () => {
       if (!unlocked) openModal();
       else { if (!confirm('Locking will disable Add/Edit/Delete. Continue?')) return; setUnlockedState(false, true); }
     });
 
-    // On load: restore persisted unlocked state and load rows
+    // On load: restore persisted unlocked state if present; otherwise default to locked (do NOT auto-open modal)
     window.addEventListener('DOMContentLoaded', async () => {
       const persisted = readPersistedUnlocked();
-      setUnlockedState(persisted, false);
+      // If persisted is null (no key), default to locked (false)
+      const initialUnlocked = (persisted === null) ? false : persisted;
+      setUnlockedState(initialUnlocked, false); // don't overwrite storage on initial set
       await loadRows();
     });
   </script>
