@@ -3,128 +3,55 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Mobile First</title>
-  <meta name="description" content="Mobile-first overtime scheduler: fixed mobile layout, inputs disabled when locked, iOS-safe date input, centered." />
+  <title>Overtime Scheduler — Mobile First (Buttons Restored)</title>
+  <meta name="description" content="Mobile-first overtime scheduler with all buttons and functions restored; iOS-safe date input; locked-by-default." />
   <style>
     :root{
-      --bg:#0f1724;
-      --card:#0b1220;
-      --text:#e6eef8;
-      --muted:#9fb0c6;
-      --accent:#60a5fa;
-      --danger:#ef4444;
-      --glass: rgba(255,255,255,0.03);
+      --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
+      --accent:#60a5fa; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
       --shadow: 0 8px 30px rgba(2,6,23,0.6);
-      --input-h:44px;
-      --radius:12px;
-      /* Mobile-first fixed sizes */
-      --mobile-width:360px;   /* target mobile width */
-      --gutter:12px;
-      --fs:16px;
+      --input-h:44px; --radius:12px;
+      --mobile-width:360px; --gutter:12px; --fs:16px;
     }
-
-    /* Reset */
     *,*::before,*::after{box-sizing:border-box}
     html,body{height:100%;margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--fs)}
     input,button,select,textarea{font-family:inherit;font-size:1rem}
     a{color:inherit}
-
-    /* Page wrapper: force a centered mobile canvas */
-    .mobile-canvas{
-      width:100%;
-      min-height:100vh;
-      display:flex;
-      align-items:flex-start;
-      justify-content:center;
-      padding:18px;
-      background:var(--bg);
-    }
-
-    /* Fixed mobile container */
-    .app {
-      width:var(--mobile-width);
-      max-width:100%;
-      background:transparent;
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-      align-items:stretch;
-    }
-
-    /* Header */
-    .header-card{
-      border-radius:var(--radius);
-      padding:12px;
-      background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
-      border:1px solid rgba(255,255,255,0.04);
-      box-shadow:var(--shadow);
-      display:flex;
-      gap:8px;
-      align-items:center;
-      justify-content:space-between;
-    }
+    .mobile-canvas{width:100%;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:18px;background:var(--bg)}
+    .app{width:var(--mobile-width);max-width:100%;display:flex;flex-direction:column;gap:14px;align-items:stretch}
+    .header-card{border-radius:var(--radius);padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);box-shadow:var(--shadow);display:flex;gap:8px;align-items:center;justify-content:space-between}
     .title-block{display:flex;flex-direction:column;gap:2px}
     .title-block h1{font-size:1rem;margin:0}
     .title-block p{margin:0;color:var(--muted);font-size:.85rem}
-
     .controls{display:flex;gap:8px;align-items:center;width:100%}
     .search{flex:1;border-radius:10px;padding:8px 10px;height:40px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);min-width:0}
-
     .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:600}
     .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
     .btn.ghost{background:transparent;border:0;color:var(--muted);padding:6px 8px;border-radius:8px;cursor:pointer}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger);padding:6px 8px;border-radius:8px}
-
-    /* Card */
     .card{background:var(--card);border-radius:12px;padding:12px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
-
-    /* Entries list */
     .list{display:flex;flex-direction:column;gap:10px}
-    .item{
-      padding:10px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);
-      display:grid;grid-template-columns:1fr 100px;gap:8px;align-items:center;
-    }
+    .item{padding:10px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);display:grid;grid-template-columns:1fr 100px;gap:8px;align-items:center}
     .item .left{display:flex;flex-direction:column;gap:6px}
     .item .right{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
     .value{padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.02);text-align:center;color:var(--text);min-height:36px;display:flex;align-items:center;justify-content:center}
     .edit-input{display:none;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:36px}
-
     .item.editing .value{display:none}
     .item.editing .edit-input{display:block}
-
-    /* Sidebar / Add form (stacked under header for mobile) */
     #formCard{width:100%}
     #formCard .card{padding:12px}
     #formCard strong{display:block;text-align:center;margin:0 0 8px 0;font-size:1rem}
     label{font-size:.9rem;color:var(--muted);margin:0 0 6px 0;text-align:center;display:block}
-    input[type="text"], input[type="date"], textarea{
-      width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--text); height:var(--input-h); text-align:center; box-sizing:border-box;
-    }
-
+    input[type="text"], input[type="date"], textarea{width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--text); height:var(--input-h); text-align:center; box-sizing:border-box;}
     .add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
     .form-actions{display:flex;gap:8px;justify-content:center;margin-top:10px}
-
-    /* Date wrapper to avoid iOS overlap */
     .date-wrap{position:relative;width:100%}
     .date-wrap input[type="date"]{padding:10px 44px 10px 12px;-webkit-appearance:textfield;appearance:textfield}
     .date-wrap input[type="date"]::-webkit-calendar-picker-indicator{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:28px;height:28px;opacity:0.95;cursor:pointer;padding:4px}
     .date-wrap input[type="date"]::-webkit-datetime-edit, .date-wrap input[type="date"]::-webkit-datetime-edit-fields-wrapper, .date-wrap input[type="date"]::-webkit-datetime-edit-text { padding:0; margin:0; line-height:1.1; }
-
-    /* Make inputs visibly disabled when locked */
     .lock-guard[disabled]{opacity:0.45;pointer-events:none}
-
-    /* Scale down slightly on very small phones */
-    @media (max-width:360px){
-      :root{ --mobile-width:320px; }
-      .app{ width:var(--mobile-width); }
-      .add-row{ grid-template-columns:1fr; }
-    }
-
-    /* Desktop: keep the mobile canvas centered and same width (no auto-responsive expansion) */
-    @media (min-width:720px){
-      .mobile-canvas{ align-items:flex-start; padding-top:28px; }
-      .app{ box-shadow: 0 10px 40px rgba(0,0,0,0.5); border-radius:14px; }
-    }
+    @media (max-width:360px){ :root{ --mobile-width:320px; } .app{ width:var(--mobile-width); } .add-row{ grid-template-columns:1fr; } }
+    @media (min-width:720px){ .mobile-canvas{ align-items:flex-start; padding-top:28px; } .app{ box-shadow: 0 10px 40px rgba(0,0,0,0.5); border-radius:14px; } }
   </style>
 </head>
 <body>
@@ -136,7 +63,7 @@
           <p>Locked by default — unlock to add or edit</p>
         </div>
 
-        <div style="display:flex;align-items:center;gap:8px;width:46%;">
+        <div style="display:flex;align-items:center;gap:8px">
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search" />
         </div>
       </header>
@@ -179,7 +106,7 @@
             <button id="resetBtn" type="button" class="btn secondary lock-guard">Reset</button>
             <button id="lockToggle" type="button" class="btn ghost" title="Lock or unlock">Unlock</button>
           </div>
-      </form>
+        </form>
       </aside>
 
       <footer style="text-align:center;color:var(--muted);font-size:.85rem;padding:6px 0">
@@ -189,6 +116,7 @@
     </div>
   </div>
 
+  <!-- Unlock modal -->
   <div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:9999;padding:18px">
     <div style="background:var(--card);padding:14px;border-radius:12px;max-width:360px;width:100%;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06)">
       <h3 style="margin:0 0 8px 0">Unlock</h3>
@@ -215,8 +143,6 @@
     const resetBtn = document.getElementById('resetBtn');
     const searchInput = document.getElementById('search');
     const lockToggle = document.getElementById('lockToggle');
-    const lockDot = document.getElementById('lockDot');
-    const lockText = document.getElementById('lockText');
     const modal = document.getElementById('modal');
     const pwInput = document.getElementById('pwInput');
     const pwSubmit = document.getElementById('pwSubmit');
@@ -240,7 +166,6 @@
         if (unlocked) el.removeAttribute('disabled');
         else el.setAttribute('disabled','true');
       });
-      // row action buttons (if any)
       const rowActionButtons = rowsEl.querySelectorAll('[data-action]');
       rowActionButtons.forEach(btn => {
         const action = btn.dataset.action;
@@ -248,17 +173,12 @@
           if (unlocked) btn.removeAttribute('disabled'); else btn.setAttribute('disabled','true');
         }
       });
+      // Update lockToggle label
+      lockToggle.textContent = unlocked ? 'Lock' : 'Unlock';
     }
 
     function setUnlockedState(isUnlocked, persist = true){
       unlocked = !!isUnlocked;
-      // visual lock indicator (header has no dot here, but keep text)
-      const lockBtn = document.getElementById('lockToggle');
-      if (unlocked) {
-        lockBtn.textContent = 'Lock';
-      } else {
-        lockBtn.textContent = 'Unlock';
-      }
       updateGuardedControls();
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
@@ -356,7 +276,7 @@
 
     resetBtn.addEventListener('click', () => form.reset());
 
-    // Row actions (edit/delete) — simple handlers (edit toggles inline editing)
+    // Row actions (edit/delete/save/cancel)
     rowsEl.addEventListener('click', async (e) => {
       const action = e.target?.dataset?.action;
       if (!action) return;
@@ -381,16 +301,17 @@
 
       if (action === 'edit') {
         if (!unlocked) { alert('Actions are locked. Unlock to edit.'); return; }
-        // Simple inline edit: replace values with inputs
+        // Inline edit: replace name and date with inputs
         const nameEl = item.querySelector('[data-field="name"]');
         const dateEl = item.querySelector('[data-field="overtime_date"]');
         const currentName = nameEl.textContent || '';
-        const currentDate = dateEl.textContent && dateEl.textContent !== '—' ? new Date(dateEl.textContent).toISOString().slice(0,10) : '';
+        const currentDate = (dateEl.textContent && dateEl.textContent !== '—') ? new Date(dateEl.textContent).toISOString().slice(0,10) : '';
         item.classList.add('editing');
         nameEl.style.display = 'none';
         dateEl.style.display = 'none';
 
         const nameInput = document.createElement('input');
+        nameInput.type = 'text';
         nameInput.value = currentName;
         nameInput.className = 'edit-input';
         nameInput.style.display = 'block';
@@ -428,7 +349,6 @@
         try {
           const { data, error } = await supabase.from('overtime_data').update({ name, overtime_date }).eq('id', item.dataset.id).select();
           if (error) throw error;
-          // update cache
           dataCache = dataCache.map(r => String(r.id) === String(item.dataset.id) ? (data && data[0]) || { ...r, name, overtime_date } : r);
           renderList(dataCache);
         } catch (err) {
@@ -461,7 +381,7 @@
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
-    // Lock toggle (opens modal to unlock)
+    // Lock toggle (opens modal to unlock or locks directly)
     lockToggle.addEventListener('click', () => {
       if (!unlocked) openModal();
       else { if (!confirm('Locking will disable Add/Edit/Delete. Continue?')) return; setUnlockedState(false, true); }
