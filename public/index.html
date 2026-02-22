@@ -3,164 +3,105 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Responsive Row Alignment</title>
-  <meta name="description" content="Overtime scheduler with aligned row fields and actions on small screens." />
+  <title>Overtime Scheduler — Edit Layout Fixes</title>
+  <meta name="description" content="Overtime scheduler with responsive edit layout — prevents overlap of inputs and action buttons on small screens." />
   <style>
     :root{
-      --bg:#0f1724;
-      --card:#0b1220;
-      --text:#e6eef8;
-      --muted:#9fb0c6;
-      --accent:#60a5fa;
-      --danger:#ef4444;
-      --glass: rgba(255,255,255,0.03);
-      --shadow: 0 8px 30px rgba(2,6,23,0.6);
-      --input-h:44px;
-      --gap:12px;
-      --action-col:140px;
-      --radius:12px;
+      --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
+      --accent:#60a5fa; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
+      --shadow: 0 8px 30px rgba(2,6,23,0.6); --input-h:44px; --gap:12px;
+      --action-col:160px; --radius:12px;
     }
 
-    /* Reset & base */
+    /* Base */
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;padding:18px;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+    html,body{height:100%;margin:0;padding:18px;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased}
     input,button,select,textarea{font-family:inherit;font-size:16px}
 
-    /* Page grid */
+    /* Layout */
     .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
+    .header-card{grid-column:1/-1;border-radius:var(--radius);padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:84px}
+    .title-block{display:flex;flex-direction:column;gap:4px}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
 
-    /* Header card */
-    .header-card {
-      grid-column: 1 / -1;
-      position: relative;
-      border-radius: var(--radius);
-      padding: 18px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border: 1px solid rgba(255,255,255,0.04);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      min-height:84px;
-    }
+    .controls{display:flex;gap:8px;align-items:center;min-width:0}
+    .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:var(--text);height:var(--input-h);flex:1 1 auto;min-width:0}
+    .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
+    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .btn.ghost{background:transparent;border:0;color:var(--muted);padding:8px 10px;border-radius:8px;cursor:pointer}
+    .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger);padding:8px 10px;border-radius:8px}
 
-    /* Title block */
-    .title-block { position: relative; z-index: 2; display:flex;flex-direction:column; gap:4px; min-width:0 }
-    .title-block h1 { margin:0; font-size:20px; line-height:1.05; font-weight:700 }
-    .title-block p.lead { margin:0; color:var(--muted); font-size:13px }
+    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04)}
+    .list{display:flex;flex-direction:column;gap:12px}
+    .item{padding:12px;border-radius:12px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);display:grid;grid-template-columns:1fr var(--action-col);gap:12px;align-items:center;min-width:0;min-height:64px}
+    .display-left{display:flex;flex-direction:column;gap:6px;min-width:0}
+    .name{font-weight:700;word-break:break-word}
+    .meta{color:var(--muted);font-size:13px;word-break:break-word}
+    .date{font-family:ui-monospace,monospace;color:var(--accent);font-size:13px}
 
-    /* Controls (search + lock) */
-    .controls { display:flex; gap:8px; align-items:center; z-index:2; min-width:0 }
-    .search { padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.02); color:var(--text); height:var(--input-h); min-width:140px; flex:1 1 auto; min-width:0 }
-    .btn { background: linear-gradient(180deg,var(--accent),#1e40af); color:#fff; border:0; padding:10px 14px; border-radius:10px; cursor:pointer; font-weight:600 }
-    .btn.secondary { background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted) }
-    .btn.ghost { background:transparent; border:0; color:var(--muted); padding:8px 10px; border-radius:8px; cursor:pointer }
-    .btn.danger { background:transparent; border:1px solid rgba(255,0,0,0.08); color:var(--danger); padding:8px 10px; border-radius:8px }
+    /* Action column */
+    .row-actions{display:flex;flex-direction:column;gap:8px;align-items:flex-end;justify-self:end;min-width:0}
+    .row-actions .btn{padding:8px 10px;font-size:14px;white-space:nowrap}
 
-    /* Main content cards */
-    .card { background:var(--card); border-radius:12px; padding:16px; box-shadow:var(--shadow); border:1px solid rgba(255,255,255,0.04) }
-    .list { display:flex; flex-direction:column; gap:12px }
+    /* Add form grid (matches list row alignment) */
+    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0}
+    .add-row > div{min-width:0}
 
-    /* Row layout: use grid so fields and actions align predictably */
-    .item {
-      padding:12px;
-      border-radius:10px;
-      background:var(--glass);
-      border:1px solid rgba(255,255,255,0.04);
-      display:grid;
-      grid-template-columns: 1fr var(--action-col);
-      gap:12px;
-      align-items:center;
-      min-width:0;
-    }
+    /* Edit layout (inline editing) */
+    .edit-row{display:grid;grid-template-columns:1fr var(--action-col);gap:12px;align-items:start;width:100%;min-width:0}
+    .edit-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;min-width:0}
+    .edit-fields .field-name{grid-column:1 / -1}
+    .edit-fields .field-date{grid-column:1 / 2}
+    .edit-fields .field-notes{grid-column:2 / 3}
+    .action-col{display:flex;align-items:flex-start;justify-content:flex-end;min-width:0}
+    .actions-inline{display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex-wrap:wrap}
 
-    .display-left { display:flex; flex-direction:column; gap:6px; min-width:0; }
-    .name { font-weight:700; word-break:break-word }
-    .meta { color:var(--muted); font-size:13px; word-break:break-word }
-    .date { font-family:ui-monospace,monospace; color:var(--accent); font-size:13px; }
+    /* Inputs */
+    input[type="text"], input[type="date"], .edit-input, textarea{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);width:100%;min-width:0;font-size:16px;box-sizing:border-box}
+    input[type="date"]{-webkit-appearance:none;appearance:none;padding-right:14px}
 
-    /* Action column: keep buttons stacked on wide screens */
-    .row-actions { display:flex; flex-direction:column; gap:8px; align-items:flex-end; justify-self:end; min-width:0 }
-    .row-actions .btn { padding:8px 10px; font-size:14px }
-
-    /* Add-row: use grid for consistent alignment with list rows */
-    .add-row { display:grid; grid-template-columns: 1fr 1fr; gap:8px; min-width:0; }
-    .add-row > div { min-width:0; }
-
-    /* Forms & inputs */
-    form { display:flex; flex-direction:column; gap:10px }
-    label { font-size:13px; color:var(--muted); display:block; margin-bottom:6px }
-    input[type="text"], input[type="date"], .edit-input, textarea {
-      padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04);
-      background:transparent; color:var(--text); height:var(--input-h); width:100%; min-width:0; font-size:16px;
-    }
-    input[type="date"] { -webkit-appearance:none; appearance:none; padding-right:14px }
-
-    /* Edit row layout (used when editing an item inline) */
-    .edit-row { display:grid; grid-template-columns: 1fr var(--action-col); gap:var(--gap); align-items:start; width:100%; min-width:0 }
-    .edit-fields { display:grid; grid-template-columns:1fr 1fr; gap:var(--gap); align-items:start; min-width:0 }
-    .edit-fields .field-name { grid-column: 1 / -1 }
-    .edit-fields .field-date { grid-column: 1 / 2 }
-    .edit-fields .field-notes { grid-column: 2 / 3 }
-    .action-col { display:flex; align-items:flex-start; justify-content:flex-end; min-width:0 }
-    .actions-inline { display:flex; flex-direction:column; gap:8px; align-items:flex-end }
-
-    /* Prevent shrinking/overflow */
+    /* Prevent shrinking */
     .item, .display-left, .edit-fields, .edit-row, .action-col, .controls, .add-row { min-width:0 }
     .display-left > * { min-width:0; overflow-wrap:break-word }
 
     /* Footer */
-    footer.site-footer { grid-column:1/-1; margin-top:12px; text-align:center; color:var(--muted); font-size:13px }
-    footer.site-footer .brand { font-weight:700; color:var(--text); margin-bottom:6px; display:block }
-    footer.site-footer .legal { color:var(--muted); font-size:12px }
+    footer.site-footer{grid-column:1/-1;margin-top:12px;text-align:center;color:var(--muted);font-size:13px}
+    footer.site-footer .brand{font-weight:700;color:var(--text);margin-bottom:6px;display:block}
+    footer.site-footer .legal{color:var(--muted);font-size:12px}
 
     /* Modal */
-    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:9999; padding:20px }
-    .modal { background:var(--card); padding:18px; border-radius:12px; min-width:260px; max-width:520px; box-shadow:var(--shadow); border:1px solid rgba(255,255,255,0.06); z-index:10000 }
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
+    .modal{background:var(--card);padding:18px;border-radius:12px;min-width:260px;max-width:520px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06);z-index:10000}
     .locked .modal-backdrop, .locked .modal-backdrop *, .locked .modal, .locked .modal * { pointer-events:auto !important; opacity:1 !important }
 
-    /* Locked state visuals */
+    /* Locked visuals */
     .locked .btn, .locked .btn.ghost, .locked input, .locked button { opacity:0.45; pointer-events:none }
     .locked #lockToggle { opacity:1; pointer-events:auto }
     .locked .search, .locked .search * { pointer-events:auto !important; opacity:1 !important }
 
     /* Responsive: stack fields and move actions below on small screens */
     @media (max-width:760px){
-      .container { grid-template-columns:1fr; gap:12px; padding:12px }
-      .header-card { flex-direction:column; align-items:stretch; gap:12px; padding:14px }
+      .container{grid-template-columns:1fr;gap:12px;padding:12px}
+      .header-card{flex-direction:column;align-items:stretch;gap:12px;padding:14px}
+      .title-block, .title-block h1, .title-block p.lead { text-align:center; margin:0 auto; }
 
-      /* center header and form headings */
-      .header-card .title-block,
-      .header-card .title-block h1,
-      .header-card .title-block p.lead { text-align:center; margin:0 auto; }
+      .controls{width:100%;justify-content:space-between;gap:8px;flex-wrap:wrap}
+      .controls .search{flex:1 1 auto;min-width:0}
 
-      /* Controls: keep search full width */
-      .controls { width:100%; justify-content:space-between; gap:8px; flex-wrap:wrap }
-      .controls .search { flex:1 1 auto; min-width:0 }
+      /* Stack list row into single column so fields and actions align vertically */
+      .item{grid-template-columns:1fr;align-items:stretch;gap:10px}
+      .row-actions{flex-direction:row;justify-content:flex-end;gap:8px;width:100%;order:2}
+      .row-actions .btn{flex:0 1 auto}
 
-      /* List rows: stack into single column so fields and actions align vertically */
-      .item {
-        grid-template-columns: 1fr;
-        gap:10px;
-        align-items:stretch;
-      }
-      .row-actions {
-        flex-direction:row;
-        justify-content:flex-end;
-        gap:8px;
-        width:100%;
-      }
-      .row-actions .btn { flex: 0 1 auto; }
+      /* Inline edit: stack fields and move actions below */
+      .edit-row{grid-template-columns:1fr !important;gap:12px !important}
+      .action-col{justify-content:flex-start}
+      .actions-inline{flex-direction:row;gap:8px;flex-wrap:wrap;justify-content:flex-end;width:100%}
 
-      /* Edit row stacks */
-      .edit-row { grid-template-columns: 1fr !important; gap:12px !important; }
-      .action-col { justify-content:flex-start; }
-
-      /* Add form: stack fields */
-      .add-row { grid-template-columns: 1fr !important; }
-      .add-row > div + div { margin-top:8px; }
+      /* Add form stacks */
+      .add-row{grid-template-columns:1fr !important}
+      .add-row > div + div{margin-top:8px}
 
       /* Ensure inputs fill container */
       input[type="text"], input[type="date"], .edit-input, textarea { width:100%; max-width:100%; box-sizing:border-box; height:44px; padding:10px 12px; }
@@ -168,13 +109,15 @@
       /* Buttons: avoid fixed widths */
       .btn, .btn.ghost, .btn.secondary, .btn.danger { min-width:0; }
     }
+
+    /* Small polish: ensure action buttons wrap and don't overflow */
+    .actions-inline button { white-space:nowrap; }
   </style>
 </head>
 <body>
   <div class="container" id="app">
-    <!-- Header card -->
-    <header class="header-card" role="banner" aria-label="Application header">
-      <div class="title-block" aria-hidden="true">
+    <header class="header-card">
+      <div class="title-block">
         <h1>Overtime Scheduler</h1>
         <p class="lead">Always locked on load — search stays available while locked</p>
       </div>
@@ -189,36 +132,17 @@
       </div>
     </header>
 
-    <!-- Entries list -->
     <section class="card list" aria-live="polite">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <strong>Entries</strong>
         <span id="status">Idle</span>
       </div>
 
-      <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px">
-        <!-- Example row (dynamic rows will be rendered by JS) -->
-        <!--
-        <div class="item" data-id="1">
-          <div class="display-left">
-            <div class="name">John Doe</div>
-            <div class="meta">Notes about overtime</div>
-            <div class="date">2026-03-12</div>
-          </div>
-          <div class="row-actions">
-            <button class="btn ghost" data-action="edit">Edit</button>
-            <button class="btn ghost" data-action="delete">Delete</button>
-          </div>
-        </div>
-        -->
-      </div>
-
+      <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
       <div id="empty" class="meta" style="display:none">No entries yet.</div>
-
       <div class="meta" style="margin-top:12px">Tip: Unlock to enable Add/Edit/Delete.</div>
     </section>
 
-    <!-- Add Overtime form -->
     <aside class="card" id="formCard">
       <strong style="display:block;margin-bottom:8px;text-align:left">Add Overtime</strong>
       <form id="addForm" autocomplete="off">
@@ -245,14 +169,12 @@
       </form>
     </aside>
 
-    <!-- Footer -->
-    <footer class="site-footer" role="contentinfo" aria-label="Site copyright and trademark">
+    <footer class="site-footer">
       <span class="brand">BoxTechHub™</span>
       <div class="legal">© 2026 BoxTechHub. All rights reserved.</div>
     </footer>
   </div>
 
-  <!-- Modal -->
   <div id="modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <h3 id="modalTitle">Unlock Actions</h3>
@@ -436,8 +358,13 @@
           </div>
         </div>
       `;
+      // Focus first input and ensure layout recalculation
       const nameInput = item.querySelector('[data-edit="name"]');
-      if (nameInput) nameInput.focus();
+      if (nameInput) {
+        nameInput.focus();
+        // small timeout to ensure mobile keyboards don't cause layout overlap
+        setTimeout(()=> nameInput.scrollIntoView({behavior:'smooth', block:'center'}), 120);
+      }
     }
 
     function exitEditMode(item, id) {
@@ -532,7 +459,6 @@
       renderList(filtered);
     });
 
-    // Always start locked on load
     window.addEventListener('DOMContentLoaded', async () => {
       setLockedState(true);
       await loadRows();
