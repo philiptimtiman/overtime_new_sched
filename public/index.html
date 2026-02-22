@@ -1,27 +1,16 @@
 <!doctype html>
-<html lang="en">
+<html lang="tl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Centered Layout</title>
-  <meta name="description" content="Overtime scheduler — always locked on load; centered layout; responsive; search enabled; guarded edit actions." />
+  <title>Overtime Scheduler — Balanced Centered Layout</title>
+  <meta name="description" content="Balanced, centered layout; default locked on load; search enabled; guarded edit actions." />
   <style>
     :root{
-      --bg:#0f1724;
-      --card:#0b1220;
-      --text:#e6eef8;
-      --muted:#9fb0c6;
-      --accent:#60a5fa;
-      --danger:#ef4444;
-      --glass: rgba(255,255,255,0.03);
-      --shadow: 0 8px 30px rgba(2,6,23,0.6);
-      --input-h:44px;
-      --gap:12px;
-      --right-col-min:260px;
-      --right-col-max:340px;
-      --radius:12px;
-      --page-max:980px;
-      --page-pad:16px;
+      --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
+      --accent:#60a5fa; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
+      --shadow: 0 8px 30px rgba(2,6,23,0.6); --input-h:44px; --gap:14px;
+      --right-col:320px; --page-max:980px; --pad:18px; --radius:12px;
     }
 
     *{box-sizing:border-box}
@@ -29,27 +18,26 @@
     input,button,select,textarea{font-family:inherit;font-size:16px}
     a{color:inherit}
 
-    /* Page wrapper centers everything and limits width */
+    /* Page wrapper: center everything and keep symmetric gutters */
     .page {
       width:100%;
       max-width:var(--page-max);
       margin:0 auto;
-      padding:var(--page-pad);
+      padding:var(--pad);
       min-height:100vh;
       display:flex;
       flex-direction:column;
       gap:18px;
     }
 
-    /* Container: center grid and reduce right column width to avoid right-heavy feel */
+    /* Balanced grid: main + right column */
     .container {
       display:grid;
-      grid-template-columns: 1fr minmax(var(--right-col-min), var(--right-col-max));
+      grid-template-columns: 1fr var(--right-col);
       gap:20px;
       align-items:start;
       width:100%;
       justify-items:stretch;
-      align-content:start;
     }
 
     /* Header */
@@ -77,58 +65,36 @@
     .btn.ghost{background:transparent;border:0;color:var(--muted);padding:8px 10px;border-radius:8px;cursor:pointer}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger);padding:8px 10px;border-radius:8px}
 
-    /* Cards and list */
+    /* Cards */
     .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
     .list{display:flex;flex-direction:column;gap:12px}
 
     /* Row layout */
     .item{
-      padding:10px;
-      border-radius:12px;
-      background:var(--glass);
-      border:1px solid rgba(255,255,255,0.04);
-      display:grid;
-      grid-template-columns:1fr 140px 1fr 120px;
-      gap:10px;
-      align-items:center;
-      min-width:0;
+      padding:10px;border-radius:12px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);
+      display:grid;grid-template-columns:1fr 140px 1fr 120px;gap:10px;align-items:center;min-width:0;
     }
-
     .field{display:flex;flex-direction:column;gap:6px;min-width:0}
-    .value{
-      padding:8px 10px;border-radius:10px;min-height:var(--input-h);
-      display:flex;align-items:center;justify-content:center;color:var(--text);
-      background:transparent;border:1px solid rgba(255,255,255,0.02);box-sizing:border-box;word-break:break-word;text-align:center;
-    }
-    .field input{
-      padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);
-      background:transparent;color:var(--text);height:var(--input-h);width:100%;box-sizing:border-box;display:none;text-align:center;min-width:0;
-    }
-
+    .value{padding:8px 10px;border-radius:10px;min-height:var(--input-h);display:flex;align-items:center;justify-content:center;color:var(--text);background:transparent;border:1px solid rgba(255,255,255,0.02);box-sizing:border-box;word-break:break-word;text-align:center}
+    .field input{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);width:100%;box-sizing:border-box;display:none;text-align:center;min-width:0}
     .actions{display:flex;flex-direction:column;gap:8px;align-items:flex-end;justify-self:end;min-width:0}
     .actions .btn{padding:8px 10px;font-size:14px;white-space:nowrap}
-
     .item.editing .value{display:none}
     .item.editing .field input{display:block}
 
-    /* Add form centered inputs and placeholders */
+    /* Add form */
     #formCard input[type="text"], #formCard input[type="date"], #formCard textarea{
-      padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);
-      background:transparent;color:var(--text);height:var(--input-h);width:100%;font-size:15px;box-sizing:border-box;text-align:center;min-width:0;display:block;
+      padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);width:100%;font-size:15px;box-sizing:border-box;text-align:center;min-width:0;display:block;
     }
     #formCard input::placeholder, #formCard textarea::placeholder { text-align:center; color:rgba(255,255,255,0.45); }
 
     .add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start;min-width:0;width:100%}
     .add-row>div{min-width:0;display:flex;flex-direction:column;gap:6px}
     .add-row label{font-size:13px;color:var(--muted);margin:0 0 4px 0;text-align:center}
-    .add-row input[type="date"]{max-width:100%;width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;background-clip:padding-box}
-    .add-row input[type="date"]::-webkit-calendar-picker-indicator{position:relative;right:0;opacity:0.95;cursor:pointer}
-
-    #formCard label { text-align:center; }
     .form-actions { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-start; }
     .form-actions .btn[disabled]{opacity:0.45;pointer-events:none}
 
-    /* Make sure cards fill their grid cell and are visually centered */
+    /* Ensure cards fill their grid cell */
     .card, .header-card, .list { width:100%; margin:0; }
 
     /* Responsive: stack and center on small screens */
@@ -143,10 +109,10 @@
       .page{padding:12px}
     }
 
-    /* Tiny tweak to reduce perceived right bias on some narrow devices */
-    @media (min-width:420px) and (max-width:640px){
-      .container { gap:14px; }
-      .header-card { padding-left:14px; padding-right:14px; }
+    /* Small tweak for very narrow screens to keep visual balance */
+    @media (max-width:420px){
+      .header-card { padding-left:10px; padding-right:10px; }
+      .page { padding-left:10px; padding-right:10px; }
     }
   </style>
 </head>
@@ -156,7 +122,7 @@
       <header class="header-card" role="banner" aria-label="Application header">
         <div class="title-block" aria-hidden="true">
           <h1>Overtime Scheduler</h1>
-          <p class="lead">Unlock to enable Add / Edit / Delete. This page defaults to Locked on every load.</p>
+          <p class="lead">Unlock to enable Add / Edit / Delete. Default: Locked on load.</p>
         </div>
 
         <div class="controls" role="group" aria-label="Search and lock controls">
@@ -229,13 +195,11 @@
   </div>
 
   <script type="module">
-    // Supabase placeholders — replace with your keys if you use Supabase
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
     const SUPABASE_URL = 'https://bisvmgjgyvludhqsvvcn.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Elements
     const rowsEl = document.getElementById('rows');
     const statusEl = document.getElementById('status');
     const form = document.getElementById('addForm');
@@ -256,32 +220,23 @@
     let dataCache = [];
     let unlocked = false;
 
-    // Helpers
     function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
     function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
     function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Update lock-guarded controls' disabled attribute for accessibility
     function updateGuardedControls() {
       const guarded = document.querySelectorAll('.lock-guard');
-      guarded.forEach(el => {
-        if (unlocked) el.removeAttribute('disabled');
-        else el.setAttribute('disabled','true');
-      });
-
-      // Row action buttons
+      guarded.forEach(el => { if (unlocked) el.removeAttribute('disabled'); else el.setAttribute('disabled','true'); });
       const rowActionButtons = rowsEl.querySelectorAll('[data-action]');
       rowActionButtons.forEach(btn => {
         const action = btn.dataset.action;
         if (['edit','delete','save','cancel'].includes(action)) {
-          if (unlocked) btn.removeAttribute('disabled');
-          else btn.setAttribute('disabled','true');
+          if (unlocked) btn.removeAttribute('disabled'); else btn.setAttribute('disabled','true');
         }
       });
     }
 
-    // Lock state
     function setUnlockedState(isUnlocked, persist = true){
       unlocked = !!isUnlocked;
       if (unlocked) {
@@ -295,17 +250,14 @@
         lockText.textContent = 'Locked';
         lockToggle.textContent = 'Unlock';
       }
-      // Ensure search remains enabled
       if (searchInput) { searchInput.disabled = false; searchInput.setAttribute('aria-disabled','false'); searchInput.tabIndex = 0; }
       updateGuardedControls();
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
-    // Modal controls
     function openModal(){ modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
     function closeModal(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); }
 
-    // Submit unlock password (calls your server endpoint)
     async function submitPassword(password){
       try {
         pwError.style.display = 'block';
@@ -327,7 +279,6 @@
       }
     }
 
-    // Row creation/rendering
     function createRowElement(row){
       const wrapper = document.createElement('div');
       wrapper.className = 'item';
@@ -363,7 +314,6 @@
       updateGuardedControls();
     }
 
-    // Load rows
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -378,7 +328,6 @@
       }
     }
 
-    // Add form submit
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!unlocked) { alert('Actions are locked. Unlock to add entries.'); return; }
@@ -402,7 +351,6 @@
     });
     resetBtn.addEventListener('click', () => form.reset());
 
-    // Row actions
     rowsEl.addEventListener('click', async (e) => {
       const action = e.target?.dataset?.action;
       if (!action) return;
@@ -507,7 +455,6 @@
       }
     }
 
-    // Search filter
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
@@ -519,18 +466,15 @@
       renderList(filtered);
     });
 
-    // Modal handlers
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
-    // Lock toggle
     lockToggle.addEventListener('click', () => {
       if (!unlocked) openModal();
       else { if (!confirm('Locking will disable Add/Edit/Delete. Continue?')) return; setUnlockedState(false, true); }
     });
 
-    // On load: force locked on every page load (overwrites any saved preference)
     window.addEventListener('DOMContentLoaded', async () => {
       setUnlockedState(false, true);
       await loadRows();
