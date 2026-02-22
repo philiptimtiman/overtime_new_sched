@@ -3,86 +3,125 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Mobile First (Buttons Restored)</title>
-  <meta name="description" content="Mobile-first overtime scheduler with all buttons and functions restored; iOS-safe date input; locked-by-default." />
+  <title>Overtime Scheduler — Spaced Layout</title>
+  <meta name="description" content="Mobile-first centered overtime scheduler with increased spacing, no overlap, and locked-by-default behavior." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
       --accent:#60a5fa; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
-      --shadow: 0 8px 30px rgba(2,6,23,0.6);
+      --shadow: 0 10px 40px rgba(2,6,23,0.6);
       --input-h:44px; --radius:12px;
-      --mobile-width:360px; --gutter:12px; --fs:16px;
+      --mobile-width:360px; --gutter:16px; --fs:16px;
+      --item-gap:12px; --card-pad:14px;
     }
+
+    /* Reset */
     *,*::before,*::after{box-sizing:border-box}
     html,body{height:100%;margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--fs)}
-    input,button,select,textarea{font-family:inherit;font-size:1rem}
+    input,button,select,textarea{font-family:inherit}
     a{color:inherit}
-    .mobile-canvas{width:100%;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:18px;background:var(--bg)}
-    .app{width:var(--mobile-width);max-width:100%;display:flex;flex-direction:column;gap:14px;align-items:stretch}
-    .header-card{border-radius:var(--radius);padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);box-shadow:var(--shadow);display:flex;gap:8px;align-items:center;justify-content:space-between}
-    .title-block{display:flex;flex-direction:column;gap:2px}
-    .title-block h1{font-size:1rem;margin:0}
-    .title-block p{margin:0;color:var(--muted);font-size:.85rem}
-    .controls{display:flex;gap:8px;align-items:center;width:100%}
-    .search{flex:1;border-radius:10px;padding:8px 10px;height:40px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);min-width:0}
-    .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:600}
+
+    /* Canvas and app width */
+    .mobile-canvas{width:100%;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:20px;background:var(--bg)}
+    .app{width:var(--mobile-width);max-width:100%;display:flex;flex-direction:column;gap:18px;align-items:stretch}
+
+    /* Header */
+    .header-card{border-radius:var(--radius);padding:var(--card-pad);background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+    .title-block h1{font-size:1.05rem;margin:0}
+    .title-block p{margin:0;color:var(--muted);font-size:.9rem}
+
+    .controls{display:flex;gap:10px;align-items:center}
+    .search{flex:1;border-radius:10px;padding:10px 12px;height:44px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);min-width:0}
+
+    /* Card */
+    .card{background:var(--card);border-radius:12px;padding:var(--card-pad);box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
+    .list{display:flex;flex-direction:column;gap:var(--item-gap)}
+
+    /* Entry item: stacked layout to avoid overlap */
+    .item{
+      padding:12px;border-radius:12px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);
+      display:flex;flex-direction:column;gap:8px;min-width:0;
+    }
+    .row-top{display:flex;gap:8px;align-items:center;justify-content:space-between}
+    .row-bottom{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .value{padding:8px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.02);text-align:center;color:var(--text);min-height:40px;display:flex;align-items:center;justify-content:center;width:100%}
+    .meta-small{font-size:.85rem;color:var(--muted);text-align:center}
+
+    /* Buttons group: stacked on small width */
+    .btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+    .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600}
     .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .btn.ghost{background:transparent;border:0;color:var(--muted);padding:6px 8px;border-radius:8px;cursor:pointer}
+    .btn.ghost{background:transparent;border:0;color:var(--muted);padding:6px 8px;border-radius:8px}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger);padding:6px 8px;border-radius:8px}
-    .card{background:var(--card);border-radius:12px;padding:12px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
-    .list{display:flex;flex-direction:column;gap:10px}
-    .item{padding:10px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);display:grid;grid-template-columns:1fr 100px;gap:8px;align-items:center}
-    .item .left{display:flex;flex-direction:column;gap:6px}
-    .item .right{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
-    .value{padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.02);text-align:center;color:var(--text);min-height:36px;display:flex;align-items:center;justify-content:center}
-    .edit-input{display:none;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:36px}
-    .item.editing .value{display:none}
-    .item.editing .edit-input{display:block}
+
+    /* Add form */
     #formCard{width:100%}
-    #formCard .card{padding:12px}
     #formCard strong{display:block;text-align:center;margin:0 0 8px 0;font-size:1rem}
     label{font-size:.9rem;color:var(--muted);margin:0 0 6px 0;text-align:center;display:block}
-    input[type="text"], input[type="date"], textarea{width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--text); height:var(--input-h); text-align:center; box-sizing:border-box;}
-    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .form-actions{display:flex;gap:8px;justify-content:center;margin-top:10px}
+    input[type="text"], input[type="date"], textarea{
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--text); height:44px; text-align:center; box-sizing:border-box;
+    }
+
+    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .form-actions{display:flex;gap:8px;flex-direction:column;align-items:stretch;margin-top:12px}
+    .form-actions .btn{width:100%}
+
+    /* Date wrapper: reserve space for calendar icon */
     .date-wrap{position:relative;width:100%}
     .date-wrap input[type="date"]{padding:10px 44px 10px 12px;-webkit-appearance:textfield;appearance:textfield}
     .date-wrap input[type="date"]::-webkit-calendar-picker-indicator{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:28px;height:28px;opacity:0.95;cursor:pointer;padding:4px}
     .date-wrap input[type="date"]::-webkit-datetime-edit, .date-wrap input[type="date"]::-webkit-datetime-edit-fields-wrapper, .date-wrap input[type="date"]::-webkit-datetime-edit-text { padding:0; margin:0; line-height:1.1; }
+
+    /* Disabled visual */
     .lock-guard[disabled]{opacity:0.45;pointer-events:none}
-    @media (max-width:360px){ :root{ --mobile-width:320px; } .app{ width:var(--mobile-width); } .add-row{ grid-template-columns:1fr; } }
-    @media (min-width:720px){ .mobile-canvas{ align-items:flex-start; padding-top:28px; } .app{ box-shadow: 0 10px 40px rgba(0,0,0,0.5); border-radius:14px; } }
+
+    /* Reduce crowding on very small screens */
+    @media (max-width:360px){
+      :root{ --mobile-width:320px; --gutter:12px; --item-gap:10px; }
+      .add-row{grid-template-columns:1fr}
+      .form-actions{flex-direction:column}
+      .row-top, .row-bottom{flex-direction:column;align-items:stretch}
+      .btn-row{justify-content:stretch}
+    }
+
+    /* Desktop keep mobile canvas centered but same width */
+    @media (min-width:720px){
+      .mobile-canvas{padding-top:28px}
+      .app{box-shadow:0 12px 50px rgba(0,0,0,0.5);border-radius:14px}
+    }
   </style>
 </head>
 <body>
   <div class="mobile-canvas">
     <div class="app" role="application" aria-label="Overtime Scheduler mobile">
-      <header class="header-card" role="banner" aria-label="Header">
-        <div class="title-block" aria-hidden="true">
+      <header class="header-card">
+        <div class="title-block">
           <h1>Overtime Scheduler</h1>
           <p>Locked by default — unlock to add or edit</p>
         </div>
 
-        <div style="display:flex;align-items:center;gap:8px">
+        <div class="controls" style="margin-top:6px">
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search" />
         </div>
       </header>
 
-      <section class="card list" aria-live="polite">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <strong>Entries</strong>
-          <span id="status" style="font-size:.9rem;color:var(--muted)">Idle</span>
-        </div>
+      <main class="card list" aria-live="polite" style="padding:var(--card-pad)">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <strong>Entries</strong>
+            <span id="status" class="meta-small">Idle</span>
+          </div>
 
-        <div id="rows" style="display:flex;flex-direction:column;gap:10px"></div>
-        <div id="empty" style="display:none;text-align:center;color:var(--muted);padding:12px">No entries yet.</div>
-      </section>
+          <div id="rows" style="display:flex;flex-direction:column;gap:var(--item-gap)"></div>
+          <div id="empty" style="display:none;text-align:center;color:var(--muted);padding:12px">No entries yet.</div>
+        </div>
+      </main>
 
       <aside id="formCard" class="card" aria-labelledby="addOvertimeTitle">
         <strong id="addOvertimeTitle">Add Overtime</strong>
 
         <form id="addForm" autocomplete="off" novalidate>
-          <div style="margin-top:8px">
+          <div style="margin-top:10px">
             <label for="name">Name</label>
             <input id="name" name="name" class="lock-guard" type="text" placeholder="Employee name" required />
           </div>
@@ -159,21 +198,14 @@
     function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Ensure lock-guarded elements (including add form inputs) are disabled when locked
+    // Toggle disabled state for all lock-guarded elements (including Add form inputs)
     function updateGuardedControls(){
       const guarded = document.querySelectorAll('.lock-guard');
       guarded.forEach(el => {
         if (unlocked) el.removeAttribute('disabled');
         else el.setAttribute('disabled','true');
       });
-      const rowActionButtons = rowsEl.querySelectorAll('[data-action]');
-      rowActionButtons.forEach(btn => {
-        const action = btn.dataset.action;
-        if (['edit','delete','save','cancel'].includes(action)) {
-          if (unlocked) btn.removeAttribute('disabled'); else btn.setAttribute('disabled','true');
-        }
-      });
-      // Update lockToggle label
+      // update lock button label
       lockToggle.textContent = unlocked ? 'Lock' : 'Unlock';
     }
 
@@ -207,19 +239,24 @@
       }
     }
 
-    // Render row
+    // Render row (stacked)
     function createRowElement(row){
       const wrapper = document.createElement('div');
       wrapper.className = 'item';
       wrapper.dataset.id = row.id;
       wrapper.innerHTML = `
-        <div class="left">
-          <div class="value" data-field="name">${escapeHtml(row.name)}</div>
-          <div style="margin-top:6px;font-size:.85rem;color:var(--muted);text-align:center">${row.notes ? escapeHtml(row.notes) : ''}</div>
+        <div class="row-top">
+          <div style="flex:1">
+            <div class="value" data-field="name">${escapeHtml(row.name)}</div>
+          </div>
+          <div style="width:110px">
+            <div class="value" data-field="overtime_date">${row.overtime_date ? formatDate(row.overtime_date) : '—'}</div>
+          </div>
         </div>
-        <div class="right">
-          <div class="value" data-field="overtime_date">${row.overtime_date ? formatDate(row.overtime_date) : '—'}</div>
-          <div style="display:flex;gap:6px;margin-top:6px">
+
+        <div class="row-bottom">
+          <div style="flex:1" class="meta-small">${row.notes ? escapeHtml(row.notes) : ''}</div>
+          <div class="btn-row">
             <button class="btn ghost lock-guard" data-action="edit">Edit</button>
             <button class="btn ghost lock-guard" data-action="delete">Delete</button>
           </div>
@@ -236,7 +273,7 @@
       updateGuardedControls();
     }
 
-    // Load rows from Supabase (placeholder)
+    // Load rows
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -276,7 +313,7 @@
 
     resetBtn.addEventListener('click', () => form.reset());
 
-    // Row actions (edit/delete/save/cancel)
+    // Row actions
     rowsEl.addEventListener('click', async (e) => {
       const action = e.target?.dataset?.action;
       if (!action) return;
@@ -301,38 +338,19 @@
 
       if (action === 'edit') {
         if (!unlocked) { alert('Actions are locked. Unlock to edit.'); return; }
-        // Inline edit: replace name and date with inputs
-        const nameEl = item.querySelector('[data-field="name"]');
-        const dateEl = item.querySelector('[data-field="overtime_date"]');
-        const currentName = nameEl.textContent || '';
-        const currentDate = (dateEl.textContent && dateEl.textContent !== '—') ? new Date(dateEl.textContent).toISOString().slice(0,10) : '';
-        item.classList.add('editing');
-        nameEl.style.display = 'none';
-        dateEl.style.display = 'none';
-
-        const nameInput = document.createElement('input');
-        nameInput.type = 'text';
-        nameInput.value = currentName;
-        nameInput.className = 'edit-input';
-        nameInput.style.display = 'block';
-        nameInput.style.width = '100%';
-        nameInput.style.marginBottom = '6px';
-
-        const dateInput = document.createElement('input');
-        dateInput.type = 'date';
-        dateInput.value = currentDate;
-        dateInput.className = 'edit-input';
-        dateInput.style.display = 'block';
-        dateInput.style.width = '100%';
-
-        const left = item.querySelector('.left');
-        left.insertBefore(nameInput, left.firstChild);
-        left.insertBefore(dateInput, left.children[1]);
-
-        const actions = item.querySelector('.right > div:last-child');
-        actions.innerHTML = `
-          <button class="btn ghost" data-action="save">Save</button>
-          <button class="btn ghost" data-action="cancel">Cancel</button>
+        // Inline edit: convert item to simple edit form
+        const row = dataCache.find(r => String(r.id) === String(id));
+        if (!row) return;
+        item.innerHTML = `
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <input type="text" class="edit-input" value="${escapeHtml(row.name)}" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04)" />
+            <div class="date-wrap"><input type="date" class="edit-input" value="${row.overtime_date || ''}" style="padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.04)" /></div>
+            <input type="text" class="edit-input" value="${escapeHtml(row.notes || '')}" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04)" />
+            <div style="display:flex;gap:8px;margin-top:6px">
+              <button class="btn ghost" data-action="save">Save</button>
+              <button class="btn ghost" data-action="cancel">Cancel</button>
+            </div>
+          </div>
         `;
         updateGuardedControls();
         return;
@@ -340,16 +358,15 @@
 
       if (action === 'save') {
         if (!unlocked) { alert('Actions are locked. Unlock to save.'); return; }
-        const left = item.querySelector('.left');
-        const nameInput = left.querySelector('input[type="text"]');
-        const dateInput = left.querySelector('input[type="date"]');
-        const name = nameInput?.value.trim();
-        const overtime_date = dateInput?.value || null;
+        const inputs = item.querySelectorAll('.edit-input');
+        const name = inputs[0]?.value.trim();
+        const overtime_date = inputs[1]?.value || null;
+        const notes = inputs[2]?.value.trim();
         if (!name) { alert('Name required'); return; }
         try {
-          const { data, error } = await supabase.from('overtime_data').update({ name, overtime_date }).eq('id', item.dataset.id).select();
+          const { data, error } = await supabase.from('overtime_data').update({ name, notes, overtime_date }).eq('id', id).select();
           if (error) throw error;
-          dataCache = dataCache.map(r => String(r.id) === String(item.dataset.id) ? (data && data[0]) || { ...r, name, overtime_date } : r);
+          dataCache = dataCache.map(r => String(r.id) === String(id) ? (data && data[0]) || { ...r, name, notes, overtime_date } : r);
           renderList(dataCache);
         } catch (err) {
           console.error(err);
@@ -381,7 +398,7 @@
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
-    // Lock toggle (opens modal to unlock or locks directly)
+    // Lock toggle
     lockToggle.addEventListener('click', () => {
       if (!unlocked) openModal();
       else { if (!confirm('Locking will disable Add/Edit/Delete. Continue?')) return; setUnlockedState(false, true); }
