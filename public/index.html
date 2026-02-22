@@ -3,14 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — BoxTechHub Header Card</title>
-  <meta name="description" content="Overtime scheduler with a header card that uses the BoxTechHub logo as a decorative background in the top corner." />
+  <title>Overtime Scheduler — Header Logo Background</title>
+  <meta name="description" content="Overtime scheduler with header card using assets/logo.jpeg as decorative background in the top-left corner." />
   <style>
     :root{
-      --bg:#0f1724; --card:#0b1220; --card-contrast:#0e1622; --text:#e6eef8; --muted:#9fb0c6;
-      --accent:#60a5fa; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
-      --shadow: 0 8px 30px rgba(2,6,23,0.6); --input-h:44px; --gap:12px;
-      --action-col:160px; --radius:12px;
+      --bg:#0f1724;
+      --card:#0b1220;
+      --card-contrast:#0e1622;
+      --text:#e6eef8;
+      --muted:#9fb0c6;
+      --accent:#60a5fa;
+      --danger:#ef4444;
+      --glass: rgba(255,255,255,0.03);
+      --shadow: 0 8px 30px rgba(2,6,23,0.6);
+      --input-h:44px;
+      --gap:12px;
+      --action-col:160px;
+      --radius:12px;
     }
 
     /* Reset & base */
@@ -26,7 +35,7 @@
       grid-column: 1 / -1;
       position: relative;
       border-radius: var(--radius);
-      padding: 18px 18px 18px 18px;
+      padding: 18px;
       background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       border: 1px solid rgba(255,255,255,0.04);
       box-shadow: var(--shadow);
@@ -46,30 +55,21 @@
       left: 12px;
       width: 84px;
       height: 84px;
-      background-image: url("assets/boxtechhub-logo.svg");
+      background-image: url("assets/logo.jpeg");
       background-repeat: no-repeat;
       background-position: center;
-      background-size: contain;
-      opacity: 0.12; /* subtle watermark effect */
+      background-size: cover;
+      opacity: 0.14; /* subtle watermark effect */
       pointer-events: none;
       z-index: 0;
-      filter: blur(0.2px);
       border-radius: 10px;
+      filter: blur(0.2px);
     }
-
-    /* If you prefer a stronger logo presence, increase opacity (e.g., 0.22) or size. */
 
     /* Title block sits above the decorative background */
     .title-block { position: relative; z-index: 2; display:flex;flex-direction:column; gap:4px; min-width:0 }
     .title-block h1 { margin:0; font-size:20px; line-height:1.05; font-weight:700 }
     .title-block p.lead { margin:0; color:var(--muted); font-size:13px }
-
-    /* Brand area (keeps a small wordmark visible even with background) */
-    .brand-inline { display:flex; align-items:center; gap:12px; min-width:0; z-index:2 }
-    .brand-inline img { height:40px; width:auto; display:block; }
-    .brand-inline .brand-text { display:flex; flex-direction:column; line-height:1; }
-    .brand-inline .brand-name { font-weight:700; color:var(--text); font-size:14px }
-    .brand-inline .brand-sub { font-size:11px; color:var(--muted) }
 
     /* Controls (search + lock) */
     .controls { display:flex; gap:8px; align-items:center; z-index:2; min-width:0 }
@@ -130,7 +130,6 @@
       .container { grid-template-columns:1fr; gap:12px; padding:12px }
       .header-card { flex-direction:column; align-items:stretch; gap:12px; padding:14px }
       .header-card::before { top:10px; left:10px; width:64px; height:64px; opacity:0.12 }
-      .brand-inline .brand-text { display:none } /* keep header compact on small screens */
       .controls { width:100%; justify-content:space-between; gap:8px; flex-wrap:wrap }
       .controls .search { flex:1 1 auto; min-width:0 }
       .edit-row { grid-template-columns:1fr }
@@ -146,18 +145,11 @@
   <div class="container" id="app">
     <!-- Header card: logo used as decorative background in top-left corner -->
     <header class="header-card" role="banner" aria-label="Application header">
-      <div class="title-block">
+      <div class="title-block" aria-hidden="true">
+        <!-- Title text kept minimal and visually aligned; you asked to remove the BoxTechHub wordmark,
+             so this block contains only the app title and subtitle (can be hidden if you prefer). -->
         <h1>Overtime Scheduler</h1>
         <p class="lead">Always locked on load — search stays available while locked</p>
-      </div>
-
-      <div class="brand-inline" aria-hidden="true">
-        <!-- Inline small SVG fallback (visible if external asset missing) -->
-        <img src="assets/boxtechhub-logo.svg" alt="BoxTechHub logo" onerror="this.style.display='none';" />
-        <div class="brand-text">
-          <span class="brand-name">BoxTechHub<span style="font-size:11px;vertical-align:super;margin-left:4px">™</span></span>
-          <span class="brand-sub">Overtime Scheduler</span>
-        </div>
       </div>
 
       <div class="controls" role="group" aria-label="Search and lock controls">
@@ -234,8 +226,7 @@
   </div>
 
   <script type="module">
-    // Minimal JS to preserve previous behavior: locked on load, search usable while locked,
-    // header card remains decorative with logo background. Replace Supabase values as needed.
+    // Minimal JS: always start locked on load, keep search usable while locked.
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
     const SUPABASE_URL = 'https://bisvmgjgyvludhqsvvcn.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
@@ -276,7 +267,6 @@
         lockText.textContent = 'Unlocked';
         lockToggle.textContent = 'Lock';
       }
-      // Ensure search remains interactive
       if (searchInput) {
         searchInput.disabled = false;
         searchInput.setAttribute('aria-disabled','false');
