@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Date & Time Active (yyyymmdd hh:mm:ss)</title>
-  <meta name="description" content="Overtime Scheduler with active date+time input and display in yyyymmdd hh:mm:ss format." />
+  <title>Overtime Scheduler — Live Clock (yyyymmdd hh:mm:ss)</title>
+  <meta name="description" content="Overtime Scheduler with active live clock showing yyyymmdd hh:mm:ss." />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -43,6 +43,19 @@
 
     .controls{display:flex;gap:8px;align-items:center}
     .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--text)}
+
+    .live-row{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+    .live-clock{
+      font-family:monospace;
+      font-size:0.86rem;
+      color:var(--muted);
+      background:rgba(255,255,255,0.02);
+      padding:6px 10px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.03);
+      min-width:170px;
+      text-align:center;
+    }
 
     .theme-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px}
     .theme-swatch{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,0.06);display:inline-flex;align-items:center;justify-content:center;padding:0;background:transparent}
@@ -90,7 +103,7 @@
 
     .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 
-    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));Color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem;transition:background var(--theme-transition), color var(--theme-transition)}
+    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem;transition:background var(--theme-transition), color var(--theme-transition)}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
     .btn.full{width:100%}
@@ -154,6 +167,7 @@
       .date-text{padding-right:48px}
       .theme-row{flex-wrap:wrap}
       .date-pill{min-width:64px; max-width:96px; font-size:0.85rem}
+      .live-clock{min-width:140px;font-size:0.78rem}
     }
   </style>
 </head>
@@ -161,10 +175,16 @@
   <div class="canvas">
     <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler">
       <header class="card header" aria-labelledby="appTitle">
-        <div class="brand">
-          <h1 id="appTitle">OVERTIME & LEAVE SCHEDULE</h1>
-		  <p class="meta">&#169;2026 BoxTechHub&#8482;</p>
-          <p class="meta">BxTHPTver202602230600</p>
+        <div class="brand" style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;width:100%">
+          <div style="display:flex;flex-direction:column;align-items:flex-start">
+            <h1 id="appTitle" style="margin:0">Overtime Scheduler</h1>
+            <p class="meta" style="margin:0">Locked by default — unlock to add or edit</p>
+          </div>
+
+          <!-- Live clock placed at top-right -->
+          <div class="live-row" aria-hidden="false">
+            <div id="liveClock" class="live-clock" role="status" aria-live="polite">—</div>
+          </div>
         </div>
 
         <div class="controls" role="search" style="margin-top:8px;display:flex;gap:8px;align-items:center">
@@ -273,6 +293,7 @@
 
     const datetimeInput = document.getElementById('overtime_datetime');
     const dateBtn = document.getElementById('datePickerBtn');
+    const liveClockEl = document.getElementById('liveClock');
 
     const swatches = Array.from(document.querySelectorAll('.theme-swatch'));
     const THEME_KEY = 'overtime_theme_v1';
@@ -284,11 +305,9 @@
     function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
     function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
 
-    // Format display: show local date + time in "yyyymmdd hh:mm:ss"
-    function formatToYMDHMS(iso){
-      if (!iso) return '—';
-      const d = new Date(iso);
-      if (isNaN(d)) return '—';
+    // Format for display: "yyyymmdd hh:mm:ss"
+    function formatToYMDHMSFromDateObj(d){
+      if (!d || isNaN(d)) return '—';
       const pad = (n) => String(n).padStart(2,'0');
       const yyyy = d.getFullYear();
       const mm = pad(d.getMonth()+1);
@@ -299,15 +318,23 @@
       return `${yyyy}${mm}${dd} ${hh}:${min}:${ss}`;
     }
 
+    // Update live clock every second (local time)
+    function updateLiveClock(){
+      try {
+        const now = new Date();
+        liveClockEl.textContent = formatToYMDHMSFromDateObj(now);
+      } catch (e) {
+        liveClockEl.textContent = '—';
+      }
+    }
+
     // Convert datetime-local value (YYYY-MM-DDTHH:MM) to ISO string for storage
     function toIsoFromLocal(val){
       if (!val) return null;
       try {
-        // If browser provides a full ISO-like value, Date will handle it
         const d = new Date(val);
         if (!isNaN(d)) return d.toISOString();
       } catch(e){}
-      // Fallback: append seconds and treat as local
       const parts = val.split('T');
       if (parts.length !== 2) return null;
       const [datePart, timePart] = parts;
@@ -439,7 +466,7 @@
       const el = document.createElement('div');
       el.className = 'item';
       el.dataset.id = row.id;
-      const dateDisplay = row.overtime_date ? formatToYMDHMS(row.overtime_date) : '—';
+      const dateDisplay = row.overtime_date ? formatToYMDHMSFromDateObj(new Date(row.overtime_date)) : '—';
       const dateAttr = row.overtime_date ? row.overtime_date : '';
       el.innerHTML = `
         <div class="item-top">
@@ -603,8 +630,13 @@
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
+    // Start live clock and app
     window.addEventListener('DOMContentLoaded', async () => {
-      // start locked by default (you can change to restore previous state by reading LOCAL_KEY)
+      // initialize clock immediately and update every second
+      updateLiveClock();
+      setInterval(updateLiveClock, 1000);
+
+      // start locked by default
       setUnlockedState(false, true);
       await loadRows();
     });
