@@ -3,51 +3,30 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler</title>
-  <meta name="description" content="Overtime scheduler — lock/unlock state persists across refresh using localStorage." />
+  <title>Overtime Scheduler — Centered Add Form</title>
+  <meta name="description" content="Overtime scheduler — Add Overtime inputs centered; lock state persists; responsive rows." />
   <style>
     :root{
-      --bg:#0f1724;
-      --card:#0b1220;
-      --text:#e6eef8;
-      --muted:#9fb0c6;
-      --accent:#60a5fa;
-      --danger:#ef4444;
-      --glass: rgba(255,255,255,0.03);
-      --shadow: 0 8px 30px rgba(2,6,23,0.6);
-      --input-h:44px;
-      --gap:12px;
-      --action-col:140px;
-      --date-col:160px;
-      --radius:12px;
-      --container-pad:18px;
+      --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
+      --accent:#60a5fa; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
+      --shadow: 0 8px 30px rgba(2,6,23,0.6); --input-h:44px; --gap:12px;
+      --action-col:140px; --date-col:160px; --radius:12px; --pad:18px;
     }
 
     /* Reset & base */
     *, *::before, *::after { box-sizing: border-box; }
-    html,body{height:100%;margin:0;padding:var(--container-pad);background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased}
-    input,button,select,textarea{font-family:inherit;font-size:20px}
+    html,body{height:100%;margin:0;padding:var(--pad);background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased}
+    input,button,select,textarea{font-family:inherit;font-size:16px}
+    a{color:inherit}
 
-    /* Page grid */
+    /* Layout */
     .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
 
-    /* Header card */
-    .header-card {
-      grid-column: 1 / -1;
-      border-radius: var(--radius);
-      padding: 18px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border: 1px solid rgba(255,255,255,0.04);
-      box-shadow: var(--shadow);
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      min-height:84px;
-    }
-    .title-block{display:flex;flex-direction:column;gap:4px;min-width:0}
-    h1{font-size:30px;margin:0}
-    p.lead{margin:0;color:var(--muted);font-size:10px;min-width:0}
+    /* Header */
+    .header-card{grid-column:1/-1;border-radius:var(--radius);padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:84px}
+    .title-block{display:flex;flex-direction:column;gap:4px}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
 
     .controls{display:flex;gap:8px;align-items:center;min-width:0}
     .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:var(--text);height:var(--input-h);flex:1 1 auto;min-width:0}
@@ -60,190 +39,72 @@
     .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
     .list{display:flex;flex-direction:column;gap:12px}
 
-    /* Rows layout */
-    .item {
-      padding:12px;
-      border-radius:12px;
-      background:var(--glass);
-      border:1px solid rgba(255,255,255,0.04);
-      display:grid;
-      grid-template-columns: 1fr var(--date-col) 1fr var(--action-col);
-      gap:12px;
-      align-items:center;
-      min-width:0;
+    /* Row layout */
+    .item{padding:12px;border-radius:12px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);display:grid;grid-template-columns:1fr var(--date-col) 1fr var(--action-col);gap:12px;align-items:center;min-width:0}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:0}
+    .value{padding:10px 12px;border-radius:10px;min-height:var(--input-h);display:flex;align-items:center;justify-content:center;color:var(--text);background:transparent;border:1px solid rgba(255,255,255,0.02);box-sizing:border-box;word-break:break-word;text-align:center}
+    .field input{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);width:100%;box-sizing:border-box;display:none;text-align:center;min-width:0}
+    .actions{display:flex;flex-direction:column;gap:8px;align-items:flex-end;justify-self:end;min-width:0}
+    .actions .btn{padding:8px 10px;font-size:14px;white-space:nowrap}
+    .item.editing .value{display:none}
+    .item.editing .field input{display:block}
+
+    /* Add form */
+    #formCard input[type="text"], #formCard input[type="date"], #formCard textarea{
+      padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);width:100%;font-size:16px;box-sizing:border-box;text-align:center;min-width:0;display:block;
     }
 
-    .field {
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      min-width:0;
+    /* Center placeholders too */
+    #formCard input::placeholder, #formCard textarea::placeholder { text-align:center; color:rgba(255,255,255,0.45); }
+
+    /* Add-row: explicit grid, prevent overlap */
+    .add-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:start;min-width:0;width:100%}
+    .add-row>div{min-width:0;display:flex;flex-direction:column;gap:6px}
+    .add-row label{font-size:13px;color:var(--muted);margin:0 0 4px 0;text-align:center}
+
+    /* Ensure date input fits on iOS and other browsers */
+    .add-row input[type="date"]{max-width:100%;width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;background-clip:padding-box}
+    .add-row input[type="date"]::-webkit-calendar-picker-indicator{position:relative;right:0;opacity:0.95;cursor:pointer}
+
+    /* Center labels in the Add form (desktop + mobile) */
+    #formCard label { text-align:center; }
+
+    /* Buttons area in form: center on mobile, left on desktop */
+    .form-actions { margin-top:6px; display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-start; }
+    @media (max-width:760px){
+      .form-actions { justify-content:center; }
     }
-
-    .field .value {
-      padding:10px 12px;
-      border-radius:10px;
-      min-height:var(--input-h);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:var(--text);
-      background:transparent;
-      border:1px solid rgba(255,255,255,0.02);
-      box-sizing:border-box;
-      word-break:break-word;
-      text-align:center;
-    }
-
-    .field input {
-      padding:10px 12px;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,0.04);
-      background:transparent;
-      color:var(--text);
-      height:var(--input-h);
-      width:100%;
-      box-sizing:border-box;
-      display:none; /* inputs hidden until editing */
-      text-align:center;
-      min-width:0;
-    }
-
-    /* Actions column */
-    .actions {
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      align-items:flex-end;
-      justify-self:end;
-      min-width:0;
-    }
-    .actions .btn { padding:8px 10px; font-size:14px; white-space:nowrap; }
-
-    /* Editing state: reveal inputs and hide values */
-    .item.editing .value { display:none; }
-    .item.editing .field input { display:block; }
-
-    /* Add Overtime form styles and overlap fixes */
-    #formCard input[type="text"],
-    #formCard input[type="date"],
-    #formCard textarea {
-      padding:10px 12px;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,0.04);
-      background:transparent;
-      color:var(--text);
-      height:var(--input-h);
-      width:100%;
-      font-size:16px;
-      box-sizing:border-box;
-      text-align:center;
-      min-width:0;
-      display:block;
-    }
-
-    /* Add-row: explicit grid, prevent overlap by forcing min-width:0 and box-sizing */
-    .add-row {
-      display:grid;
-      grid-template-columns: minmax(0,1fr) minmax(0,1fr);
-      gap:8px;
-      align-items:start;
-      min-width:0;
-      width:100%;
-    }
-    .add-row > div { min-width:0; display:flex; flex-direction:column; gap:6px; }
-    .add-row label { font-size:13px; color:var(--muted); margin:0 0 4px 0; text-align:center; }
-
-    /* Specific fix: ensure date input doesn't overflow its grid cell in all browsers (iOS Safari) */
-    .add-row input[type="date"] {
-      max-width:100%;
-      width:100%;
-      min-width:0;
-      box-sizing:border-box;
-      -webkit-appearance: none;
-      appearance: none;
-      background-clip: padding-box;
-    }
-
-    /* iOS: keep calendar indicator visible but avoid layout shift */
-    .add-row input[type="date"]::-webkit-calendar-picker-indicator {
-      position: relative;
-      right: 0;
-      opacity: 0.9;
-      cursor: pointer;
-    }
-
-    /* Prevent shrinking/overflow */
-    .item, .field, .controls, .actions, #formCard { min-width:0 }
-    .field > * { min-width:0; overflow-wrap:break-word }
 
     /* Footer */
-    footer.site-footer { grid-column:1/-1; margin-top:12px; text-align:center; color:var(--muted); font-size:13px }
-    footer.site-footer .brand { font-weight:700; color:var(--text); margin-bottom:6px; display:block }
-    footer.site-footer .legal { color:var(--muted); font-size:12px }
+    footer.site-footer{grid-column:1/-1;margin-top:12px;text-align:center;color:var(--muted);font-size:13px}
 
     /* Modal */
-    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:9999; padding:20px }
-    .modal { background:var(--card); padding:18px; border-radius:12px; min-width:260px; max-width:520px; box-shadow:var(--shadow); border:1px solid rgba(255,255,255,0.06); z-index:10000 }
-    .locked .modal-backdrop, .locked .modal-backdrop *, .locked .modal, .locked .modal * { pointer-events:auto !important; opacity:1 !important }
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
+    .modal{background:var(--card);padding:18px;border-radius:12px;min-width:260px;max-width:520px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06);z-index:10000}
+    .locked .btn, .locked .btn.ghost, .locked input, .locked button{opacity:0.45;pointer-events:none}
+    .locked #lockToggle{opacity:1;pointer-events:auto}
 
-    /* Locked visuals */
-    .locked .btn, .locked .btn.ghost, .locked input, .locked button { opacity:0.45; pointer-events:none }
-    .locked #lockToggle { opacity:1; pointer-events:auto }
-    .locked .search, .locked .search * { pointer-events:auto !important; opacity:1 !important }
-
-    /* Responsive: stack fields and move actions below on small screens.
-       Inputs remain hidden unless .editing is present to avoid duplicate visible inputs/values.
-    */
+    /* Responsive adjustments */
     @media (max-width:760px){
-      :root { --container-pad:12px; }
-      html,body { padding: var(--container-pad); }
-      .container { grid-template-columns:1fr; gap:12px; }
-      .header-card { flex-direction:column; align-items:stretch; gap:12px; padding:14px }
-      .title-block, .title-block h1, .title-block p.lead { text-align:center; margin:0 auto; }
-
-      .controls { width:100%; justify-content:space-between; gap:8px; flex-wrap:wrap }
-      .controls .search { flex:1 1 auto; min-width:0 }
-
-      /* Stack each row into a single column that mirrors the Add Overtime form */
-      .item {
-        grid-template-columns: 1fr;
-        gap:10px;
-        align-items:stretch;
-      }
-
-      /* On mobile show labels (optional) and keep values visible unless editing */
-      .field label { display:block; font-size:12px; color:var(--muted); text-align:center; margin-bottom:4px; }
-      .field .value { display:block; }
-      .field input { display:none; }
-
-      /* When editing on mobile, reveal inputs and hide values */
-      .item.editing .value { display:none; }
-      .item.editing .field input { display:block; }
-
-      .actions {
-        flex-direction:row;
-        justify-content:center;
-        gap:8px;
-        width:100%;
-      }
-      .item.editing .actions { order: 2; }
-
-      /* Make add-row stack on small screens to avoid overlap */
-      .add-row { grid-template-columns: 1fr; }
-      .add-row > div + div { margin-top:8px; }
+      .container{grid-template-columns:1fr;gap:12px;padding:12px}
+      .header-card{flex-direction:column;align-items:stretch;gap:12px;padding:14px}
+      .item{grid-template-columns:1fr;gap:10px;align-items:stretch}
+      .add-row{grid-template-columns:1fr}
+      .add-row>div+div{margin-top:8px}
+      .actions{flex-direction:row;justify-content:center;width:100%}
+      .item.editing .actions{order:2}
     }
 
-    /* Small polish */
-    .actions button { white-space:nowrap; }
+    /* small polish */
+    .actions button{white-space:nowrap}
   </style>
 </head>
 <body>
   <div class="container" id="app">
     <header class="header-card" role="banner" aria-label="Application header">
       <div class="title-block" aria-hidden="true">
-        <h1>Foreign TE Overtime Schedule</h1>
-        <p class="lead">c/b: philiptimtiman v2026022210.1</p>
+        <h1>Overtime Scheduler</h1>
+        <p class="lead">Unlock to enable Add / Edit / Delete. Lock state persists across refresh.</p>
       </div>
 
       <div class="controls" role="group" aria-label="Search and lock controls">
@@ -264,15 +125,14 @@
 
       <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
       <div id="empty" class="meta" style="display:none">No entries yet.</div>
-
-      <div class="meta" style="margin-top:12px ;font-size:10px">Please refresh the page. Schedule updates are made 1–2 days before the scheduled overtime date.</div>
+      <div class="meta" style="margin-top:12px">Tip: Unlock to enable Add/Edit/Delete.</div>
     </section>
 
     <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle">
-      <strong id="addOvertimeTitle" style="display:block;margin-bottom:8px">ADD Overtime Schedule</strong>
+      <strong id="addOvertimeTitle" style="display:block;margin-bottom:8px;text-align:center">Add Overtime</strong>
       <form id="addForm" autocomplete="off" novalidate>
         <div style="display:flex;flex-direction:column;gap:6px">
-          <label for="name" style="font-size:13px;color:var(--muted);margin:0;text-align:center">Name</label>
+          <label for="name" style="font-size:13px;color:var(--muted);margin:0">Name</label>
           <input id="name" name="name" type="text" placeholder="Employee name" required autocomplete="name" />
         </div>
 
@@ -287,7 +147,7 @@
           </div>
         </div>
 
-        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start">
+        <div class="form-actions">
           <button id="submitBtn" class="btn" type="submit">Add</button>
           <button type="button" id="resetBtn" class="btn secondary">Reset</button>
         </div>
@@ -337,60 +197,39 @@
     const pwError = document.getElementById('pwError');
     const emptyEl = document.getElementById('empty');
 
-    const LOCAL_KEY = 'overtime_unlocked_v1'; // localStorage key to persist unlocked state
-
+    const LOCAL_KEY = 'overtime_unlocked_v1';
     let dataCache = [];
-    let locked = true;
+    let unlocked = false;
 
     function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    function setLockedState(val, persist = true){
-      locked = !!val;
-      if (locked) {
-        document.body.classList.add('locked');
-        lockDot.style.background = '#ef4444';
-        lockText.textContent = 'Locked';
-        lockToggle.textContent = 'Unlock';
-      } else {
+    function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
+    function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
+
+    function setUnlockedState(isUnlocked, persist = true){
+      unlocked = !!isUnlocked;
+      if (unlocked) {
         document.body.classList.remove('locked');
         lockDot.style.background = '#60a5fa';
         lockText.textContent = 'Unlocked';
         lockToggle.textContent = 'Lock';
+      } else {
+        document.body.classList.add('locked');
+        lockDot.style.background = '#ef4444';
+        lockText.textContent = 'Locked';
+        lockToggle.textContent = 'Unlock';
       }
-
-      // search remains enabled
-      if (searchInput) {
-        searchInput.disabled = false;
-        searchInput.setAttribute('aria-disabled','false');
-        searchInput.tabIndex = 0;
-      }
-
-      // persist to localStorage so state survives refresh
-      if (persist) {
-        try {
-          localStorage.setItem(LOCAL_KEY, locked ? 'false' : 'true');
-        } catch (e) {
-          // ignore storage errors
-        }
-      }
+      if (searchInput) { searchInput.disabled = false; searchInput.setAttribute('aria-disabled','false'); searchInput.tabIndex = 0; }
+      if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
-    function readPersistedLock(){
-      try {
-        const v = localStorage.getItem(LOCAL_KEY);
-        if (v === 'true') return false; // unlocked
-        if (v === 'false') return true;  // locked
-      } catch (e) { /* ignore */ }
-      return true; // default locked
-    }
+    function readPersistedUnlocked(){ const v = safeGetLocal(LOCAL_KEY); if (v === 'true') return true; if (v === 'false') return false; return false; }
 
     function openModal(){ pwInput.value=''; pwError.style.display='none'; modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); pwInput.focus(); }
     function closeModal(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); }
 
-    async function submitPassword(password) {
-      // This function calls your server to validate password.
-      // On success we persist unlocked state locally.
+    async function submitPassword(password){
       try {
         pwError.style.display = 'block';
         pwError.textContent = 'Checking...';
@@ -400,13 +239,10 @@
         try { parsed = raw ? JSON.parse(raw) : null; } catch (e) { parsed = null; }
         if (!res.ok) {
           const msg = parsed?.error || parsed?.message || raw || `HTTP ${res.status}`;
-          pwError.textContent = `Server: ${msg} (status ${res.status})`;
+          pwError.textContent = `Server: ${msg}`;
           return;
         }
-
-        // If server accepted, set unlocked locally.
-        // Optionally verify with /api/unlocked endpoint if you have one.
-        setLockedState(false, true);
+        setUnlockedState(true, true);
         closeModal();
       } catch (err) {
         console.error(err);
@@ -414,20 +250,13 @@
       }
     }
 
-    // Attach modal submit handler once
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
     lockToggle.addEventListener('click', () => {
-      if (locked) {
-        // open modal to unlock
-        openModal();
-      } else {
-        // lock and persist
-        if (!confirm('Locking will disable Add/Edit/Delete. Continue?')) return;
-        setLockedState(true, true);
-      }
+      if (!unlocked) openModal();
+      else { if (!confirm('Locking will disable Add/Edit/Delete. Continue?')) return; setUnlockedState(false, true); }
     });
 
     function createRowElement(row){
@@ -481,7 +310,7 @@
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (locked) { alert('Actions are locked. Unlock to add entries.'); return; }
+      if (!unlocked) { alert('Actions are locked. Unlock to add entries.'); return; }
       const name = form.name.value.trim();
       const notes = form.notes.value.trim();
       const overtime_date = form.overtime_date.value || null;
@@ -511,7 +340,7 @@
       if (!id) return;
 
       if (action === 'delete') {
-        if (locked) { alert('Actions are locked. Unlock to delete.'); return; }
+        if (!unlocked) { alert('Actions are locked. Unlock to delete.'); return; }
         if (!confirm('Delete this entry? This cannot be undone.')) return;
         try {
           const { error } = await supabase.from('overtime_data').delete().eq('id', id);
@@ -526,13 +355,13 @@
       }
 
       if (action === 'edit') {
-        if (locked) { alert('Actions are locked. Unlock to edit.'); return; }
+        if (!unlocked) { alert('Actions are locked. Unlock to edit.'); return; }
         enterEditMode(item, id);
         return;
       }
 
       if (action === 'save') {
-        if (locked) { alert('Actions are locked. Unlock to save.'); return; }
+        if (!unlocked) { alert('Actions are locked. Unlock to save.'); return; }
         await saveEdit(item, id);
         return;
       }
@@ -547,41 +376,31 @@
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
       item.classList.add('editing');
-
       const actions = item.querySelector('.actions');
       actions.innerHTML = `
         <button class="btn ghost" data-action="save">Save</button>
         <button class="btn ghost" data-action="cancel">Cancel</button>
         <button class="btn danger" data-action="delete">Delete</button>
       `;
-
       const nameInput = item.querySelector('[data-edit="name"]');
       const dateInput = item.querySelector('[data-edit="overtime_date"]');
       const notesInput = item.querySelector('[data-edit="notes"]');
-
       if (nameInput) nameInput.value = row.name || '';
       if (dateInput) dateInput.value = row.overtime_date || '';
       if (notesInput) notesInput.value = row.notes || '';
-
-      if (nameInput) {
-        nameInput.focus();
-        setTimeout(()=> nameInput.scrollIntoView({behavior:'smooth', block:'center'}), 120);
-      }
+      if (nameInput) { nameInput.focus(); setTimeout(()=> nameInput.scrollIntoView({behavior:'smooth', block:'center'}), 120); }
     }
 
     function exitEditMode(item, id){
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
       item.classList.remove('editing');
-
       const nameVal = item.querySelector('[data-field="name"]');
       const dateVal = item.querySelector('[data-field="overtime_date"]');
       const notesVal = item.querySelector('[data-field="notes"]');
-
       if (nameVal) nameVal.textContent = row.name || '';
       if (dateVal) dateVal.textContent = row.overtime_date ? formatDate(row.overtime_date) : '—';
       if (notesVal) notesVal.textContent = row.notes || '';
-
       const actions = item.querySelector('.actions');
       actions.innerHTML = `
         <button class="btn ghost" data-action="edit">Edit</button>
@@ -615,7 +434,6 @@
       }
     }
 
-    // Search filter
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
@@ -627,10 +445,10 @@
       renderList(filtered);
     });
 
-    // On load: read persisted lock state and set it; then load rows.
+    // On load: read persisted unlocked state and set UI; do NOT auto-open modal
     window.addEventListener('DOMContentLoaded', async () => {
-      const persistedLocked = readPersistedLock();
-      setLockedState(persistedLocked, false); // false => don't overwrite localStorage now
+      const persistedUnlocked = readPersistedUnlocked();
+      setUnlockedState(persistedUnlocked, false);
       await loadRows();
     });
   </script>
