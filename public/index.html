@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Theme Fix</title>
-  <meta name="description" content="Overtime Scheduler — fixed theme application so swatches update gradients immediately." />
+  <title>Overtime Scheduler — Final Updated</title>
+  <meta name="description" content="Overtime Scheduler — themes, lock refresh, stable edit date input, compact Add form." />
   <style>
     :root{
-      /* fallback defaults (will be overwritten by JS applyTheme) */
+      /* default theme variables (will be overwritten by JS applyTheme) */
       --accent: #10b981;
       --accent-2: #059669;
       --bg-top: #04251f;
@@ -26,7 +26,6 @@
       --theme-transition: 220ms ease;
     }
 
-    /* page background uses variables from :root so updating them via JS updates the whole page */
     html,body{
       height:100%;
       margin:0;
@@ -99,6 +98,8 @@
 
     .lock-group{display:flex;align-items:center;gap:8px}
     .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted);padding:0;cursor:pointer;transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;}
+    .icon-btn:focus{outline:2px solid rgba(255,255,255,0.06);outline-offset:2px}
+    .icon-btn:hover{transform:translateY(-1px)}
     .icon-btn.active{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent;box-shadow:0 8px 20px rgba(0,0,0,0.25)}
     .refresh-btn{width:36px;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 
@@ -118,6 +119,9 @@
 
     /* edit date input fix */
     .item.editing .edit-input[type="date"]{width:100%;min-width:0;max-width:100%;height:36px;padding:6px 10px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));border:1px solid rgba(255,255,255,0.06);color:var(--text);box-sizing:border-box}
+
+    .actions-hidden .item-actions { display: none !important; }
+    .form-hidden #formCard { display: none !important; }
 
     @media (max-width:420px){
       .add-row{grid-template-columns:1fr}
@@ -225,8 +229,8 @@
     </div>
   </div>
 
-  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="modal" role="document" aria-labelledby="modalTitle">
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999">
+    <div class="modal" role="document" aria-labelledby="modalTitle" style="padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);">
       <h3 id="modalTitle" style="margin:0 0 8px 0">Unlock Actions</h3>
       <p style="margin:0 0 8px;color:var(--muted);font-size:.9rem">Enter password to enable Add / Edit / Delete</p>
       <input id="pwInput" type="password" placeholder="Password" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);margin-bottom:8px;height:40px" />
@@ -274,7 +278,13 @@
     let dataCache = [];
     let unlocked = false;
 
-    // Theme definitions used to update :root variables directly
+    function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
+    function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
+    function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
+    function isoDateFromText(s){ if(!s) return null; const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[1]}-${m[2]}-${m[3]}` : null; }
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+    // Theme map for direct CSS variable updates
     const THEME_MAP = {
       forest: {
         '--accent':'#10b981','--accent-2':'#059669',
@@ -306,37 +316,26 @@
       }
     };
 
-    function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
-    function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
-    function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
-    function isoDateFromText(s){ if(!s) return null; const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[1]}-${m[2]}-${m[3]}` : null; }
-    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-
-    // Apply theme: update :root variables (so body and app background update immediately) and toggle active swatch
+    // Apply theme by setting CSS variables on :root and toggling swatch active state
     function applyTheme(theme){
       if (!theme || !THEME_MAP[theme]) theme = 'forest';
       const vars = THEME_MAP[theme];
       const root = document.documentElement;
       Object.keys(vars).forEach(k => root.style.setProperty(k, vars[k]));
-      // also set data-theme on appRoot for any selectors that rely on it
-      appRoot.setAttribute('data-theme', theme);
-      // update swatch active state (visual)
+      if (appRoot) appRoot.setAttribute('data-theme', theme);
       swatches.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === theme));
       safeSetLocal(THEME_KEY, theme);
     }
 
-    // Restore theme from localStorage
+    // Initialize theme from storage
     (function initTheme(){
       const saved = safeGetLocal(THEME_KEY) || 'forest';
       applyTheme(saved);
     })();
 
-    // swatch interactions
     swatches.forEach(btn => {
       btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
-      btn.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); }
-      });
+      btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
     // Lock state helpers
@@ -358,9 +357,14 @@
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
     function refreshLockState(){
-      const stored = safeGetLocal(LOCAL_KEY);
-      const shouldBeUnlocked = stored === 'true';
-      setUnlockedState(shouldBeUnlocked, false);
+      try {
+        const stored = safeGetLocal(LOCAL_KEY);
+        const shouldBeUnlocked = stored === 'true';
+        setUnlockedState(shouldBeUnlocked, false);
+        if (refreshLock) {
+          refreshLock.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: 420, easing: 'ease-out' });
+        }
+      } catch (e) { console.warn('refreshLockState failed', e); }
     }
 
     // Date picker overlay
@@ -546,10 +550,7 @@
     });
 
     // refreshLock explicit action
-    refreshLock.addEventListener('click', () => {
-      refreshLockState();
-      refreshLock.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: 420, easing: 'ease-out' });
-    });
+    if (refreshLock) refreshLock.addEventListener('click', refreshLockState);
 
     function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
     function closeModal(){ modalBackdrop.style.display = 'none'; modalBackdrop.setAttribute('aria-hidden','true'); pwError.style.display='none'; }
@@ -579,7 +580,7 @@
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
-    // Init: restore lock state and load rows
+    // Initialize: restore lock state and load rows
     window.addEventListener('DOMContentLoaded', async () => {
       const stored = safeGetLocal(LOCAL_KEY);
       const shouldBeUnlocked = stored === 'true';
