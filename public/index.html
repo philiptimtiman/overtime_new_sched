@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Centered Add Form</title>
-  <meta name="description" content="Overtime scheduler — Add Overtime inputs centered; lock state persists; responsive rows." />
+  <title>Overtime Scheduler — Complete</title>
+  <meta name="description" content="Overtime scheduler — single-file app with centered Add form, responsive rows, and persisted lock state." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -14,7 +14,7 @@
     }
 
     /* Reset & base */
-    *, *::before, *::after { box-sizing: border-box; }
+    *,*::before,*::after{box-sizing:border-box}
     html,body{height:100%;margin:0;padding:var(--pad);background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased}
     input,button,select,textarea{font-family:inherit;font-size:16px}
     a{color:inherit}
@@ -53,29 +53,20 @@
     #formCard input[type="text"], #formCard input[type="date"], #formCard textarea{
       padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);width:100%;font-size:16px;box-sizing:border-box;text-align:center;min-width:0;display:block;
     }
-
-    /* Center placeholders too */
     #formCard input::placeholder, #formCard textarea::placeholder { text-align:center; color:rgba(255,255,255,0.45); }
 
-    /* Add-row: explicit grid, prevent overlap */
     .add-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:start;min-width:0;width:100%}
     .add-row>div{min-width:0;display:flex;flex-direction:column;gap:6px}
     .add-row label{font-size:13px;color:var(--muted);margin:0 0 4px 0;text-align:center}
-
-    /* Ensure date input fits on iOS and other browsers */
     .add-row input[type="date"]{max-width:100%;width:100%;min-width:0;box-sizing:border-box;-webkit-appearance:none;appearance:none;background-clip:padding-box}
     .add-row input[type="date"]::-webkit-calendar-picker-indicator{position:relative;right:0;opacity:0.95;cursor:pointer}
 
-    /* Center labels in the Add form (desktop + mobile) */
+    /* Center labels in the Add form */
     #formCard label { text-align:center; }
 
-    /* Buttons area in form: center on mobile, left on desktop */
     .form-actions { margin-top:6px; display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-start; }
-    @media (max-width:760px){
-      .form-actions { justify-content:center; }
-    }
+    @media (max-width:760px){ .form-actions { justify-content:center; } }
 
-    /* Footer */
     footer.site-footer{grid-column:1/-1;margin-top:12px;text-align:center;color:var(--muted);font-size:13px}
 
     /* Modal */
@@ -84,7 +75,7 @@
     .locked .btn, .locked .btn.ghost, .locked input, .locked button{opacity:0.45;pointer-events:none}
     .locked #lockToggle{opacity:1;pointer-events:auto}
 
-    /* Responsive adjustments */
+    /* Responsive */
     @media (max-width:760px){
       .container{grid-template-columns:1fr;gap:12px;padding:12px}
       .header-card{flex-direction:column;align-items:stretch;gap:12px;padding:14px}
@@ -176,11 +167,13 @@
   </div>
 
   <script type="module">
+    // Replace these with your real Supabase values
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
     const SUPABASE_URL = 'https://bisvmgjgyvludhqsvvcn.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Elements
     const rowsEl = document.getElementById('rows');
     const statusEl = document.getElementById('status');
     const form = document.getElementById('addForm');
@@ -201,12 +194,13 @@
     let dataCache = [];
     let unlocked = false;
 
+    // Helpers
+    function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
+    function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
     function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
-    function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
-
+    // Lock state
     function setUnlockedState(isUnlocked, persist = true){
       unlocked = !!isUnlocked;
       if (unlocked) {
@@ -223,12 +217,13 @@
       if (searchInput) { searchInput.disabled = false; searchInput.setAttribute('aria-disabled','false'); searchInput.tabIndex = 0; }
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
-
     function readPersistedUnlocked(){ const v = safeGetLocal(LOCAL_KEY); if (v === 'true') return true; if (v === 'false') return false; return false; }
 
+    // Modal controls
     function openModal(){ pwInput.value=''; pwError.style.display='none'; modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); pwInput.focus(); }
     function closeModal(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); }
 
+    // Submit unlock password (calls your server endpoint)
     async function submitPassword(password){
       try {
         pwError.style.display = 'block';
@@ -242,6 +237,7 @@
           pwError.textContent = `Server: ${msg}`;
           return;
         }
+        // success -> mark unlocked locally
         setUnlockedState(true, true);
         closeModal();
       } catch (err) {
@@ -250,15 +246,7 @@
       }
     }
 
-    pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
-    pwCancel.addEventListener('click', () => closeModal());
-    pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
-
-    lockToggle.addEventListener('click', () => {
-      if (!unlocked) openModal();
-      else { if (!confirm('Locking will disable Add/Edit/Delete. Continue?')) return; setUnlockedState(false, true); }
-    });
-
+    // Row creation/rendering
     function createRowElement(row){
       const wrapper = document.createElement('div');
       wrapper.className = 'item';
@@ -286,7 +274,6 @@
       `;
       return wrapper;
     }
-
     function renderList(items){
       rowsEl.innerHTML = '';
       if(!items.length){ emptyEl.style.display = 'block'; return; }
@@ -294,6 +281,7 @@
       items.forEach(row => rowsEl.appendChild(createRowElement(row)));
     }
 
+    // Load rows from Supabase
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -308,13 +296,14 @@
       }
     }
 
+    // Add form submit
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!unlocked) { alert('Actions are locked. Unlock to add entries.'); return; }
       const name = form.name.value.trim();
       const notes = form.notes.value.trim();
       const overtime_date = form.overtime_date.value || null;
-      if (!name) return alert('Name is required');
+      if (!name) { alert('Name is required'); return; }
       submitBtn.disabled = true; submitBtn.textContent = 'Adding...';
       try {
         const { data, error } = await supabase.from('overtime_data').insert([{ name, notes, overtime_date }]).select();
@@ -329,9 +318,9 @@
         submitBtn.disabled = false; submitBtn.textContent = 'Add';
       }
     });
-
     resetBtn.addEventListener('click', () => form.reset());
 
+    // Row actions
     rowsEl.addEventListener('click', async (e) => {
       const action = e.target?.dataset?.action;
       if (!action) return;
@@ -434,6 +423,7 @@
       }
     }
 
+    // Search filter
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
@@ -445,10 +435,21 @@
       renderList(filtered);
     });
 
-    // On load: read persisted unlocked state and set UI; do NOT auto-open modal
+    // Modal handlers (wired)
+    pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
+    pwCancel.addEventListener('click', () => closeModal());
+    pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
+
+    // Lock toggle: opens modal only when locked
+    lockToggle.addEventListener('click', () => {
+      if (!unlocked) openModal();
+      else { if (!confirm('Locking will disable Add/Edit/Delete. Continue?')) return; setUnlockedState(false, true); }
+    });
+
+    // On load: restore persisted unlocked state and load rows
     window.addEventListener('DOMContentLoaded', async () => {
-      const persistedUnlocked = readPersistedUnlocked();
-      setUnlockedState(persistedUnlocked, false);
+      const persisted = readPersistedUnlocked();
+      setUnlockedState(persisted, false);
       await loadRows();
     });
   </script>
