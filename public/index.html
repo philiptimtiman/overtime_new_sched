@@ -94,6 +94,29 @@
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
     .btn.full{width:100%}
 
+    /* Icon button style for lock/unlock (keeps existing .btn/.ghost intact) */
+    .icon-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:40px;
+      height:40px;
+      padding:0;
+      border-radius:10px;
+      background:transparent;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,0.04);
+      transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;
+    }
+    .icon-btn svg{ display:block; width:18px; height:18px; }
+    .icon-btn.active{
+      background:linear-gradient(180deg,var(--accent),var(--accent-2));
+      color:#fff;
+      border-color:transparent;
+      box-shadow:0 8px 20px rgba(0,0,0,0.25);
+    }
+    .icon-btn:focus{ outline:2px solid rgba(255,255,255,0.06); outline-offset:2px; }
+
     #formCard{display:flex;flex-direction:column;gap:10px}
     #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block;transition:color var(--theme-transition)}
     .field{display:flex;flex-direction:column;gap:8px;min-width:0}
@@ -147,7 +170,14 @@
           <div class="lock-group" style="margin-left:6px;display:flex;align-items:center;gap:8px">
             <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444;transition:background var(--theme-transition)"></div>
 
-            <button id="openUnlock" class="btn ghost" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">Unlock</button>
+            <!-- Replaced text button with lock icon button (keeps id and aria attributes) -->
+            <button id="openUnlock" class="btn ghost icon-btn" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="11" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.4" />
+                <path d="M7 11V8a5 5 0 0110 0v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="16" r="1.2" fill="currentColor"/>
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -525,7 +555,7 @@
       renderList(filtered);
     });
 
-    // openUnlock behavior unchanged
+    // openUnlock behavior unchanged (button id preserved)
     openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
 
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
