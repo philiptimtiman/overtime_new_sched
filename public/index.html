@@ -207,6 +207,15 @@
 
     /* Extra safety: ensure the right column doesn't force horizontal scroll */
     .container, .card, input, textarea { -webkit-overflow-scrolling: touch; }
+	
+	
+	@media (max-width:760px){
+  .container { grid-template-columns: 1fr; }
+  aside.card { order: 2; }      /* put form after list if you prefer */
+  section.card.list { order: 1; }
+  .row { flex-direction: column; gap: 10px; }
+}
+
   </style>
 </head>
 <body>
