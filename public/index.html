@@ -70,8 +70,8 @@
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      min-width:72px;        /* ensures pill doesn't collapse */
-      max-width:120px;       /* prevents it from growing too wide */
+      min-width:72px;
+      max-width:120px;
       padding:6px 10px;
       border-radius:8px;
       background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
@@ -82,7 +82,7 @@
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
-      flex-shrink:0;         /* important: don't shrink when container is tight */
+      flex-shrink:0;
       line-height:1;
     }
     .date-pill time{ display:block; width:100%; text-align:center; }
@@ -135,27 +135,25 @@
 </head>
 <body>
   <div class="canvas">
-    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler" data-theme="forest">
+    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler">
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle">Overtime Scheduler</h1>
           <p class="meta">Locked by default — unlock to add or edit</p>
         </div>
 
-        <div class="controls" role="search" style="margin-top:6px;display:flex;gap:8px;align-items:center">
+        <div class="controls" role="search" style="margin-top:8px;display:flex;gap:8px;align-items:center">
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search entries" />
-          <div style="display:flex;align-items:center;gap:8px">
+          <div class="lock-group" style="margin-left:6px;display:flex;align-items:center;gap:8px">
             <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444;transition:background var(--theme-transition)"></div>
-            <button id="openUnlock" class="icon-btn" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">
-              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
-                <path class="icon-fill" d="M12 17a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                <path class="icon-fill" d="M17 8h-1V6a4 4 0 10-8 0v2H7a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2v-7a2 2 0 00-2-2zM9 8V6a3 3 0 116 0v2" />
-              </svg>
-            </button>
+
+            <button id="openUnlock" class="btn ghost" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">Unlock</button>
+
+            <button id="refreshLock" class="btn ghost" title="Refresh lock state" aria-label="Refresh lock state" type="button">Refresh</button>
           </div>
         </div>
 
-        <div class="theme-row" role="toolbar" aria-label="Theme switcher">
+        <div class="theme-row" role="toolbar" aria-label="Theme switcher" style="margin-top:10px">
           <button class="theme-swatch swatch-ocean" data-theme="ocean" aria-label="Ocean Indigo" title="Ocean Indigo" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-warm" data-theme="warm" aria-label="Warm Sunset" title="Warm Sunset" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-forest active" data-theme="forest" aria-label="Forest Teal" title="Forest Teal" type="button"><span class="dot" aria-hidden="true"></span></button>
@@ -163,20 +161,18 @@
         </div>
       </header>
 
-      <main class="card" aria-live="polite">
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <strong>Entries</strong>
-            <span id="status" class="meta">Idle</span>
-          </div>
-
-          <div id="rows" class="list" aria-live="polite"></div>
-          <div id="empty" class="empty" style="display:none;color:var(--muted);padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);text-align:center">Walang entries. I-unlock at magdagdag ng bagong overtime.</div>
+      <main class="card" aria-live="polite" style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>Entries</strong>
+          <span id="status" class="meta">Idle</span>
         </div>
+
+        <div id="rows" class="list" aria-live="polite"></div>
+        <div id="empty" class="empty" style="display:none;color:var(--muted);padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);text-align:center">Walang entries. I-unlock at magdagdag ng bagong overtime.</div>
       </main>
 
-      <aside id="formCard" class="card" aria-labelledby="addOvertimeTitle">
-        <strong id="addOvertimeTitle" style="display:block;text-align:center;font-size:1rem">Add Overtime</strong>
+      <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle" style="display:flex;flex-direction:column;gap:8px">
+        <strong id="addOvertimeTitle" style="display:block;text-align:center">Add Overtime</strong>
 
         <form id="addForm" autocomplete="off" novalidate>
           <div class="field">
@@ -184,39 +180,28 @@
             <input id="name" name="name" class="lock-guard" type="text" placeholder="Employee name" required />
           </div>
 
-          <div class="add-row">
+          <div class="add-row" style="display:grid;grid-template-columns:1fr;gap:8px">
             <div class="field">
               <label for="overtime_date_text">Date</label>
               <div class="date-control">
                 <input id="overtime_date_text" name="overtime_date_text" class="date-text lock-guard" type="text" placeholder="YYYY-MM-DD" aria-label="Overtime date" readonly />
-                <button type="button" id="datePickerBtn" class="date-btn" aria-label="Open date picker">📅</button>
+                <button type="button" id="datePickerBtn" class="date-btn lock-guard" aria-label="Open date picker">📅</button>
                 <input id="overtime_date_native" class="native-date" type="date" aria-hidden="true" />
               </div>
             </div>
 
             <div class="field">
-              <label for="notes">Notes</label>
+              <label for="notes">Short note</label>
               <input id="notes" name="notes" class="lock-guard" type="text" placeholder="Short note" />
             </div>
           </div>
 
-          <div class="form-actions" role="group" aria-label="Form actions">
-            <button id="submitBtn" class="btn btn-add lock-guard" type="submit" title="Add entry" aria-label="Add entry">
-              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M11 11V6h2v5h5v2h-5v5h-2v-5H6v-2z"/></svg>
-              <span>Add</span>
-            </button>
-
-            <button id="resetBtn" type="button" class="btn ghost lock-guard" title="Reset form" aria-label="Reset form">
-              Reset
-            </button>
+          <div class="form-actions" role="group" aria-label="Form actions" style="margin-top:8px">
+            <button id="submitBtn" class="btn" type="submit" title="Add entry" aria-label="Add entry">Add</button>
+            <button id="resetBtn" type="button" class="btn ghost lock-guard" title="Reset form" aria-label="Reset form">Reset</button>
           </div>
         </form>
       </aside>
-
-      <footer style="text-align:center;color:var(--muted);font-size:.8rem;padding:6px 0">
-        <div style="font-weight:700">BoxTechHub™</div>
-        <div style="font-size:.75rem;margin-top:4px">© 2026 BoxTechHub</div>
-      </footer>
     </div>
   </div>
 
@@ -249,6 +234,7 @@
     const searchInput = document.getElementById('search');
     const openUnlock = document.getElementById('openUnlock');
     const lockIndicator = document.getElementById('lockIndicator');
+    const refreshLock = document.getElementById('refreshLock');
 
     const modalBackdrop = document.getElementById('modalBackdrop');
     const pwInput = document.getElementById('pwInput');
@@ -273,18 +259,48 @@
     function isoDateFromText(s){ if(!s) return null; const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[1]}-${m[2]}-${m[3]}` : null; }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Theme handling (batched)
+    // Theme map (applies CSS variables so gradients update immediately)
+    const THEME_MAP = {
+      forest: {
+        '--accent':'#10b981','--accent-2':'#059669',
+        '--bg-top':'#04251f','--bg-bottom':'#0b3b36',
+        '--card-bg-top':'rgba(8,40,34,0.06)','--card-bg-bottom':'rgba(6,30,26,0.03)',
+        '--date-pill-start':'rgba(16,185,129,0.12)','--date-pill-end':'rgba(5,150,105,0.06)',
+        '--text':'#e6f7f2','--muted':'#9fcfc3'
+      },
+      ocean: {
+        '--accent':'#4f46e5','--accent-2':'#3b82f6',
+        '--bg-top':'#071428','--bg-bottom':'#0b1f2b',
+        '--card-bg-top':'rgba(10,20,40,0.06)','--card-bg-bottom':'rgba(8,18,34,0.03)',
+        '--date-pill-start':'rgba(79,70,229,0.12)','--date-pill-end':'rgba(59,130,246,0.06)',
+        '--text':'#e6eef8','--muted':'#9fb0c6'
+      },
+      warm: {
+        '--accent':'#ff7a59','--accent-2':'#ff5a36',
+        '--bg-top':'#2b0b3a','--bg-bottom':'#3b0f2f',
+        '--card-bg-top':'rgba(60,20,50,0.06)','--card-bg-bottom':'rgba(50,18,45,0.03)',
+        '--date-pill-start':'rgba(255,122,89,0.12)','--date-pill-end':'rgba(255,90,54,0.06)',
+        '--text':'#f0eef6','--muted':'#c9bfc9'
+      },
+      violet: {
+        '--accent':'#d946ef','--accent-2':'#a78bfa',
+        '--bg-top':'#0b0b12','--bg-bottom':'#2b1536',
+        '--card-bg-top':'rgba(40,18,40,0.06)','--card-bg-bottom':'rgba(36,14,36,0.03)',
+        '--date-pill-start':'rgba(217,70,239,0.12)','--date-pill-end':'rgba(167,139,250,0.06)',
+        '--text':'#f3eefb','--muted':'#d6c7e9'
+      }
+    };
+
     function applyTheme(theme){
-      if (!theme) theme = 'forest';
-      swatches.forEach(btn => btn.classList.remove('active'));
-      requestAnimationFrame(() => {
-        appRoot.setAttribute('data-theme', theme);
-        requestAnimationFrame(() => {
-          swatches.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === theme));
-          safeSetLocal(THEME_KEY, theme);
-        });
-      });
+      if (!theme || !THEME_MAP[theme]) theme = 'forest';
+      const vars = THEME_MAP[theme];
+      const root = document.documentElement;
+      Object.keys(vars).forEach(k => root.style.setProperty(k, vars[k]));
+      if (appRoot) appRoot.setAttribute('data-theme', theme);
+      swatches.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === theme));
+      safeSetLocal(THEME_KEY, theme);
     }
+
     (function initTheme(){ const saved = safeGetLocal(THEME_KEY) || 'forest'; applyTheme(saved); })();
     swatches.forEach(btn => {
       btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
@@ -515,11 +531,22 @@
     // openUnlock behavior unchanged
     openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
 
+    // refreshLock explicit action (reads persisted state)
+    if (refreshLock) refreshLock.addEventListener('click', () => {
+      try {
+        const stored = safeGetLocal(LOCAL_KEY);
+        const shouldBeUnlocked = stored === 'true';
+        setUnlockedState(shouldBeUnlocked, false);
+        refreshLock.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: 420, easing: 'ease-out' });
+      } catch (e) { console.warn('refresh failed', e); }
+    });
+
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
     window.addEventListener('DOMContentLoaded', async () => {
+      // start locked by default (you can change to restore previous state by reading LOCAL_KEY)
       setUnlockedState(false, true);
       await loadRows();
     });
