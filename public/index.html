@@ -3,29 +3,52 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overtime Scheduler — Unlock Debug</title>
-  <meta name="description" content="Single-file UI with Lock/Unlock; modal shows server response for debugging." />
+  <title>Overtime Scheduler — Edit Layout Fix</title>
+  <meta name="description" content="Single-file UI with fixed edit layout so Save/Cancel don't overlap inputs." />
   <style>
     :root{
-      --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
-      --accent:#60a5fa; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
-      --shadow: 0 8px 30px rgba(2,6,23,0.6); --input-h:44px;
+      --bg:#0f1724;
+      --card:#0b1220;
+      --text:#e6eef8;
+      --muted:#9fb0c6;
+      --accent:#60a5fa;
+      --danger:#ef4444;
+      --glass: rgba(255,255,255,0.03);
+      --shadow: 0 8px 30px rgba(2,6,23,0.6);
+      --input-h:44px;
+      --action-col:160px;
+      --gap:12px;
     }
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);padding:18px}
-    .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px}
-    header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;padding:18px}
+    .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
+    header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+
     .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04)}
     .controls{display:flex;gap:8px;align-items:center}
-    .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);color:var(--text);height:var(--input-h)}
-    .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer}
+    .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);color:var(--text);height:var(--input-h);min-width:160px}
+    .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
     .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
     .btn.ghost{background:transparent;border:0;color:var(--muted);padding:6px 8px;border-radius:8px;cursor:pointer}
-    .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
-    .row{display:flex;gap:8px}
-    input[type="text"], input[type="date"]{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h)}
+    .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger);padding:8px 10px;border-radius:8px}
+
     .list{display:flex;flex-direction:column;gap:12px}
-    .item{padding:12px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;align-items:center}
+    .item{padding:12px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);display:flex;flex-direction:column;gap:8px;min-height:64px}
+    .display-left{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+    .name{font-weight:700}
+    .meta{color:var(--muted);font-size:13px}
+    .date{font-family:ui-monospace,monospace;color:var(--accent);font-size:13px}
+
+    .actions-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+    form{display:flex;flex-direction:column;gap:10px}
+    label{font-size:13px;color:var(--muted)}
+    input[type="text"], input[type="date"], .edit-input {padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);width:100%;min-width:0}
+    .row{display:flex;gap:8px}
+    .row > *{flex:1 1 0;min-width:0}
+
     /* Disabled state visuals: dim and disable most controls when locked */
     .locked .btn,
     .locked .btn.ghost,
@@ -34,8 +57,13 @@
       opacity: 0.45;
       pointer-events: none;
     }
+
     /* Exception: always allow the Lock/Unlock control to be clickable and visible */
-    .locked #lockToggle { opacity: 1; pointer-events: auto; }
+    .locked #lockToggle {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
     /* Exception: allow the unlock modal and its controls to be interactive while locked */
     .locked .modal-backdrop,
     .locked .modal,
@@ -45,12 +73,43 @@
       opacity: 1;
       pointer-events: auto;
     }
+
+    /* ensure modal sits above dimmed UI */
     .modal-backdrop { z-index: 9999; }
     .modal { z-index: 10000; }
+
+    .locked .search{opacity:0.7}
+
+    /* Lock indicator */
+    .lock-indicator{display:flex;align-items:center;gap:8px}
+    .lock-dot{width:10px;height:10px;border-radius:50%;background:#60a5fa;box-shadow:0 0 8px rgba(96,165,250,0.25)}
+    .lock-dot.locked{background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,0.25)}
+
+    /* Modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center}
     .modal{background:var(--card);padding:18px;border-radius:12px;min-width:280px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06)}
+    .modal h3{margin:0 0 8px 0}
+    .modal p{margin:0 0 12px 0;color:var(--muted);font-size:13px}
     .modal .row{flex-direction:column}
-    @media (max-width:760px){ .container{grid-template-columns:1fr;gap:12px;padding:12px} .row{flex-direction:column} }
+    .modal.show{display:flex}
+
+    /* Edit layout fixes */
+    .edit-row { display:flex; gap:var(--gap); align-items:flex-start; width:100%; }
+    .edit-row .edit-fields { flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:8px; }
+    .edit-row .edit-fields .edit-input { width:100%; }
+    .edit-row .action-col { flex:0 0 var(--action-col); display:flex; align-items:flex-start; justify-content:flex-end; gap:8px; }
+    .edit-row .action-col .actions-inline { flex-direction:column; align-items:flex-end; gap:8px; }
+    /* ensure inputs don't overflow and wrap correctly on small screens */
+    .edit-input { box-sizing:border-box; overflow:visible; }
+
+    @media (max-width:760px){
+      .container{grid-template-columns:1fr;gap:12px;padding:12px}
+      header{flex-direction:column;align-items:flex-start}
+      .row{flex-direction:column}
+      .edit-row{flex-direction:column}
+      .edit-row .action-col{flex:0 0 auto;align-items:flex-end;justify-content:flex-start}
+      .edit-row .action-col .actions-inline{flex-direction:row}
+    }
   </style>
 </head>
 <body>
@@ -58,13 +117,13 @@
     <header>
       <div>
         <h1>Overtime Scheduler</h1>
-        <p style="margin:0;color:var(--muted)">Unlock via server endpoint; modal shows server response for debugging</p>
+        <p class="lead">Edit layout fixed so Save/Cancel don't overlap inputs</p>
       </div>
 
       <div class="controls">
-        <input id="search" class="search" placeholder="Search name or notes" aria-label="Search" autocomplete="off" />
-        <div style="display:flex;align-items:center;gap:8px;margin-left:6px">
-          <div id="lockDot" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
+        <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" autocomplete="off" />
+        <div class="lock-indicator" aria-hidden="true" style="margin-left:6px">
+          <div id="lockDot" class="lock-dot"></div>
           <div id="lockText" style="color:var(--muted);font-size:13px">Checking…</div>
         </div>
         <button id="lockToggle" class="btn secondary" title="Lock or unlock actions">Lock</button>
@@ -76,29 +135,33 @@
         <strong>Entries</strong>
         <span id="status">Idle</span>
       </div>
-      <div id="rows" style="margin-top:8px"></div>
-      <div id="empty" style="display:none;color:var(--muted);margin-top:8px">No entries yet.</div>
-      <div style="margin-top:12px;color:var(--muted)">Tip: Unlock via the modal to enable Add/Edit/Delete. The modal will show server responses for debugging.</div>
+
+      <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
+      <div id="empty" class="meta" style="display:none">No entries yet.</div>
+
+      <div class="meta" style="margin-top:12px">Tip: Unlock to enable Add/Edit/Delete.</div>
     </section>
 
-    <aside class="card">
+    <aside class="card" id="formCard">
       <strong style="display:block;margin-bottom:8px">Add Overtime</strong>
       <form id="addForm" autocomplete="off">
         <div>
-          <label for="name" style="color:var(--muted);font-size:13px">Name</label>
+          <label for="name">Name</label>
           <input id="name" name="name" type="text" placeholder="Employee name" required autocomplete="name" />
         </div>
-        <div class="row" style="margin-top:8px">
+
+        <div class="row">
           <div>
-            <label for="overtime_date" style="color:var(--muted);font-size:13px">Date</label>
+            <label for="overtime_date">Date</label>
             <input id="overtime_date" name="overtime_date" type="date" autocomplete="bday" />
           </div>
           <div>
-            <label for="notes" style="color:var(--muted);font-size:13px">Notes</label>
+            <label for="notes">Notes</label>
             <input id="notes" name="notes" type="text" placeholder="Short note" autocomplete="off" />
           </div>
         </div>
-        <div style="margin-top:10px;display:flex;gap:8px">
+
+        <div style="margin-top:6px;display:flex;gap:8px">
           <button id="submitBtn" class="btn" type="submit">Add</button>
           <button type="button" id="resetBtn" class="btn secondary">Reset</button>
         </div>
@@ -110,24 +173,24 @@
   <div id="modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <h3 id="modalTitle">Unlock Actions</h3>
-      <p id="modalDesc" style="color:var(--muted);margin-top:6px">Enter password to unlock editing, deleting, and adding. (server-validated)</p>
-      <div class="row" style="margin-top:12px">
+      <p id="modalDesc">Enter password to unlock editing, deleting, and adding. (server-validated)</p>
+      <div class="row" style="margin-bottom:10px">
         <input id="pwInput" type="password" autocomplete="current-password" placeholder="Password" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);width:100%" />
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <div style="display:flex;gap:8px;justify-content:flex-end">
         <button id="pwCancel" class="btn secondary">Cancel</button>
         <button id="pwSubmit" class="btn">Submit</button>
       </div>
-      <div id="pwError" style="color:var(--danger);margin-top:8px;display:none;font-size:13px;white-space:pre-wrap"></div>
+      <div id="pwError" style="color:var(--danger);margin-top:8px;display:none;font-size:13px"></div>
     </div>
   </div>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // Replace with your Supabase values
-    const SUPABASE_URL = 'https://bisvmgjgyvludhqsvvcn.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
+    // Supabase placeholders (replace with your values)
+    const SUPABASE_URL = 'https://your-project-ref.supabase.co';
+    const SUPABASE_ANON_KEY = 'your-anon-key';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // DOM refs
@@ -147,28 +210,35 @@
     const pwError = document.getElementById('pwError');
     const emptyEl = document.getElementById('empty');
 
+    // State
     let dataCache = [];
     let locked = true;
 
+    // Helpers
+    function formatDate(d){
+      if(!d) return '—';
+      const dt = new Date(d + 'T00:00:00');
+      return dt.toLocaleDateString();
+    }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-    function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
 
     function setLockedState(val){
       locked = !!val;
       localStorage.setItem('overtime_locked', locked ? 'true' : 'false');
       if (locked) {
         document.body.classList.add('locked');
-        lockDot.style.background = '#ef4444';
+        lockDot.classList.add('locked');
         lockText.textContent = 'Locked';
         lockToggle.textContent = 'Unlock';
       } else {
         document.body.classList.remove('locked');
-        lockDot.style.background = '#60a5fa';
+        lockDot.classList.remove('locked');
         lockText.textContent = 'Unlocked';
         lockToggle.textContent = 'Lock';
       }
     }
 
+    // Render
     function renderList(items){
       rowsEl.innerHTML = '';
       if(!items.length){ emptyEl.style.display = 'block'; return; }
@@ -177,12 +247,14 @@
         const wrapper = document.createElement('div');
         wrapper.className = 'item';
         wrapper.dataset.id = row.id;
+
+        // default (view) layout
         wrapper.innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%">
-            <div style="flex:1">
-              <div style="font-weight:700">${escapeHtml(row.name)}</div>
-              <div style="color:var(--muted);font-size:13px">${escapeHtml(row.notes||'')}</div>
-              <div style="color:var(--accent);font-family:ui-monospace,monospace;font-size:13px">${formatDate(row.overtime_date)}</div>
+            <div class="display-left">
+              <div class="name" data-field="name">${escapeHtml(row.name)}</div>
+              <div class="meta" data-field="notes">${escapeHtml(row.notes || '')}</div>
+              <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
             </div>
             <div style="min-width:120px;display:flex;justify-content:flex-end;gap:8px">
               <button class="btn ghost" data-action="edit">Edit</button>
@@ -194,12 +266,17 @@
       });
     }
 
+    // Load rows
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
-        const { data, error } = await supabase.from('overtime_data').select('id,name,notes,overtime_date').order('overtime_date',{ascending:true});
+        const { data, error } = await supabase
+          .from('overtime_data')
+          .select('id, name, notes, overtime_date')
+          .order('overtime_date', { ascending: true });
+
         if (error) throw error;
-        dataCache = (data||[]);
+        dataCache = (data || []);
         renderList(dataCache);
         statusEl.textContent = `Loaded ${dataCache.length} rows`;
       } catch (err) {
@@ -208,6 +285,7 @@
       }
     }
 
+    // Add
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (locked) { alert('Actions are locked. Unlock to add entries.'); return; }
@@ -215,61 +293,86 @@
       const notes = form.notes.value.trim();
       const overtime_date = form.overtime_date.value || null;
       if (!name) return alert('Name is required');
-      submitBtn.disabled = true; submitBtn.textContent = 'Adding...';
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Adding...';
       try {
-        const { data, error } = await supabase.from('overtime_data').insert([{ name, notes, overtime_date }]).select();
+        const { data, error } = await supabase
+          .from('overtime_data')
+          .insert([{ name, notes, overtime_date }])
+          .select();
+
         if (error) throw error;
-        dataCache = [...dataCache, ...(data||[])];
+        dataCache = [...dataCache, ...data];
         renderList(dataCache);
         form.reset();
       } catch (err) {
         console.error(err);
         alert('Insert failed: ' + (err.message || err));
       } finally {
-        submitBtn.disabled = false; submitBtn.textContent = 'Add';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Add';
       }
     });
 
     resetBtn.addEventListener('click', () => form.reset());
 
+    // Delegated handlers
     rowsEl.addEventListener('click', async (e) => {
       const action = e.target?.dataset?.action;
       if (!action) return;
       const item = e.target.closest('.item');
       const id = item?.dataset?.id;
       if (!id) return;
+
       if (action === 'delete') {
         if (locked) { alert('Actions are locked. Unlock to delete.'); return; }
-        if (!confirm('Delete this entry?')) return;
+        const ok = confirm('Delete this entry? This cannot be undone.');
+        if (!ok) return;
         try {
           const { error } = await supabase.from('overtime_data').delete().eq('id', id);
           if (error) throw error;
           dataCache = dataCache.filter(r => String(r.id) !== String(id));
           renderList(dataCache);
-        } catch (err) { console.error(err); alert('Delete failed'); }
+        } catch (err) {
+          console.error(err);
+          alert('Delete failed: ' + (err.message || err));
+        }
         return;
       }
+
       if (action === 'edit') {
         if (locked) { alert('Actions are locked. Unlock to edit.'); return; }
         enterEditMode(item, id);
         return;
       }
-      if (action === 'save') { if (locked) { alert('Locked'); return; } await saveEdit(item, id); return; }
-      if (action === 'cancel') { exitEditMode(item, id); return; }
+
+      if (action === 'save') {
+        if (locked) { alert('Actions are locked. Unlock to save.'); return; }
+        await saveEdit(item, id);
+        return;
+      }
+
+      if (action === 'cancel') {
+        exitEditMode(item, id);
+        return;
+      }
     });
 
+    // Edit UI (uses .edit-row layout to avoid overlap)
     function enterEditMode(item, id) {
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
+
       item.innerHTML = `
-        <div style="display:flex;gap:12px;width:100%">
-          <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+        <div class="edit-row">
+          <div class="edit-fields">
             <input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" />
-            <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes||'')}" />
-            <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date||''}" />
+            <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" />
+            <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" />
           </div>
-          <div style="width:140px;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
-            <div style="display:flex;gap:8px">
+          <div class="action-col">
+            <div class="actions-inline">
               <button class="btn ghost" data-action="save">Save</button>
               <button class="btn ghost" data-action="cancel">Cancel</button>
               <button class="btn danger" data-action="delete">Delete</button>
@@ -277,6 +380,8 @@
           </div>
         </div>
       `;
+      const nameInput = item.querySelector('[data-edit="name"]');
+      if (nameInput) nameInput.focus();
     }
 
     function exitEditMode(item, id) {
@@ -284,10 +389,10 @@
       if (!row) return;
       item.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%">
-          <div style="flex:1">
-            <div style="font-weight:700">${escapeHtml(row.name)}</div>
-            <div style="color:var(--muted);font-size:13px">${escapeHtml(row.notes||'')}</div>
-            <div style="color:var(--accent);font-family:ui-monospace,monospace;font-size:13px">${formatDate(row.overtime_date)}</div>
+          <div class="display-left">
+            <div class="name" data-field="name">${escapeHtml(row.name)}</div>
+            <div class="meta" data-field="notes">${escapeHtml(row.notes || '')}</div>
+            <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
           </div>
           <div style="min-width:120px;display:flex;justify-content:flex-end;gap:8px">
             <button class="btn ghost" data-action="edit">Edit</button>
@@ -301,25 +406,52 @@
       const nameInput = item.querySelector('[data-edit="name"]');
       const notesInput = item.querySelector('[data-edit="notes"]');
       const dateInput = item.querySelector('[data-edit="overtime_date"]');
-      const name = nameInput?.value.trim(); const notes = notesInput?.value.trim(); const overtime_date = dateInput?.value || null;
-      if (!name) { alert('Name required'); return; }
-      const saveBtn = item.querySelector('[data-action="save"]'); if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+
+      const name = nameInput?.value.trim();
+      const notes = notesInput?.value.trim();
+      const overtime_date = dateInput?.value || null;
+
+      if (!name) { alert('Name is required'); nameInput?.focus(); return; }
+
+      const saveBtn = item.querySelector('[data-action="save"]');
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+
       try {
-        const { data, error } = await supabase.from('overtime_data').update({ name, notes, overtime_date }).eq('id', id).select();
+        const { data, error } = await supabase
+          .from('overtime_data')
+          .update({ name, notes, overtime_date })
+          .eq('id', id)
+          .select();
+
         if (error) throw error;
         if (data && data.length) {
-          dataCache = dataCache.map(r => String(r.id) === String(id) ? data[0] : r);
+          const updated = data[0];
+          dataCache = dataCache.map(r => (String(r.id) === String(id) ? updated : r));
         } else {
-          dataCache = dataCache.map(r => String(r.id) === String(id) ? { ...r, name, notes, overtime_date } : r);
+          dataCache = dataCache.map(r => (String(r.id) === String(id) ? { ...r, name, notes, overtime_date } : r));
         }
         renderList(dataCache);
-      } catch (err) { console.error(err); alert('Update failed'); if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; } }
+      } catch (err) {
+        console.error(err);
+        alert('Update failed: ' + (err.message || err));
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+      }
     }
 
-    function openModal(){ pwInput.value=''; pwError.style.display='none'; pwError.textContent=''; modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); pwInput.focus(); }
-    function closeModal(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); }
+    // Modal helpers
+    function openModal() {
+      pwInput.value = '';
+      pwError.style.display = 'none';
+      modal.style.display = 'flex';
+      modal.setAttribute('aria-hidden', 'false');
+      pwInput.focus();
+    }
+    function closeModal() {
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+    }
 
-    // Debug submitPassword: shows server status, headers and body in the modal
+    // Submit password (simple flow)
     async function submitPassword(password) {
       try {
         pwError.style.display = 'block';
@@ -345,7 +477,6 @@
         const check = await fetch('/api/unlocked', { method: 'GET' });
         const checkJson = await (check.ok ? check.json().catch(() => null) : null);
 
-        console.info('unlock success', { unlockResponse: parsed ?? raw, unlockedCheck: checkJson, status: res.status });
         if (checkJson && checkJson.unlocked) {
           setLockedState(false);
           closeModal();
@@ -361,19 +492,24 @@
       }
     }
 
+    // Hook lock toggle
     lockToggle.addEventListener('click', () => {
       if (locked) {
         openModal();
         pwSubmit.onclick = () => submitPassword(pwInput.value || '');
       } else {
-        if (!confirm('Locking will disable Add/Edit/Delete. Continue?')) return;
+        const ok = confirm('Locking will disable Add/Edit/Delete. Continue?');
+        if (!ok) return;
         setLockedState(true);
       }
     });
 
     pwCancel.addEventListener('click', () => closeModal());
-    pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
+    pwInput.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); }
+    });
 
+    // Check unlocked state on load
     async function checkUnlockedOnLoad() {
       try {
         const r = await fetch('/api/unlocked');
@@ -388,17 +524,19 @@
       }
     }
 
+    // Search filter (client-side)
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
       const filtered = dataCache.filter(r =>
-        (r.name||'').toLowerCase().includes(q) ||
-        (r.notes||'').toLowerCase().includes(q) ||
-        (r.overtime_date||'').includes(q)
+        (r.name || '').toLowerCase().includes(q) ||
+        (r.notes || '').toLowerCase().includes(q) ||
+        (r.overtime_date || '').includes(q)
       );
       renderList(filtered);
     });
 
+    // Init
     window.addEventListener('DOMContentLoaded', async () => {
       await checkUnlockedOnLoad();
       await loadRows();
