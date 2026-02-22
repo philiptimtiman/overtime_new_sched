@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Always Locked on Load</title>
+  <title>Overtime Scheduler</title>
   <meta name="description" content="Overtime scheduler that always starts locked on page load; mobile-friendly and search stays available while locked." />
   <style>
     :root{
@@ -124,6 +124,11 @@
       opacity: 1 !important;
     }
 
+    /* Footer (trademark & copyright) */
+    footer.site-footer { grid-column: 1 / -1; margin-top:12px; text-align:center; color:var(--muted); font-size:13px; }
+    footer.site-footer .brand { font-weight:700; color:var(--text); margin-bottom:6px; display:block; }
+    footer.site-footer .legal { color:var(--muted); font-size:12px; }
+
     /* Modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
     .modal{background:var(--card);padding:18px;border-radius:12px;min-width:260px;max-width:520px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06);z-index:10000}
@@ -148,8 +153,8 @@
   <div class="container" id="app">
     <header>
       <div class="title-block">
-        <h1>Overtime Scheduler</h1>
-        <p class="lead">Always locked on load — search stays available while locked</p>
+        <h1>Foreign TE Overtime Schedule</h1>
+        <p class="lead">Please refresh the page. Schedule updates 1~2 days before the actual Date of overtime.</p>
       </div>
 
       <div class="controls" role="group" aria-label="Search and lock controls">
@@ -199,6 +204,12 @@
         </div>
       </form>
     </aside>
+
+    <!-- Footer with trademark and copyright -->
+    <footer class="site-footer" role="contentinfo" aria-label="Site copyright and trademark">
+      <span class="brand">BoxTechHub™</span>
+      <div class="legal">© 2026 BoxTechHub. All rights reserved.</div>
+    </footer>
   </div>
 
   <!-- Password modal (direct child of body so override applies) -->
@@ -253,6 +264,7 @@
 
     function setLockedState(val){
       locked = !!val;
+      // Always store state but we still force locked on load
       localStorage.setItem('overtime_locked', locked ? 'true' : 'false');
       if (locked) {
         document.body.classList.add('locked');
