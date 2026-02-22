@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — yyyy/mm/dd Dates</title>
-  <meta name="description" content="Overtime Scheduler with date format yyyy/mm/dd for entries and Add Overtime form." />
+  <title>Overtime Scheduler — yyyy/mm/dd Dates (patched)</title>
+  <meta name="description" content="Overtime Scheduler with date format yyyy/mm/dd for entries and Add Overtime form. Date input overlap fixed." />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -36,7 +36,9 @@
       border-radius:var(--radius);padding:12px;box-shadow:0 8px 20px rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.04);
     }
 
+    /* Header: stacked order (title, p1, clock, controls, theme) */
     .header.card{display:flex;flex-direction:column;gap:8px;position:relative;padding-top:12px}
+    /* Center the brand/title and p1 */
     .brand{display:flex;flex-direction:column;align-items:center;text-align:center}
     .brand h1{margin:0;font-size:1rem}
     .brand p{margin:0;color:var(--muted);font-size:.85rem}
@@ -44,8 +46,25 @@
     .controls{display:flex;gap:8px;align-items:center}
     .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--text)}
 
-    .live-row{display:flex;align-items:center;justify-content:center;margin-top:4px}
-    .live-clock{font-family:monospace;font-size:0.86rem;color:var(--muted);background:rgba(255,255,255,0.02);padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);min-width:170px;text-align:center;pointer-events:none}
+    /* Live clock centered under p1 */
+    .live-row{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-top:4px;
+    }
+    .live-clock{
+      font-family:monospace;
+      font-size:0.86rem;
+      color:var(--muted);
+      background:rgba(255,255,255,0.02);
+      padding:6px 10px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.03);
+      min-width:170px;
+      text-align:center;
+      pointer-events:none;
+    }
 
     .theme-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px}
     .theme-swatch{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,0.06);display:inline-flex;align-items:center;justify-content:center;padding:0;background:transparent}
@@ -66,7 +85,6 @@
     .name{font-weight:600;font-size:.96rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .notes{color:var(--muted);font-size:.82rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-    /* date pill: stable sizing, centered text */
     .date-pill{display:inline-flex;align-items:center;justify-content:center;min-width:72px;max-width:160px;padding:6px 10px;border-radius:8px;background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));border:1px solid rgba(255,255,255,0.02);color:var(--text);box-sizing:border-box;font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;line-height:1;text-align:center}
     .date-pill time{ display:block; width:100%; text-align:center; }
 
@@ -77,14 +95,74 @@
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
     .btn.full{width:100%}
 
-    .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border-radius:10px;background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;}
+    .icon-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:40px;
+      height:40px;
+      padding:0;
+      border-radius:10px;
+      background:transparent;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,0.04);
+      transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;
+    }
     .icon-btn svg{ display:block; width:18px; height:18px; }
-    .icon-btn.active{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent;box-shadow:0 8px 20px rgba(0,0,0,0.25);}
+    .icon-btn.active{
+      background:linear-gradient(180deg,var(--accent),var(--accent-2));
+      color:#fff;
+      border-color:transparent;
+      box-shadow:0 8px 20px rgba(0,0,0,0.25);
+    }
     .icon-btn:focus{ outline:2px solid rgba(255,255,255,0.06); outline-offset:2px; }
 
     #formCard{display:flex;flex-direction:column;gap:10px}
     #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block;transition:color var(--theme-transition)}
     .field{display:flex;flex-direction:column;gap:8px;min-width:0}
+
+    /* --- PATCH: prevent date input overlap --- */
+    .add-row{display:grid;grid-template-columns:1fr;gap:8px;align-items:start}
+    @media(min-width:520px){ .add-row{grid-template-columns:1fr 1fr} }
+
+    .date-control{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+    .date-control input[type="date"],
+    .date-control input[type="text"],
+    .date-control input[type="datetime-local"]{
+      flex:1;
+      min-width:0;
+      height:var(--input-h);
+      padding:8px 10px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.04);
+      background:rgba(0,0,0,0.12);
+      color:var(--text);
+      text-align:center;
+      box-sizing:border-box;
+    }
+    .date-btn{
+      flex:0 0 auto;
+      width:40px;
+      height:40px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.04);
+      background:transparent;
+      color:var(--muted);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+    }
+    @media(max-width:320px){
+      .date-control{flex-direction:column;align-items:stretch}
+      .date-btn{width:100%}
+    }
+    /* --- end patch --- */
 
     input[type="text"], textarea, input[type="date"]{
       width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
@@ -93,9 +171,7 @@
     }
     input[type="text"]:focus, textarea:focus, input[type="date"]:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
 
-    .date-control{position:relative;display:block;min-width:0}
     .date-text{padding-right:48px;cursor:pointer}
-    .date-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;z-index:2;font-size:1rem;padding:0}
     .native-date{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;opacity:0;border:0;padding:0;margin:0;background:transparent;z-index:3;cursor:pointer}
 
     .editing .edit-input{display:block}
@@ -104,7 +180,9 @@
     .item.editing { display:flex; flex-direction:column; gap:8px; }
     .item.editing .edit-input { width:100%; max-width:100%; }
 
-    .modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;}
+    .modal-backdrop{
+      position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;
+    }
     .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
 
     .actions-hidden .item-actions { display: none !important; }
@@ -124,20 +202,24 @@
   <div class="canvas">
     <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler">
       <header class="card header" aria-labelledby="appTitle">
+        <!-- Header title centered -->
         <div class="brand">
           <h1 id="appTitle" style="margin:0">Overtime Scheduler</h1>
           <p class="meta" style="margin-top:6px">Locked by default — unlock to add or edit</p>
         </div>
 
+        <!-- Live clock centered under the header/p1 -->
         <div class="live-row" aria-hidden="false">
           <div id="liveClock" class="live-clock" role="status" aria-live="polite">—</div>
         </div>
 
+        <!-- Controls (search + lock) -->
         <div class="controls" role="search" style="margin-top:8px;display:flex;gap:8px;align-items:center">
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search entries" />
           <div class="lock-group" style="margin-left:6px;display:flex;align-items:center;gap:8px">
             <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444;transition:background var(--theme-transition)"></div>
 
+            <!-- Lock icon button (id preserved) -->
             <button id="openUnlock" class="btn ghost icon-btn" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
                 <rect x="3" y="11" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.4" />
@@ -148,6 +230,7 @@
           </div>
         </div>
 
+        <!-- Theme row -->
         <div class="theme-row" role="toolbar" aria-label="Theme switcher" style="margin-top:10px">
           <button class="theme-swatch swatch-ocean" data-theme="ocean" aria-label="Ocean Indigo" title="Ocean Indigo" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-warm" data-theme="warm" aria-label="Warm Sunset" title="Warm Sunset" type="button"><span class="dot" aria-hidden="true"></span></button>
@@ -263,10 +346,8 @@
     }
 
     // Convert date input value (YYYY-MM-DD) to ISO date string (YYYY-MM-DD) for storage
-    // We'll store as plain date string (YYYY-MM-DD) in DB field overtime_date to keep it simple
     function toIsoDateFromInput(val){
       if (!val) return null;
-      // val is "YYYY-MM-DD" from input[type=date]
       const m = val.match(/^(\d{4})-(\d{2})-(\d{2})$/);
       return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
     }
@@ -274,20 +355,17 @@
     // Convert stored ISO date (YYYY-MM-DD or full ISO) to input value (YYYY-MM-DD)
     function toDateInputValue(stored){
       if (!stored) return '';
-      // If stored includes time, parse and extract date
       const d = new Date(stored);
       if (!isNaN(d)) {
         const pad = (n) => String(n).padStart(2,'0');
         return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
       }
-      // If stored already "YYYY-MM-DD", return as-is if valid
       const m = String(stored).match(/^(\d{4})-(\d{2})-(\d{2})$/);
       return m ? `${m[1]}-${m[2]}-${m[3]}` : '';
     }
 
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Theme map (applies CSS variables so gradients update immediately)
     const THEME_MAP = {
       forest: {
         '--accent':'#10b981','--accent-2':'#059669',
@@ -331,7 +409,6 @@
       btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
-    // Update controls
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
@@ -390,7 +467,6 @@
       const el = document.createElement('div');
       el.className = 'item';
       el.dataset.id = row.id;
-      // row.overtime_date may be stored as "YYYY-MM-DD" or full ISO; formatDateOnlyYMD handles both
       const dateDisplay = row.overtime_date ? formatDateOnlyYMD(row.overtime_date) : '—';
       const dateAttr = row.overtime_date ? (String(row.overtime_date).split('T')[0]) : '';
       el.innerHTML = `
@@ -422,7 +498,6 @@
       statusEl.textContent = `Loaded ${items.length} entries`;
     }
 
-    // Load rows
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -436,14 +511,13 @@
       }
     }
 
-    // Form submit (date-only)
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!unlocked) { alert('Actions are locked. Unlock to add entries.'); return; }
       const name = form.name.value.trim();
       const notes = form.notes.value.trim();
       const dateVal = dateInput?.value || '';
-      const overtime_date = toIsoDateFromInput(dateVal); // returns YYYY-MM-DD or null
+      const overtime_date = toIsoDateFromInput(dateVal);
       if (!name) { alert('Name is required'); return; }
       submitBtn.disabled = true; submitBtn.setAttribute('aria-busy','true');
       try {
@@ -461,10 +535,8 @@
       }
     });
 
-    // Reset button
     resetBtn.addEventListener('click', () => { form.reset(); if (dateInput) dateInput.value = ''; });
 
-    // Row actions (edit uses input[type=date])
     rowsEl.addEventListener('click', async (ev) => {
       const action = ev.target?.dataset?.action;
       if (!action) return;
@@ -513,7 +585,7 @@
         if (!unlocked) { alert('Actions are locked. Unlock to save.'); return; }
         const inputs = item.querySelectorAll('.edit-input');
         const name = inputs[0]?.value.trim();
-        const dateLocal = inputs[1]?.value || null; // YYYY-MM-DD
+        const dateLocal = inputs[1]?.value || null;
         const overtime_date = toIsoDateFromInput(dateLocal);
         const notes = inputs[2]?.value.trim();
         if (!name) { alert('Name required'); return; }
@@ -535,7 +607,6 @@
       }
     });
 
-    // Search filter
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
@@ -547,7 +618,6 @@
       renderList(filtered);
     });
 
-    // openUnlock behavior unchanged
     openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
 
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
@@ -573,6 +643,14 @@
       } catch (e) {
         liveClockEl.textContent = '—';
       }
+    }
+
+    // date picker button helper
+    if (dateBtn && dateInput) {
+      dateBtn.addEventListener('click', () => {
+        try { dateInput.showPicker && dateInput.showPicker(); } catch(e){}
+        dateInput.focus();
+      });
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
