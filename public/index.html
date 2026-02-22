@@ -3,218 +3,77 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overtime Scheduler — Oldest First</title>
-  <meta name="description" content="Single-file UI: list, add, edit, save, cancel, delete; sorted oldest-first and responsive." />
+  <title>Overtime Scheduler — Unlock via Server</title>
+  <meta name="description" content="Single-file UI wired to /api/unlock and /api/unlocked (server-side password check)." />
   <style>
     :root{
       --bg:#0f1724;
       --card:#0b1220;
       --text:#e6eef8;
-      --text-muted:#9fb0c6;
+      --muted:#9fb0c6;
       --accent:#60a5fa;
-      --accent-2:#7ee7c7;
       --danger:#ef4444;
-      --radius:12px;
       --glass: rgba(255,255,255,0.03);
       --shadow: 0 8px 30px rgba(2,6,23,0.6);
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Segoe UI Mono", monospace;
-      --input-height:44px;
-      --search-bg: rgba(255,255,255,0.04);
-      --search-border: rgba(255,255,255,0.12);
-      --search-placeholder: rgba(255,255,255,0.55);
-      --search-text: var(--text);
+      --input-h:44px;
     }
     [data-theme="light"]{
-      --bg:#f6f7fb;
-      --card:#ffffff;
-      --text:#0f172a;
-      --text-muted:#6b7280;
-      --accent:#2563eb;
-      --accent-2:#06b6d4;
-      --glass: rgba(0,0,0,0.03);
-      --shadow: 0 6px 18px rgba(15,23,42,0.06);
-      --search-bg: rgba(0,0,0,0.03);
-      --search-border: rgba(15,23,42,0.08);
-      --search-placeholder: rgba(15,23,42,0.45);
-      --search-text: var(--text);
+      --bg:#f6f7fb; --card:#fff; --text:#0f172a; --muted:#6b7280; --accent:#2563eb;
     }
 
-    /* Reset + layout */
-    *, *::before, *::after { box-sizing: border-box; }
-    html,body{height:100%}
-    body{
-      margin:0;
-      min-height:100%;
-      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      background: var(--bg);
-      padding:18px;
-      color: var(--text);
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .container{
-      max-width:980px;
-      margin:0 auto;
-      display:grid;
-      grid-template-columns: 1fr 380px;
-      gap:20px;
-      align-items:start;
-    }
-
-    header{
-      grid-column:1 / -1;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      margin-bottom:6px;
-    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;padding:18px}
+    .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
+    header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
     h1{font-size:20px;margin:0}
-    p.lead{margin:0;color:var(--text-muted);font-size:13px}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
 
-    .card{
-      background: var(--card);
-      border-radius:12px;
-      padding:16px;
-      box-shadow:var(--shadow);
-      border:1px solid rgba(255,255,255,0.04);
-      color:var(--text);
-    }
-
-    /* Search box */
+    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04)}
     .controls{display:flex;gap:8px;align-items:center}
-    .search{
-      padding:10px 12px;
-      border-radius:10px;
-      border:1px solid var(--search-border);
-      background: var(--search-bg);
-      color: var(--search-text);
-      min-width:160px;
-      width:100%;
-      max-width:420px;
-      height: var(--input-height);
-      outline:none;
-      font-size:14px;
-      transition: box-shadow .12s ease, border-color .12s ease, background .12s ease;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      appearance: none;
-    }
-    .search:focus{
-      box-shadow: 0 6px 18px rgba(96,165,250,0.08);
-      border-color: var(--accent);
-      background: rgba(255,255,255,0.06);
-    }
-    .search::placeholder { color: var(--search-placeholder); opacity:1; }
-    .search::-webkit-input-placeholder { color: var(--search-placeholder); }
-    .search:-ms-input-placeholder { color: var(--search-placeholder); }
+    .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);color:var(--text);height:var(--input-h);min-width:160px}
+    .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
+    .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+    .btn.ghost{background:transparent;border:0;color:var(--muted);padding:6px 8px;border-radius:8px;cursor:pointer}
+    .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger);padding:8px 10px;border-radius:8px}
 
-    /* Inputs */
-    form{display:flex;flex-direction:column;gap:10px}
-    label{font-size:13px;color:var(--text-muted);display:block}
-    input[type="text"], input[type="date"], textarea{
-      width:100%;
-      padding:10px 12px;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,0.04);
-      background:transparent;
-      outline:none;
-      font-size:14px;
-      color:var(--text);
-      transition:box-shadow .12s, border-color .12s;
-      min-width:0;
-      height: var(--input-height);
-      line-height:1.1;
-      box-sizing:border-box;
-    }
-    textarea{min-height:84px;resize:vertical;padding-top:10px;padding-bottom:10px;height:auto}
-    input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.28); }
-    input:focus, textarea:focus{ box-shadow:0 6px 18px rgba(96,165,250,0.08); border-color:var(--accent); }
-
-    .row{ display:flex; gap:8px; align-items:flex-start; }
-    .row > *{ flex:1 1 0; min-width:0; }
-
-    .actions{display:flex;gap:8px;align-items:center}
-    button{
-      background:linear-gradient(180deg,var(--accent), #1e40af);
-      color:white;
-      border:0;
-      padding:10px 14px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:600;
-      transition:transform .08s ease, box-shadow .08s;
-    }
-    button.secondary{
-      background:transparent;
-      color:var(--text-muted);
-      border:1px solid rgba(255,255,255,0.04);
-      font-weight:600;
-    }
-    .btn-ghost{
-      background:transparent;color:var(--text-muted);border:0;padding:6px 8px;border-radius:8px;cursor:pointer;
-    }
-    .btn-danger{ background:transparent;color:var(--danger);border:1px solid rgba(255,0,0,0.08);padding:8px 10px;border-radius:8px; }
-
-    /* List */
-    .list{ display:flex; flex-direction:column; gap:12px; }
-    .item{
-      padding:12px;
-      border-radius:10px;
-      background:var(--glass);
-      border:1px solid rgba(255,255,255,0.04);
-      transition:transform .12s ease, box-shadow .12s;
-      color:var(--text);
-      min-height:56px;
-    }
-    .item:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
-    .meta{color:var(--text-muted);font-size:13px}
-    .name{font-weight:700;color:var(--text)}
-    .date{font-family:var(--mono);font-size:13px;color:var(--accent-2); margin-top:6px; }
+    .list{display:flex;flex-direction:column;gap:12px}
+    .item{padding:12px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .display-left{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+    .name{font-weight:700}
+    .meta{color:var(--muted);font-size:13px}
+    .date{font-family:ui-monospace,monospace;color:var(--accent);font-size:13px}
 
     .actions-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .edit-input{ width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:var(--text); height: var(--input-height); box-sizing: border-box; }
 
-    /* EDIT layout: desktop side-by-side, mobile stacked */
-    .edit-row { display:flex; gap:12px; align-items:flex-start; width:100%; }
-    .edit-left { flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:8px; }
-    .edit-right { flex:0 0 140px; display:flex; flex-direction:column; gap:8px; align-items:flex-end; min-width:0; }
-    .edit-right .actions-inline { justify-content:flex-end; }
+    form{display:flex;flex-direction:column;gap:10px}
+    label{font-size:13px;color:var(--muted)}
+    input[type="text"], input[type="date"]{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h)}
+    .row{display:flex;gap:8px}
+    .row > *{flex:1 1 0;min-width:0}
 
-    /* small-screen behavior: stack inputs then actions */
-    @media (max-width:760px){
-      body{padding:12px}
-      .container{grid-template-columns:1fr; gap:12px}
-      header{flex-direction:column;align-items:flex-start;gap:10px}
-      .controls{width:100%;display:flex;gap:8px}
-      .search{flex:1}
-      .card{padding:12px}
-      .item{padding:10px}
-      .date{font-size:12px}
-      .tips{font-size:12px;padding:10px}
-      .row{flex-direction:column}
-      .actions{flex-direction:row;flex-wrap:wrap}
-      .actions button{flex:1 1 auto; min-width:0}
-
-      /* CRITICAL: stack edit layout vertically on small screens so actions sit below inputs */
-      .edit-row { flex-direction:column; gap:10px; }
-      .edit-right { width:100%; align-items:flex-start; order:2; }
-      .edit-right .actions-inline { justify-content:flex-start; gap:8px; flex-wrap:wrap; }
-      .edit-right .actions-inline button { flex:1 1 auto; min-width:0; }
-      .edit-left { order:1; }
-      .edit-left .edit-input { width:100%; }
+    /* Disabled state visuals */
+    .locked .btn, .locked .btn.ghost, .locked input, .locked button {
+      opacity:0.45; pointer-events:none;
     }
+    .locked .search{opacity:0.7}
 
-    /* small visual tweak: display area layout */
-    .display-left { display:flex; flex-direction:column; gap:6px; min-width:0; flex:1; }
-    .display-right { display:flex; flex-direction:column; gap:6px; align-items:flex-end; min-width:120px; }
+    /* Lock indicator */
+    .lock-indicator{display:flex;align-items:center;gap:8px}
+    .lock-dot{width:10px;height:10px;border-radius:50%;background:#60a5fa;box-shadow:0 0 8px rgba(96,165,250,0.25)}
+    .lock-dot.locked{background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,0.25)}
 
-    /* Accessibility: focus outline for keyboard users */
-    .search:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible {
-      outline: 3px solid rgba(96,165,250,0.18);
-      outline-offset: 2px;
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:60}
+    .modal{background:var(--card);padding:18px;border-radius:12px;min-width:280px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06)}
+    .modal h3{margin:0 0 8px 0}
+    .modal p{margin:0 0 12px 0;color:var(--muted);font-size:13px}
+    .modal .row{flex-direction:column}
+    .modal.show{display:flex}
+
+    @media (max-width:760px){
+      .container{grid-template-columns:1fr;gap:12px;padding:12px}
+      header{flex-direction:column;align-items:flex-start}
+      .row{flex-direction:column}
     }
   </style>
 </head>
@@ -223,11 +82,16 @@
     <header>
       <div>
         <h1>Overtime Scheduler</h1>
-        <p class="lead">Sorted oldest first — add, edit, save, cancel, delete</p>
+        <p class="lead">Unlock via server endpoint; password stored in Vercel env (server-side)</p>
       </div>
+
       <div class="controls">
         <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" />
-        <button id="themeToggle" class="secondary" title="Toggle theme">Toggle</button>
+        <div class="lock-indicator" aria-hidden="true" style="margin-left:6px">
+          <div id="lockDot" class="lock-dot"></div>
+          <div id="lockText" style="color:var(--muted);font-size:13px">Checking…</div>
+        </div>
+        <button id="lockToggle" class="btn secondary" title="Lock or unlock actions">Lock</button>
       </div>
     </header>
 
@@ -240,12 +104,10 @@
       <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
       <div id="empty" class="meta" style="display:none">No entries yet.</div>
 
-      <div class="tips" id="tips" style="margin-top:12px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);color:var(--text-muted);font-size:13px;line-height:1.35;">
-        Tips: Table is sorted by overtime date (oldest first). Use Edit to modify inline.
-      </div>
+      <div class="meta" style="margin-top:12px">Tip: Unlock via the modal to enable Add/Edit/Delete. The password is validated server-side.</div>
     </section>
 
-    <aside class="card">
+    <aside class="card" id="formCard">
       <strong style="display:block;margin-bottom:8px">Add Overtime</strong>
       <form id="addForm" autocomplete="off">
         <div>
@@ -264,21 +126,36 @@
           </div>
         </div>
 
-        <div class="actions" style="margin-top:6px">
-          <button id="submitBtn" type="submit">Add</button>
-          <button type="button" class="secondary" id="resetBtn">Reset</button>
+        <div style="margin-top:6px;display:flex;gap:8px">
+          <button id="submitBtn" class="btn" type="submit">Add</button>
+          <button type="button" id="resetBtn" class="btn secondary">Reset</button>
         </div>
       </form>
     </aside>
   </div>
 
+  <!-- Password modal -->
+  <div id="modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document">
+      <h3 id="modalTitle">Unlock Actions</h3>
+      <p id="modalDesc">Enter password to unlock editing, deleting, and adding. (server-validated)</p>
+      <div class="row" style="margin-bottom:10px">
+        <input id="pwInput" type="password" placeholder="Password" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);width:100%" />
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button id="pwCancel" class="btn secondary">Cancel</button>
+        <button id="pwSubmit" class="btn">Submit</button>
+      </div>
+      <div id="pwError" style="color:var(--danger);margin-top:8px;display:none;font-size:13px"></div>
+    </div>
+  </div>
+
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // Replace with your Supabase values
+    // Supabase placeholders (keep your values)
     const SUPABASE_URL = 'https://bisvmgjgyvludhqsvvcn.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
-
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // DOM refs
@@ -287,29 +164,21 @@
     const form = document.getElementById('addForm');
     const submitBtn = document.getElementById('submitBtn');
     const resetBtn = document.getElementById('resetBtn');
-    const emptyEl = document.getElementById('empty');
     const searchInput = document.getElementById('search');
-    const themeToggle = document.getElementById('themeToggle');
-    const root = document.documentElement;
-
-    // Theme init
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    if (savedTheme === 'light') root.setAttribute('data-theme','light');
-    function updateThemeButton() {
-      const isLight = root.getAttribute('data-theme') === 'light';
-      themeToggle.textContent = isLight ? 'Dark mode' : 'Light mode';
-      themeToggle.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
-    }
-    themeToggle.addEventListener('click', () => {
-      const isLight = root.getAttribute('data-theme') === 'light';
-      if (isLight) { root.removeAttribute('data-theme'); localStorage.setItem('theme','dark'); }
-      else { root.setAttribute('data-theme','light'); localStorage.setItem('theme','light'); }
-      updateThemeButton();
-    });
-    updateThemeButton();
+    const lockToggle = document.getElementById('lockToggle');
+    const lockDot = document.getElementById('lockDot');
+    const lockText = document.getElementById('lockText');
+    const modal = document.getElementById('modal');
+    const pwInput = document.getElementById('pwInput');
+    const pwSubmit = document.getElementById('pwSubmit');
+    const pwCancel = document.getElementById('pwCancel');
+    const pwError = document.getElementById('pwError');
+    const emptyEl = document.getElementById('empty');
 
     // State
     let dataCache = [];
+    // local fallback locked state (used only until server check completes)
+    let locked = true;
 
     // Helpers
     function formatDate(d){
@@ -319,26 +188,40 @@
     }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Sort helper: oldest first (ascending)
+    function setLockedState(val){
+      locked = !!val;
+      localStorage.setItem('overtime_locked', locked ? 'true' : 'false');
+      if (locked) {
+        document.body.classList.add('locked');
+        lockDot.classList.add('locked');
+        lockText.textContent = 'Locked';
+        lockToggle.textContent = 'Unlock';
+      } else {
+        document.body.classList.remove('locked');
+        lockDot.classList.remove('locked');
+        lockText.textContent = 'Unlocked';
+        lockToggle.textContent = 'Lock';
+      }
+    }
+
+    // Sorting helper (oldest first)
     function sortByDateAsc(arr) {
       return (arr || []).slice().sort((a, b) => {
-        const da = a?.overtime_date ? new Date(a.overtime_date) : new Date(8640000000000000); // far future if missing
+        const da = a?.overtime_date ? new Date(a.overtime_date) : new Date(8640000000000000);
         const db = b?.overtime_date ? new Date(b.overtime_date) : new Date(8640000000000000);
         return da - db;
       });
     }
 
-    // Render list (display mode)
+    // Render
     function renderList(items){
       rowsEl.innerHTML = '';
       if(!items.length){ emptyEl.style.display = 'block'; return; }
       emptyEl.style.display = 'none';
-
       items.forEach(row => {
         const wrapper = document.createElement('div');
         wrapper.className = 'item';
         wrapper.dataset.id = row.id;
-
         wrapper.innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%">
             <div class="display-left">
@@ -346,11 +229,9 @@
               <div class="meta" data-field="notes">${escapeHtml(row.notes || '')}</div>
               <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
             </div>
-            <div class="display-right">
-              <div class="actions-inline" aria-hidden="false">
-                <button class="btn-ghost" data-action="edit">Edit</button>
-                <button class="btn-ghost" data-action="delete">Delete</button>
-              </div>
+            <div style="min-width:120px;display:flex;justify-content:flex-end;gap:8px">
+              <button class="btn ghost" data-action="edit">Edit</button>
+              <button class="btn ghost" data-action="delete">Delete</button>
             </div>
           </div>
         `;
@@ -358,14 +239,14 @@
       });
     }
 
-    // Load rows from Supabase (ordered oldest first)
+    // Load rows (oldest first)
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
         const { data, error } = await supabase
           .from('overtime_data')
           .select('id, name, notes, overtime_date')
-          .order('overtime_date', { ascending: true }); // oldest first
+          .order('overtime_date', { ascending: true });
 
         if (error) throw error;
         dataCache = sortByDateAsc(data || []);
@@ -377,9 +258,10 @@
       }
     }
 
-    // Add new row
+    // Add
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (locked) { alert('Actions are locked. Unlock to add entries.'); return; }
       const name = form.name.value.trim();
       const notes = form.notes.value.trim();
       const overtime_date = form.overtime_date.value || null;
@@ -394,7 +276,6 @@
           .select();
 
         if (error) throw error;
-        // merge and sort oldest-first
         dataCache = sortByDateAsc([...dataCache, ...data]);
         renderList(dataCache);
         form.reset();
@@ -409,16 +290,16 @@
 
     resetBtn.addEventListener('click', () => form.reset());
 
-    // Delegated handlers for Edit / Save / Cancel / Delete
+    // Delegated handlers
     rowsEl.addEventListener('click', async (e) => {
       const action = e.target?.dataset?.action;
       if (!action) return;
-
       const item = e.target.closest('.item');
       const id = item?.dataset?.id;
       if (!id) return;
 
       if (action === 'delete') {
+        if (locked) { alert('Actions are locked. Unlock to delete.'); return; }
         const ok = confirm('Delete this entry? This cannot be undone.');
         if (!ok) return;
         try {
@@ -433,38 +314,48 @@
         return;
       }
 
-      if (action === 'edit') { enterEditMode(item, id); return; }
-      if (action === 'save') { await saveEdit(item, id); return; }
-      if (action === 'cancel') { exitEditMode(item, id); return; }
+      if (action === 'edit') {
+        if (locked) { alert('Actions are locked. Unlock to edit.'); return; }
+        enterEditMode(item, id);
+        return;
+      }
+
+      if (action === 'save') {
+        if (locked) { alert('Actions are locked. Unlock to save.'); return; }
+        await saveEdit(item, id);
+        return;
+      }
+
+      if (action === 'cancel') {
+        exitEditMode(item, id);
+        return;
+      }
     });
 
-    // Enter edit mode
+    // Edit UI
     function enterEditMode(item, id) {
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
-
-      const editHtml = `
+      item.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;width:100%">
-          <div class="edit-left">
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
             <input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" />
             <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" />
             <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" />
           </div>
-          <div class="edit-right">
+          <div style="width:140px;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
             <div class="actions-inline">
-              <button class="btn-ghost" data-action="save">Save</button>
-              <button class="btn-ghost" data-action="cancel">Cancel</button>
-              <button class="btn-danger" data-action="delete">Delete</button>
+              <button class="btn ghost" data-action="save">Save</button>
+              <button class="btn ghost" data-action="cancel">Cancel</button>
+              <button class="btn danger" data-action="delete">Delete</button>
             </div>
           </div>
         </div>
       `;
-      item.innerHTML = editHtml;
       const nameInput = item.querySelector('[data-edit="name"]');
       if (nameInput) nameInput.focus();
     }
 
-    // Exit edit mode without saving
     function exitEditMode(item, id) {
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
@@ -475,17 +366,14 @@
             <div class="meta" data-field="notes">${escapeHtml(row.notes || '')}</div>
             <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
           </div>
-          <div class="display-right">
-            <div class="actions-inline" aria-hidden="false">
-              <button class="btn-ghost" data-action="edit">Edit</button>
-              <button class="btn-ghost" data-action="delete">Delete</button>
-            </div>
+          <div style="min-width:120px;display:flex;justify-content:flex-end;gap:8px">
+            <button class="btn ghost" data-action="edit">Edit</button>
+            <button class="btn ghost" data-action="delete">Delete</button>
           </div>
         </div>
       `;
     }
 
-    // Save edit
     async function saveEdit(item, id) {
       const nameInput = item.querySelector('[data-edit="name"]');
       const notesInput = item.querySelector('[data-edit="notes"]');
@@ -522,7 +410,95 @@
       }
     }
 
-    // Search filter (client-side) — keep oldest-first order
+    // Modal helpers
+    function openModal() {
+      pwInput.value = '';
+      pwError.style.display = 'none';
+      modal.style.display = 'flex';
+      modal.setAttribute('aria-hidden', 'false');
+      pwInput.focus();
+    }
+    function closeModal() {
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    // Submit password to server endpoint /api/unlock
+    async function submitPassword(password) {
+      try {
+        const res = await fetch('/api/unlock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+
+        if (res.ok) {
+          // server sets HttpOnly cookie; confirm unlocked state via /api/unlocked
+          const check = await fetch('/api/unlocked');
+          if (check.ok) {
+            const json = await check.json();
+            // json.unlocked true means server accepted and cookie present
+            setLockedState(!json.unlocked); // setLockedState expects locked boolean
+            if (!json.unlocked) {
+              closeModal();
+              return;
+            }
+          }
+          pwError.textContent = 'Unlock failed. Try again.';
+          pwError.style.display = 'block';
+        } else {
+          const err = await res.json().catch(() => ({}));
+          pwError.textContent = err.error || 'Invalid password';
+          pwError.style.display = 'block';
+        }
+      } catch (err) {
+        console.error(err);
+        pwError.textContent = 'Network error';
+        pwError.style.display = 'block';
+      }
+    }
+
+    // Hook lock toggle
+    lockToggle.addEventListener('click', () => {
+      // If currently locked -> open modal to unlock
+      if (locked) {
+        openModal();
+        document.getElementById('modalTitle').textContent = 'Unlock Actions';
+        document.getElementById('modalDesc').textContent = 'Enter password to unlock editing, deleting, and adding.';
+        pwSubmit.onclick = () => submitPassword(pwInput.value || '');
+      } else {
+        // currently unlocked -> lock immediately (no password required to lock)
+        const ok = confirm('Locking will disable Add/Edit/Delete. Continue?');
+        if (!ok) return;
+        // To lock, clear server cookie by calling a server endpoint or simply set local locked state.
+        // We'll set local locked state; server cookie will expire naturally.
+        setLockedState(true);
+      }
+    });
+
+    pwCancel.addEventListener('click', () => closeModal());
+    pwInput.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); }
+    });
+
+    // Check unlocked state on load by calling /api/unlocked
+    async function checkUnlockedOnLoad() {
+      try {
+        const r = await fetch('/api/unlocked');
+        if (r.ok) {
+          const j = await r.json();
+          // j.unlocked true means server cookie present -> unlocked
+          setLockedState(!j.unlocked);
+        } else {
+          // fallback to local storage
+          setLockedState(localStorage.getItem('overtime_locked') === 'true');
+        }
+      } catch (e) {
+        setLockedState(localStorage.getItem('overtime_locked') === 'true');
+      }
+    }
+
+    // Search filter (client-side)
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
@@ -534,8 +510,11 @@
       renderList(sortByDateAsc(filtered));
     });
 
-    // Initial load
-    window.addEventListener('DOMContentLoaded', loadRows);
+    // Init
+    window.addEventListener('DOMContentLoaded', async () => {
+      await checkUnlockedOnLoad();
+      await loadRows();
+    });
   </script>
 </body>
 </html>
