@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Contextual Alignment</title>
-  <meta name="description" content="Mobile-first overtime scheduler with contextual text alignment: names/notes left, dates centered, labels centered." />
+  <title>Overtime Scheduler — Spacing Fix</title>
+  <meta name="description" content="Mobile-first overtime scheduler with adjusted spacing between labels and inputs." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -31,13 +31,13 @@
 
     /* Header */
     .header{display:flex;flex-direction:column;gap:10px}
-    .brand{display:flex;flex-direction:column;align-items:center;gap:6px} /* center title & subtitle */
+    .brand{display:flex;flex-direction:column;align-items:center;gap:6px}
     .brand h1{font-size:1.05rem;margin:0;text-align:center}
     .brand p{margin:0;color:var(--muted);font-size:.9rem;text-align:center}
     .controls{display:flex;gap:10px;align-items:center}
     .search{flex:1;border-radius:10px;padding:10px 12px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);min-width:0}
 
-    /* Hide the textual lock label per request (keep dot only) */
+    /* Hide textual lock label (dot remains) */
     .lock-label-hidden { display: none !important; }
 
     /* Status / small text */
@@ -71,8 +71,9 @@
     /* Add form */
     #formCard{display:flex;flex-direction:column;gap:12px}
     /* Labels centered for visual balance */
-    #formCard label{font-size:.9rem;color:var(--muted);margin:0 0 6px 0;text-align:center;display:block}
-    .field{display:flex;flex-direction:column;gap:6px;min-width:0}
+    #formCard label{font-size:.9rem;color:var(--muted);margin:0 0 10px 0;text-align:center;display:block}
+    /* Increased gap between label and input, and between stacked fields */
+    .field{display:flex;flex-direction:column;gap:10px;min-width:0}
 
     /* Inputs: placeholders centered, but editable text left-aligned for typing clarity */
     input[type="text"], textarea{
@@ -83,12 +84,12 @@
     input[type="text"]:focus, textarea:focus { text-align:left; }
 
     /* Date control: visible text + calendar button (placeholders centered) */
-    .date-control{position:relative;display:flex;align-items:center;gap:8px}
+    .date-control{position:relative;display:flex;align-items:center;gap:10px}
     .date-text{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;text-align:center}
     .date-text:focus { text-align:left; }
     .date-btn{width:44px;height:44px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center}
 
-    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
+    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0}
     .form-actions{display:flex;gap:10px;flex-direction:column;margin-top:8px;z-index:1}
     .form-actions .btn{width:100%}
 
