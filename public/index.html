@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overtime Scheduler — Unlock via Server</title>
-  <meta name="description" content="Single-file UI wired to /api/unlock and /api/unlocked (server-side password check)." />
+  <title>Overtime Scheduler — Unlock Fix</title>
+  <meta name="description" content="Single-file UI with Lock/Unlock wired to server; Unlock button remains clickable when locked." />
   <style>
     :root{
       --bg:#0f1724;
@@ -51,10 +51,21 @@
     .row{display:flex;gap:8px}
     .row > *{flex:1 1 0;min-width:0}
 
-    /* Disabled state visuals */
-    .locked .btn, .locked .btn.ghost, .locked input, .locked button {
-      opacity:0.45; pointer-events:none;
+    /* Disabled state visuals: keep everything disabled except the lock toggle control */
+    .locked .btn,
+    .locked .btn.ghost,
+    .locked input,
+    .locked button {
+      opacity: 0.45;
+      pointer-events: none;
     }
+
+    /* Exception: always allow the Lock/Unlock control to be clickable and visible */
+    .locked #lockToggle {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
     .locked .search{opacity:0.7}
 
     /* Lock indicator */
@@ -153,7 +164,7 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // Supabase placeholders (keep your values)
+    // Supabase placeholders (replace with your values)
     const SUPABASE_URL = 'https://bisvmgjgyvludhqsvvcn.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -177,8 +188,7 @@
 
     // State
     let dataCache = [];
-    // local fallback locked state (used only until server check completes)
-    let locked = true;
+    let locked = true; // default until server check
 
     // Helpers
     function formatDate(d){
@@ -437,8 +447,8 @@
           const check = await fetch('/api/unlocked');
           if (check.ok) {
             const json = await check.json();
-            // json.unlocked true means server accepted and cookie present
-            setLockedState(!json.unlocked); // setLockedState expects locked boolean
+            // json.unlocked true means server cookie present -> unlocked
+            setLockedState(!json.unlocked);
             if (!json.unlocked) {
               closeModal();
               return;
@@ -470,8 +480,6 @@
         // currently unlocked -> lock immediately (no password required to lock)
         const ok = confirm('Locking will disable Add/Edit/Delete. Continue?');
         if (!ok) return;
-        // To lock, clear server cookie by calling a server endpoint or simply set local locked state.
-        // We'll set local locked state; server cookie will expire naturally.
         setLockedState(true);
       }
     });
