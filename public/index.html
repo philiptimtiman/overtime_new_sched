@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Spacing Adjusted</title>
-  <meta name="description" content="Mobile-first overtime scheduler with adjusted spacing between Name, Date, Notes and Add button." />
+  <title>Overtime Scheduler — Spacing Adjusted (No ID Display)</title>
+  <meta name="description" content="Mobile-first overtime scheduler with adjusted spacing between Name, Date, Notes and Add button. ID display removed." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -353,8 +353,7 @@
           </div>
           <div class="date-pill" data-field="overtime_date">${row.overtime_date ? formatDate(row.overtime_date) : '—'}</div>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-          <div class="meta-small" style="color:var(--muted)">${row.id ? row.id : ''}</div>
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
           <div class="item-actions">
             <button class="btn ghost lock-guard" data-action="edit">Edit</button>
             <button class="btn ghost lock-guard" data-action="delete">Delete</button>
