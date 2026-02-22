@@ -4,3 +4,7 @@ export default function handler(req, res) {
   const unlocked = cookie.split(';').some(c => c.trim().startsWith('overtime_unlocked='));
   return res.status(200).json({ unlocked: !!unlocked });
 }
+
+export default function handler(req, res) {
+  return res.status(200).json({ ok: true, now: new Date().toISOString() });
+}
