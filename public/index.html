@@ -3,14 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Locked by Default</title>
-  <meta name="description" content="Compact readable overtime scheduler. App is locked by default on every load; Add form and action buttons hidden while locked." />
+  <title>Overtime Scheduler — Visual Update (Gradient Backgrounds)</title>
+  <meta name="description" content="Compact readable overtime scheduler with subtle gradient backgrounds; functionality unchanged." />
   <style>
     :root{
+      /* Accent */
       --accent:#14b8a6; --accent-2:#0ea5a4;
-      --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
-      --danger:#ef4444;
+
+      /* New visual theme: gradients for page and containers */
+      --bg-top: #071428;    /* deep navy */
+      --bg-bottom: #0b1f2b; /* slightly warmer dark teal */
+      --card-top: rgba(255,255,255,0.02);
+      --card-bottom: rgba(255,255,255,0.01);
+      --card-accent: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
       --glass: rgba(255,255,255,0.03);
+
+      --text:#e6eef8; --muted:#9fb0c6; --danger:#ef4444;
+
       --shadow: 0 10px 28px rgba(2,6,23,0.55);
 
       --input-h:40px;
@@ -25,15 +34,39 @@
     }
 
     *,*::before,*::after{box-sizing:border-box}
-    html,body{height:100%;margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--base-font)}
+    html,body{height:100%;margin:0;padding:0;background:
+      linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
+      color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--base-font)}
     input,button,select,textarea{font-family:inherit}
     a{color:inherit;text-decoration:none}
     button{cursor:pointer}
 
-    .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:var(--bg)}
-    .app{width:var(--mobile-width);max-width:100%;display:flex;flex-direction:column;gap:12px;align-items:stretch}
+    /* Canvas */
+    .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:transparent}
 
-    .card{background:var(--card);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
+    /* App shell: subtle inner gradient and soft border */
+    .app{
+      width:var(--mobile-width);max-width:100%;
+      display:flex;flex-direction:column;gap:12px;align-items:stretch;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+      border-radius:14px;
+      padding:10px;
+      box-shadow: 0 18px 50px rgba(2,6,23,0.55);
+      border: 1px solid rgba(255,255,255,0.03);
+      backdrop-filter: blur(6px);
+    }
+
+    /* Card: stronger glass gradient to separate from page bg */
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:var(--radius);
+      padding:12px;
+      box-shadow:var(--shadow);
+      border:1px solid rgba(255,255,255,0.04);
+      overflow:visible;
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+    }
 
     .header{display:flex;flex-direction:column;gap:8px}
     .brand{display:flex;flex-direction:column;align-items:center;gap:4px}
@@ -49,8 +82,9 @@
 
     .list{display:flex;flex-direction:column;gap:8px}
     .item{
-      display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:var(--glass);
-      border:1px solid rgba(255,255,255,0.04);
+      display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.03);
       min-width:0; overflow:visible;
     }
     .item-top{display:flex;gap:8px;align-items:center;justify-content:space-between}
@@ -59,7 +93,12 @@
     .name{font-weight:600;font-size:.96rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .notes{color:var(--muted);font-size:.82rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-    .date-pill{min-width:84px;text-align:center;padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:var(--text);box-sizing:border-box;font-size:var(--pill-font)}
+    .date-pill{
+      min-width:84px;text-align:center;padding:6px;border-radius:8px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+      border:1px solid rgba(255,255,255,0.02);
+      color:var(--text);box-sizing:border-box;font-size:var(--pill-font)
+    }
 
     .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 
@@ -77,13 +116,13 @@
     #formCard .form-actions { margin-top: 12px; }
 
     input[type="text"], textarea{
-      width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
+      width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
       text-align:center;
     }
     input[type="text"]:focus, textarea:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(20,184,166,0.08); border-color: rgba(20,184,166,0.18); }
 
     .date-control{position:relative;display:flex;align-items:center;gap:8px}
-    .date-text{flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;text-align:center;font-size:var(--input-font)}
+    .date-text{flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;text-align:center;font-size:var(--input-font)}
     .date-text:focus { text-align:left; }
     .date-btn{width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;position:relative;z-index:1;font-size:1rem}
 
@@ -119,10 +158,10 @@
       display:none;
       align-items:center;
       justify-content:center;
-      background:rgba(0,0,0,0.5);
+      background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.7));
       z-index:99999;
     }
-    .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px}
+    .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
 
     /* Hide action buttons when locked (keeps layout stable) */
     .actions-hidden .item-actions { display: none !important; }
@@ -141,7 +180,7 @@
 </head>
 <body>
   <div class="canvas">
-    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler — Compact">
+    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler — Visual Update">
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle">Overtime Scheduler</h1>
