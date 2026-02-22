@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Alignment Adjusted</title>
-  <meta name="description" content="Mobile-first overtime scheduler with adjusted text alignment for better readability on phones." />
+  <title>Overtime Scheduler — Contextual Alignment</title>
+  <meta name="description" content="Mobile-first overtime scheduler with contextual text alignment: names/notes left, dates centered, labels centered." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -12,8 +12,7 @@
       --glass: rgba(255,255,255,0.03);
       --shadow: 0 12px 40px rgba(2,6,23,0.6);
       --input-h:46px; --radius:12px;
-      --mobile-width:360px; --pad:18px; --gap:14px;
-      --fs:16px;
+      --mobile-width:360px; --gap:14px; --fs:16px;
     }
 
     /* Reset & base */
@@ -50,10 +49,12 @@
     }
     .item-top{display:flex;gap:10px;align-items:center;justify-content:space-between}
     .item-left{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
-    /* Names and notes left-aligned for readability */
+
+    /* Contextual alignment: names/notes left for readability */
     .name{font-weight:600;font-size:0.98rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .notes{color:var(--muted);font-size:.88rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    /* Date centered to keep visual axis */
+
+    /* Dates centered to keep visual axis */
     .date-pill{min-width:96px;text-align:center;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:var(--text);box-sizing:border-box}
 
     .item-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
@@ -69,15 +70,19 @@
     /* Labels centered for visual balance */
     #formCard label{font-size:.9rem;color:var(--muted);margin:0 0 6px 0;text-align:center;display:block}
     .field{display:flex;flex-direction:column;gap:6px;min-width:0}
+
+    /* Inputs: placeholders centered, but editable text left-aligned for typing clarity */
     input[type="text"], textarea{
       width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;
-      /* center placeholder text visually */
-      text-align:center;
+      text-align:center; /* placeholder centered */
     }
+    /* When user focuses, align text left for typing readability */
+    input[type="text"]:focus, textarea:focus { text-align:left; }
 
-    /* Date control: visible text + calendar button (avoids native chrome overlap) */
+    /* Date control: visible text + calendar button (placeholders centered) */
     .date-control{position:relative;display:flex;align-items:center;gap:8px}
     .date-text{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;text-align:center}
+    .date-text:focus { text-align:left; }
     .date-btn{width:44px;height:44px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center}
 
     .add-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
@@ -89,11 +94,11 @@
 
     /* Inline edit styles (stacked, full width) */
     .editing .edit-input{display:block}
-    .edit-input{display:none;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%;box-sizing:border-box;min-width:0}
+    .edit-input{display:none;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%;box-sizing:border-box;min-width:0;text-align:left}
 
     /* When editing, ensure inputs are stacked and won't overflow */
     .item.editing { display:flex; flex-direction:column; gap:10px; }
-    .item.editing .edit-input { width:100%; max-width:100%; text-align:left; }
+    .item.editing .edit-input { width:100%; max-width:100%; }
 
     /* Defensive: ensure children can shrink on small screens */
     .item, .field, .add-row, .date-control, .date-text { min-width:0; -webkit-flex-shrink:1; flex-shrink:1; }
