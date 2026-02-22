@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overtime Scheduler — Unlock Modal Fix</title>
-  <meta name="description" content="Single-file UI with Lock/Unlock; modal controls remain interactive when locked." />
+  <title>Overtime Scheduler — Unlock Debug</title>
+  <meta name="description" content="Single-file UI with Lock/Unlock; modal shows server response for debugging." />
   <style>
     :root{
       --bg:#0f1724;
@@ -107,11 +107,11 @@
     <header>
       <div>
         <h1>Overtime Scheduler</h1>
-        <p class="lead">Unlock via server endpoint; modal controls remain interactive when locked</p>
+        <p class="lead">Unlock via server endpoint; modal shows server response for debugging</p>
       </div>
 
       <div class="controls">
-        <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" />
+        <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" autocomplete="off" />
         <div class="lock-indicator" aria-hidden="true" style="margin-left:6px">
           <div id="lockDot" class="lock-dot"></div>
           <div id="lockText" style="color:var(--muted);font-size:13px">Checking…</div>
@@ -129,7 +129,7 @@
       <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
       <div id="empty" class="meta" style="display:none">No entries yet.</div>
 
-      <div class="meta" style="margin-top:12px">Tip: Unlock via the modal to enable Add/Edit/Delete. The password is validated server-side.</div>
+      <div class="meta" style="margin-top:12px">Tip: Unlock via the modal to enable Add/Edit/Delete. The modal will show server responses for debugging.</div>
     </section>
 
     <aside class="card" id="formCard">
@@ -137,17 +137,17 @@
       <form id="addForm" autocomplete="off">
         <div>
           <label for="name">Name</label>
-          <input id="name" name="name" type="text" placeholder="Employee name" required />
+          <input id="name" name="name" type="text" placeholder="Employee name" required autocomplete="name" />
         </div>
 
         <div class="row">
           <div>
             <label for="overtime_date">Date</label>
-            <input id="overtime_date" name="overtime_date" type="date" />
+            <input id="overtime_date" name="overtime_date" type="date" autocomplete="bday" />
           </div>
           <div>
             <label for="notes">Notes</label>
-            <input id="notes" name="notes" type="text" placeholder="Short note" />
+            <input id="notes" name="notes" type="text" placeholder="Short note" autocomplete="off" />
           </div>
         </div>
 
@@ -165,13 +165,13 @@
       <h3 id="modalTitle">Unlock Actions</h3>
       <p id="modalDesc">Enter password to unlock editing, deleting, and adding. (server-validated)</p>
       <div class="row" style="margin-bottom:10px">
-        <input id="pwInput" type="password" placeholder="Password" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);width:100%" />
+        <input id="pwInput" type="password" autocomplete="current-password" placeholder="Password" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);width:100%" />
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button id="pwCancel" class="btn secondary">Cancel</button>
         <button id="pwSubmit" class="btn">Submit</button>
       </div>
-      <div id="pwError" style="color:var(--danger);margin-top:8px;display:none;font-size:13px"></div>
+      <div id="pwError" style="color:var(--danger);margin-top:8px;display:none;font-size:13px;white-space:pre-wrap"></div>
     </div>
   </div>
 
@@ -438,6 +438,7 @@
     function openModal() {
       pwInput.value = '';
       pwError.style.display = 'none';
+      pwError.textContent = '';
       modal.style.display = 'flex';
       modal.setAttribute('aria-hidden', 'false');
       pwInput.focus();
@@ -447,51 +448,59 @@
       modal.setAttribute('aria-hidden', 'true');
     }
 
-    // Submit password to server endpoint /api/unlock
+    // Debug submitPassword: shows server status, headers and body in the modal
     async function submitPassword(password) {
       try {
+        pwError.style.display = 'block';
+        pwError.textContent = 'Checking...';
+
         const res = await fetch('/api/unlock', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password })
         });
 
-        if (res.ok) {
-          // server sets HttpOnly cookie; confirm unlocked state via /api/unlocked
-          const check = await fetch('/api/unlocked');
-          if (check.ok) {
-            const json = await check.json();
-            // json.unlocked true means server cookie present -> unlocked
-            setLockedState(!json.unlocked);
-            if (!json.unlocked) {
-              closeModal();
-              return;
-            }
-          }
-          pwError.textContent = 'Unlock failed. Try again.';
-          pwError.style.display = 'block';
-        } else {
-          const err = await res.json().catch(() => ({}));
-          pwError.textContent = err.error || 'Invalid password';
-          pwError.style.display = 'block';
+        // read raw text first so we can show non-JSON responses too
+        const raw = await res.text();
+        let parsed;
+        try { parsed = raw ? JSON.parse(raw) : null; } catch (e) { parsed = null; }
+
+        if (!res.ok) {
+          const msg = parsed?.error || parsed?.message || raw || `HTTP ${res.status}`;
+          pwError.textContent = `Server: ${msg} (status ${res.status})`;
+          console.warn('unlock response', { status: res.status, body: parsed ?? raw, headers: Object.fromEntries(res.headers) });
+          return;
         }
+
+        // If 200, check /api/unlocked to confirm cookie presence
+        const check = await fetch('/api/unlocked', { method: 'GET' });
+        const checkJson = await (check.ok ? check.json().catch(() => null) : null);
+
+        console.info('unlock success', { unlockResponse: parsed ?? raw, unlockedCheck: checkJson, status: res.status });
+        if (checkJson && checkJson.unlocked) {
+          setLockedState(false);
+          closeModal();
+          return;
+        }
+
+        // If server returned 200 but unlocked check failed, show that info
+        pwError.textContent = `Unlock endpoint returned ${res.status} but unlocked check failed. Server response: ${parsed?.error || parsed?.message || raw || 'no body'}`;
+        pwError.style.display = 'block';
       } catch (err) {
-        console.error(err);
-        pwError.textContent = 'Network error';
+        console.error('submitPassword error', err);
+        pwError.textContent = 'Network or server error. See console for details.';
         pwError.style.display = 'block';
       }
     }
 
     // Hook lock toggle
     lockToggle.addEventListener('click', () => {
-      // If currently locked -> open modal to unlock
       if (locked) {
         openModal();
         document.getElementById('modalTitle').textContent = 'Unlock Actions';
         document.getElementById('modalDesc').textContent = 'Enter password to unlock editing, deleting, and adding.';
         pwSubmit.onclick = () => submitPassword(pwInput.value || '');
       } else {
-        // currently unlocked -> lock immediately (no password required to lock)
         const ok = confirm('Locking will disable Add/Edit/Delete. Continue?');
         if (!ok) return;
         setLockedState(true);
@@ -509,10 +518,8 @@
         const r = await fetch('/api/unlocked');
         if (r.ok) {
           const j = await r.json();
-          // j.unlocked true means server cookie present -> unlocked
           setLockedState(!j.unlocked);
         } else {
-          // fallback to local storage
           setLockedState(localStorage.getItem('overtime_locked') === 'true');
         }
       } catch (e) {
