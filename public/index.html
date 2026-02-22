@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Theme Switcher</title>
-  <meta name="description" content="Overtime Scheduler with theme switcher (Ocean Indigo, Warm Sunset, Forest Teal, Violet Glow). Functionality unchanged." />
+  <title>Overtime Scheduler — Theme Switcher (Fixed Background)</title>
+  <meta name="description" content="Overtime Scheduler with theme switcher (Ocean Indigo, Warm Sunset, Forest Teal, Violet Glow). Background now updates correctly." />
   <style>
     :root{
       /* Default (Forest Teal) variables */
@@ -55,19 +55,19 @@
     }
 
     *,*::before,*::after{box-sizing:border-box}
-    html,body{height:100%;margin:0;padding:0;background:
-      linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
-      color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--base-font)}
+    html,body{height:100%;margin:0;padding:0;background:transparent;color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--base-font)}
     input,button,select,textarea{font-family:inherit}
     a{color:inherit;text-decoration:none}
     button{cursor:pointer}
 
     .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:transparent}
 
+    /* IMPORTANT: background moved to #appRoot so theme variables apply to page bg */
     .app{
       width:var(--mobile-width);max-width:100%;
       display:flex;flex-direction:column;gap:12px;align-items:stretch;
-      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+      /* use theme variables for page gradient */
+      background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
       border-radius:14px;
       padding:10px;
       box-shadow: 0 18px 50px rgba(2,10,8,0.55);
