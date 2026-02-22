@@ -3,74 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Lock Icon</title>
-  <meta name="description" content="Overtime Scheduler with lock/unlock icon button and theme swatches. Functionality unchanged." />
+  <title>Overtime Scheduler — Refined Buttons</title>
+  <meta name="description" content="Overtime Scheduler with refined Add / Reset buttons (smaller, nicer layout). Functionality unchanged." />
   <style>
     :root{
-      /* Default (Forest Teal) variables */
-      --accent: #10b981;
-      --accent-2: #059669;
-      --bg-top: #04251f;
-      --bg-bottom: #0b3b36;
-      --text: #e6f7f2;
-      --muted: #9fcfc3;
-      --danger: #ef4444;
-
-      /* Card background fallbacks (overridden per theme) */
-      --card-bg-top: rgba(255,255,255,0.02);
-      --card-bg-bottom: rgba(255,255,255,0.01);
-
-      --glass: rgba(255,255,255,0.03);
-      --shadow: 0 10px 28px rgba(2,6,23,0.55);
-
-      --input-h:40px;
-      --radius:10px;
-      --mobile-width:360px;
-
-      --base-font:15px;
-      --label-font:0.95rem;
-      --input-font:0.98rem;
-      --pill-font:0.9rem;
-
-      /* transition timing */
-      --theme-transition: 220ms ease;
-    }
-
-    /* Theme presets (applied by data-theme on #appRoot) */
-    #appRoot[data-theme="forest"]{
       --accent:#10b981; --accent-2:#059669;
       --bg-top:#04251f; --bg-bottom:#0b3b36;
-      --text:#e6f7f2; --muted:#9fcfc3;
+      --text:#e6f7f2; --muted:#9fcfc3; --danger:#ef4444;
       --card-bg-top: rgba(8,40,34,0.06);
       --card-bg-bottom: rgba(6,30,26,0.03);
-    }
-    #appRoot[data-theme="warm"]{
-      --accent:#ff7a59; --accent-2:#ff5a36;
-      --bg-top:#2b0b3a; --bg-bottom:#3b0f2f;
-      --text:#f0eef6; --muted:#c9bfc9;
-      --card-bg-top: rgba(60,20,50,0.06);
-      --card-bg-bottom: rgba(50,18,45,0.03);
-    }
-    #appRoot[data-theme="ocean"]{
-      --accent:#4f46e5; --accent-2:#3b82f6;
-      --bg-top:#071428; --bg-bottom:#0b1f2b;
-      --text:#e6eef8; --muted:#9fb0c6;
-      --card-bg-top: rgba(10,20,40,0.06);
-      --card-bg-bottom: rgba(8,18,34,0.03);
-    }
-    #appRoot[data-theme="violet"]{
-      --accent:#d946ef; --accent-2:#a78bfa;
-      --bg-top:#0b0b12; --bg-bottom:#2b1536;
-      --text:#f3eefb; --muted:#d6c7e9;
-      --card-bg-top: rgba(40,18,40,0.06);
-      --card-bg-bottom: rgba(36,14,36,0.03);
+      --input-h:40px; --radius:10px; --mobile-width:360px;
+      --base-font:15px; --theme-transition:220ms ease;
     }
 
-    /* Base reset and typography */
     *,*::before,*::after{box-sizing:border-box}
     html,body{height:100%;margin:0;padding:0;background:transparent;color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--base-font)}
     input,button,select,textarea{font-family:inherit}
-    a{color:inherit;text-decoration:none}
     button{cursor:pointer}
 
     .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:transparent}
@@ -78,163 +26,93 @@
     .app{
       width:var(--mobile-width);max-width:100%;
       display:flex;flex-direction:column;gap:12px;align-items:stretch;
-      background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
-      border-radius:14px;
-      padding:10px;
-      box-shadow: 0 14px 36px rgba(2,10,8,0.45);
-      border: 1px solid rgba(255,255,255,0.03);
-      backdrop-filter: blur(4px);
-      color:var(--text);
-      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
-      will-change: background, color, border-color;
+      background: linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
+      border-radius:14px;padding:10px;box-shadow:0 14px 36px rgba(2,10,8,0.45);border:1px solid rgba(255,255,255,0.03);
+      transition:background var(--theme-transition),color var(--theme-transition);
     }
 
     .card{
-      background: linear-gradient(180deg, var(--card-bg-top), var(--card-bg-bottom));
-      border-radius: var(--radius);
-      padding:12px;
-      box-shadow:0 8px 20px rgba(2,6,23,0.45);
-      border:1px solid rgba(255,255,255,0.04);
-      overflow:visible;
-      -webkit-backdrop-filter: blur(3px);
-      backdrop-filter: blur(3px);
-      color:var(--text);
-      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition), box-shadow var(--theme-transition);
-      will-change: background, color, border-color;
+      background: linear-gradient(180deg,var(--card-bg-top),var(--card-bg-bottom));
+      border-radius:var(--radius);padding:12px;box-shadow:0 8px 20px rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.04);
     }
 
-    .header.card { display:flex; flex-direction:column; gap:8px; align-items:stretch; }
-    .brand{display:flex;flex-direction:column;align-items:center;gap:4px}
-    .brand h1{font-size:1rem;margin:0;text-align:center;color:var(--text);transition:color var(--theme-transition)}
-    .brand p{margin:0;color:var(--muted);font-size:.85rem;text-align:center;transition:color var(--theme-transition)}
+    .header.card{display:flex;flex-direction:column;gap:8px}
+    .brand{display:flex;flex-direction:column;align-items:center}
+    .brand h1{margin:0;font-size:1rem}
+    .brand p{margin:0;color:var(--muted);font-size:.85rem}
 
     .controls{display:flex;gap:8px;align-items:center}
-    .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--text);min-width:0;font-size:var(--input-font)}
+    .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--text)}
 
-    /* Theme swatches (no text) */
     .theme-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px}
-    .theme-swatch{
-      width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,0.06);
-      display:inline-flex;align-items:center;justify-content:center;padding:0;
-      background:transparent;box-sizing:border-box;
-      transition: transform 160ms ease, box-shadow 220ms ease, border-color var(--theme-transition);
-    }
-    .theme-swatch:focus{outline:none; transform:scale(1.06); box-shadow:0 6px 18px rgba(0,0,0,0.25);}
-    .theme-swatch .dot{width:24px;height:24px;border-radius:999px;box-shadow:0 4px 10px rgba(0,0,0,0.25);}
-
-    /* specific swatch gradients */
+    .theme-swatch{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,0.06);display:inline-flex;align-items:center;justify-content:center;padding:0;background:transparent}
+    .theme-swatch .dot{width:24px;height:24px;border-radius:999px}
     .swatch-ocean .dot{background:linear-gradient(180deg,#4f46e5,#3b82f6)}
     .swatch-warm .dot{background:linear-gradient(180deg,#ff7a59,#ff5a36)}
     .swatch-forest .dot{background:linear-gradient(180deg,#10b981,#059669)}
     .swatch-violet .dot{background:linear-gradient(180deg,#d946ef,#a78bfa)}
+    .theme-swatch.active{transform:scale(1.06);box-shadow:0 8px 26px rgba(0,0,0,0.32);border-color:transparent}
 
-    /* active state: ring and slightly larger */
-    .theme-swatch.active{border-color:transparent; transform:scale(1.06); box-shadow:0 8px 26px rgba(0,0,0,0.32)}
-    .theme-swatch.active .dot{box-shadow:0 6px 18px rgba(0,0,0,0.35)}
-
-    .lock-label-hidden { display: none !important; }
-
-    .meta{font-size:.82rem;color:var(--muted);text-align:center;transition:color var(--theme-transition)}
+    .meta{font-size:.82rem;color:var(--muted);text-align:center}
 
     .list{display:flex;flex-direction:column;gap:8px}
-    .item{
-      display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
-      border:1px solid rgba(255,255,255,0.03);
-      min-width:0; overflow:visible;
-      color:var(--text);
-      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
+    .item{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
+    .item-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .notes{color:var(--muted);font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .date-pill{min-width:84px;text-align:center;padding:6px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.02)}
+
+    .item-actions{display:flex;gap:6px;align-items:center}
+    .btn{
+      display:inline-flex;align-items:center;gap:8px;
+      background:linear-gradient(180deg,var(--accent),var(--accent-2));
+      color:#fff;border:0;padding:8px 12px;border-radius:10px;font-weight:600;
+      transition:transform 120ms ease, box-shadow 180ms ease, opacity 160ms ease;
     }
-    .item-top{display:flex;gap:8px;align-items:center;justify-content:space-between}
-    .item-left{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
-
-    .name{font-weight:600;font-size:.96rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .notes{color:var(--muted);font-size:.82rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-    .date-pill{
-      min-width:84px;text-align:center;padding:6px;border-radius:8px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
-      border:1px solid rgba(255,255,255,0.02);
-      color:var(--text);box-sizing:border-box;font-size:var(--pill-font)
-    }
-
-    .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-
-    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem;transition:background var(--theme-transition), color var(--theme-transition)}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+    .btn:active{transform:translateY(1px)}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:8px 10px}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
-    .btn.full{width:100%}
 
-    #formCard{display:flex;flex-direction:column;gap:10px}
-    #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block;transition:color var(--theme-transition)}
-    .field{display:flex;flex-direction:column;gap:8px;min-width:0}
-
-    input[type="text"], textarea{
-      width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
-      text-align:center;
-      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
-    }
-    input[type="text"]:focus, textarea:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
-
-    .date-control{position:relative;display:flex;align-items:center;gap:8px}
-    .date-text{flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;text-align:center;font-size:var(--input-font)}
-    .date-text:focus { text-align:left; }
-    .date-btn{width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;position:relative;z-index:1;font-size:1rem}
-
-    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
-    .form-actions{display:flex;gap:8px;flex-direction:column;margin-top:8px;z-index:2}
-    .form-actions .btn{width:100%}
-
-    .date-control .native-date{
-      position:absolute;
-      right:6px;
-      top:50%;
-      transform:translateY(-50%);
-      width:40px;
-      height:40px;
-      opacity:0;
-      border:0;
-      padding:0;
-      margin:0;
-      background:transparent;
-      z-index:5;
-      cursor:pointer;
-    }
-
-    .editing .edit-input{display:block}
-    .edit-input{display:none;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%;box-sizing:border-box;min-width:0;text-align:left;font-size:var(--input-font)}
-
-    .item.editing { display:flex; flex-direction:column; gap:8px; }
-    .item.editing .edit-input { width:100%; max-width:100%; }
-
-    .modal-backdrop{
-      position:fixed;
-      inset:0;
-      display:none;
+    /* --- Refined Add / Reset button styles --- */
+    /* Make form actions compact and visually balanced */
+    .form-actions{
+      display:flex;
+      gap:8px;
       align-items:center;
       justify-content:center;
-      background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));
-      z-index:99999;
+      margin-top:8px;
     }
-    .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
 
-    .actions-hidden .item-actions { display: none !important; }
-    .form-hidden #formCard { display: none !important; }
+    /* Primary Add button: shorter, pill-like, with icon */
+    .btn-add{
+      padding:8px 12px;
+      height:36px;
+      border-radius:999px;
+      font-size:0.95rem;
+      box-shadow: 0 6px 18px rgba(2,10,8,0.18);
+      display:inline-flex;align-items:center;gap:8px;
+    }
+    .btn-add svg{width:16px;height:16px;display:block;flex-shrink:0}
 
-    /* Icon button styles for lock/unlock */
+    /* Secondary Reset button: subtle outline, smaller */
+    .btn-reset{
+      padding:8px 10px;
+      height:36px;
+      border-radius:999px;
+      font-size:0.95rem;
+      display:inline-flex;align-items:center;gap:8px;
+      background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);
+    }
+    .btn-reset svg{width:14px;height:14px;display:block;flex-shrink:0}
+
+    /* When form is narrow (mobile), stack buttons but keep compact */
+    @media (max-width:360px){
+      .form-actions{flex-direction:row;gap:8px}
+    }
+
+    /* Icon button for lock (kept from previous) */
     .icon-btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      width:40px;
-      height:40px;
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,0.06);
-      background:transparent;
-      color:var(--muted);
-      padding:0;
-      cursor:pointer;
-      transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;
+      display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted);padding:0;cursor:pointer;transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;
     }
     .icon-btn:focus{ outline: 2px solid rgba(255,255,255,0.06); outline-offset:2px; }
     .icon-btn:hover{ transform: translateY(-1px); }
@@ -242,17 +120,13 @@
     .icon-btn svg { display:block; width:18px; height:18px; }
     .icon-btn .icon-fill, .icon-btn .icon-stroke { fill: currentColor; stroke: none; }
 
-    @media (max-width:340px){
-      .add-row{grid-template-columns:1fr}
-      .app{width:320px}
-      .date-text{padding-right:10px}
-      .theme-row{flex-wrap:wrap}
-    }
+    /* small helpers */
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   </style>
 </head>
 <body>
   <div class="canvas">
-    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler — Theme Swatches" data-theme="forest">
+    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler" data-theme="forest">
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle">Overtime Scheduler</h1>
@@ -266,7 +140,7 @@
 
             <!-- Icon button replaces text button; keeps same id openUnlock so JS remains unchanged -->
             <button id="openUnlock" class="icon-btn" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">
-              <!-- simple lock/key icon (inline SVG) -->
+              <!-- lock icon -->
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
                 <path class="icon-fill" d="M12 17a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
                 <path class="icon-fill" d="M17 8h-1V6a4 4 0 10-8 0v2H7a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2v-7a2 2 0 00-2-2zM9 8V6a3 3 0 116 0v2" />
@@ -275,7 +149,6 @@
           </div>
         </div>
 
-        <!-- Theme swatches (no text) -->
         <div class="theme-row" role="toolbar" aria-label="Theme switcher">
           <button class="theme-swatch swatch-ocean" data-theme="ocean" aria-label="Ocean Indigo" title="Ocean Indigo" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-warm" data-theme="warm" aria-label="Warm Sunset" title="Warm Sunset" type="button"><span class="dot" aria-hidden="true"></span></button>
@@ -305,13 +178,13 @@
             <input id="name" name="name" class="lock-guard" type="text" placeholder="Employee name" required />
           </div>
 
-          <div class="add-row">
+          <div class="add-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="field">
               <label for="overtime_date_text">Date</label>
-              <div class="date-control">
+              <div class="date-control" style="position:relative;display:flex;align-items:center;gap:8px">
                 <input id="overtime_date_text" name="overtime_date_text" class="date-text lock-guard" type="text" placeholder="YYYY-MM-DD" aria-label="Overtime date" readonly />
                 <button type="button" id="datePickerBtn" class="date-btn" aria-label="Open date picker">📅</button>
-                <input id="overtime_date_native" class="native-date" type="date" />
+                <input id="overtime_date_native" class="native-date" type="date" style="position:absolute;right:6px;opacity:0" />
               </div>
             </div>
 
@@ -321,9 +194,18 @@
             </div>
           </div>
 
-          <div class="form-actions">
-            <button id="submitBtn" class="btn lock-guard" type="submit">Add</button>
-            <button id="resetBtn" type="button" class="btn ghost lock-guard">Reset</button>
+          <div class="form-actions" role="group" aria-label="Form actions">
+            <!-- Add button with plus icon -->
+            <button id="submitBtn" class="btn btn-add lock-guard" type="submit" title="Add entry" aria-label="Add entry">
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M11 11V6h2v5h5v2h-5v5h-2v-5H6v-2z"/></svg>
+              <span>Add</span>
+            </button>
+
+            <!-- Reset button with refresh icon -->
+            <button id="resetBtn" type="button" class="btn-reset lock-guard" title="Reset form" aria-label="Reset form">
+              <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M12 6V3L8 7l4 4V8c2.8 0 5 2.2 5 5 0 .6-.1 1.2-.3 1.7l1.5 1.1C18.9 15 19 14.5 19 14c0-3.9-3.1-7-7-7zM6.3 6.3L4.8 5.2C5.1 4.8 5.9 4 7 4c3.9 0 7 3.1 7 7v1l4-4-4-4v3c-2.8 0-5 2.2-5 5 0 .6.1 1.2.3 1.7L6.3 6.3z"/></svg>
+              <span>Reset</span>
+            </button>
           </div>
         </form>
       </aside>
@@ -388,66 +270,39 @@
     function isoDateFromText(s){ if(!s) return null; const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[1]}-${m[2]}-${m[3]}` : null; }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Theme handling (batched with requestAnimationFrame to reduce repaint lag)
+    // Theme handling (batched)
     function applyTheme(theme){
       if (!theme) theme = 'forest';
-
-      // immediate visual feedback: remove active from all
       swatches.forEach(btn => btn.classList.remove('active'));
-
-      // batch DOM updates to next paint
       requestAnimationFrame(() => {
         appRoot.setAttribute('data-theme', theme);
-
-        // small second rAF to ensure CSS variables applied before toggling active state
         requestAnimationFrame(() => {
           swatches.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === theme));
           safeSetLocal(THEME_KEY, theme);
         });
       });
     }
-
-    // Restore theme from localStorage (if any), otherwise default 'forest'
-    (function initTheme(){
-      const saved = safeGetLocal(THEME_KEY) || 'forest';
-      applyTheme(saved);
-    })();
-
+    (function initTheme(){ const saved = safeGetLocal(THEME_KEY) || 'forest'; applyTheme(saved); })();
     swatches.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const t = btn.dataset.theme;
-        applyTheme(t);
-      });
-      // keyboard accessibility: Enter/Space triggers
-      btn.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter' || ev.key === ' ') {
-          ev.preventDefault();
-          btn.click();
-        }
-      });
+      btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+      btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
-    // Update controls: enable/disable inputs and show/hide action buttons and form when locked/unlocked
+    // Update controls
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
-
-      // update icon button accessible state and tooltip
       if (openUnlock) {
         openUnlock.setAttribute('aria-pressed', unlocked ? 'true' : 'false');
         openUnlock.title = unlocked ? 'Lock actions' : 'Unlock actions';
         openUnlock.setAttribute('aria-label', unlocked ? 'Lock actions' : 'Unlock actions');
         openUnlock.classList.toggle('active', unlocked);
       }
-
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
     }
-
     function setUnlockedState(state, persist = true){
-      unlocked = !!state;
-      updateGuardedControls();
-      if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
+      unlocked = !!state; updateGuardedControls(); if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
     function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
@@ -474,45 +329,37 @@
       }
     }
 
-    // Date picker overlay strategy
+    // Date picker overlay
     (function attachNativeOverlay() {
       try {
-        const dateControl = document.querySelector('.date-control');
-        if (!dateControl || !dateNative || !dateText || !dateBtn) return;
-        dateNative.addEventListener('change', () => {
-          dateText.value = dateNative.value || '';
-        });
+        if (!dateNative || !dateText || !dateBtn) return;
+        dateNative.addEventListener('change', () => dateText.value = dateNative.value || '');
         function openNativePicker(initialIso) {
           if (initialIso && /^\d{4}-\d{2}-\d{2}$/.test(initialIso)) dateNative.value = initialIso;
           else dateNative.value = '';
-          if (typeof dateNative.showPicker === 'function') {
-            dateNative.showPicker();
-          } else {
-            dateNative.focus();
-            try { dateNative.click(); } catch(e){}
-          }
+          if (typeof dateNative.showPicker === 'function') dateNative.showPicker(); else { dateNative.focus(); try { dateNative.click(); } catch(e){} }
         }
         dateBtn.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
         dateText.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
-        dateNative.style.pointerEvents = 'auto';
-      } catch (e) {
-        console.warn('Date overlay attach failed', e);
-      }
+      } catch (e) { console.warn('Date overlay attach failed', e); }
     })();
 
+    // Render rows
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
       el.dataset.id = row.id;
       el.innerHTML = `
         <div class="item-top">
-          <div class="item-left">
+          <div style="flex:1;min-width:0">
             <div class="name" data-field="name">${escapeHtml(row.name)}</div>
             <div class="notes" data-field="notes">${escapeHtml(row.notes || '')}</div>
           </div>
-          <div class="date-pill" data-field="overtime_date">${row.overtime_date ? formatDate(row.overtime_date) : '—'}</div>
+          <div style="margin-left:8px">
+            <div class="date-pill" data-field="overtime_date">${row.overtime_date ? formatDate(row.overtime_date) : '—'}</div>
+          </div>
         </div>
-        <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
           <div class="item-actions">
             <button class="btn ghost lock-guard" data-action="edit">Edit</button>
             <button class="btn ghost lock-guard" data-action="delete">Delete</button>
@@ -521,7 +368,6 @@
       `;
       return el;
     }
-
     function renderList(items){
       rowsEl.innerHTML = '';
       if (!items || !items.length) { emptyEl.style.display = 'block'; statusEl.textContent = 'No entries'; return; }
@@ -531,6 +377,7 @@
       statusEl.textContent = `Loaded ${items.length} entries`;
     }
 
+    // Load rows
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -544,6 +391,7 @@
       }
     }
 
+    // Form submit
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!unlocked) { alert('Actions are locked. Unlock to add entries.'); return; }
@@ -551,7 +399,7 @@
       const notes = form.notes.value.trim();
       const overtime_date = isoDateFromText(dateText.value) || null;
       if (!name) { alert('Name is required'); return; }
-      submitBtn.disabled = true; submitBtn.textContent = 'Adding...';
+      submitBtn.disabled = true; submitBtn.setAttribute('aria-busy','true');
       try {
         const { data, error } = await supabase.from('overtime_data').insert([{ name, notes, overtime_date }]).select();
         if (error) throw error;
@@ -563,12 +411,14 @@
         console.error(err);
         alert('Insert failed: ' + (err.message || err));
       } finally {
-        submitBtn.disabled = false; submitBtn.textContent = 'Add';
+        submitBtn.disabled = false; submitBtn.removeAttribute('aria-busy');
       }
     });
 
+    // Reset button behavior: clear form fields (keeps lock guard)
     resetBtn.addEventListener('click', () => { form.reset(); dateText.value = ''; });
 
+    // Row actions (edit/delete/save/cancel)
     rowsEl.addEventListener('click', async (ev) => {
       const action = ev.target?.dataset?.action;
       if (!action) return;
@@ -638,6 +488,7 @@
       }
     });
 
+    // Search filter
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
@@ -657,9 +508,7 @@
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
     window.addEventListener('DOMContentLoaded', async () => {
-      // Force locked state on every load/refresh (user requested)
       setUnlockedState(false, true);
-      // Ensure theme persisted (already applied by initTheme)
       await loadRows();
     });
   </script>
