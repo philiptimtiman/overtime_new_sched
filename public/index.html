@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Overtime Data</title>
+  <style>
+    body { font-family: system-ui, Arial; max-width: 800px; margin: 32px auto; padding: 0 16px; }
+    form { margin-bottom: 24px; display: grid; gap: 8px; }
+    input, textarea { padding: 8px; font-size: 14px; width: 100%; box-sizing: border-box; }
+    button { padding: 8px 12px; font-size: 14px; }
+    ul { list-style: none; padding: 0; }
+    li { padding: 8px 0; border-bottom: 1px solid #eee; }
+    .meta { color: #666; font-size: 13px; }
+  </style>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    // Replace these with your Supabase values
+    const SUPABASE_URL = 'https://bisvmgjgyvludhqsvvcn.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // DOM refs
+    const listEl = document.getElementById('rows');
+    const form = document.getElementById('addForm');
+    const statusEl = document.getElementById('status');
+
+    // Load rows
+    async function loadRows() {
+      statusEl.textContent = 'Loading...';
+      const { data, error } = await supabase
+        .from('overtime_data')
+        .select('id, name, notes, overtime_date')
+        .order('id', { ascending: true });
+
+      if (error) {
+        statusEl.textContent = 'Error loading data';
+        console.error(error);
+        return;
+      }
+
+      listEl.innerHTML = '';
+      data.forEach(r => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${escapeHtml(r.name)}</strong>
+          <div class="meta">${escapeHtml(r.notes || '')} — ${formatDate(r.overtime_date)}</div>`;
+        listEl.appendChild(li);
+      });
+      statusEl.textContent = `Loaded ${data.length} rows`;
+    }
+
+    // Add row
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = form.name.value.trim();
+      const notes = form.notes.value.trim();
+      const overtime_date = form.overtime_date.value || null; // YYYY-MM-DD
+
+      if (!name) return alert('Name is required');
+
+      const { data, error } = await supabase
+        .from('overtime_data')
+        .insert([{ name, notes, overtime_date }]);
+
+      if (error) {
+        alert('Insert failed: ' + error.message);
+        console.error(error);
+        return;
+      }
+
+      form.reset();
+      loadRows();
+    });
+
+    // Helpers
+    function formatDate(d) {
+      if (!d) return 'No date';
+      // d is returned as 'YYYY-MM-DD'
+      const dt = new Date(d + 'T00:00:00'); // ensure correct parsing
+      return dt.toLocaleDateString();
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    // initial load
+    window.addEventListener('DOMContentLoaded', loadRows);
+  </script>
+</head>
+<body>
+  <h1>Overtime Data</h1>
+
+  <form id="addForm">
+    <input name="name" placeholder="Name" required />
+    <input name="overtime_date" type="date" />
+    <textarea name="notes" rows="2" placeholder="Notes"></textarea>
+    <div>
+      <button type="submit">Add Row</button>
+      <button type="button" onclick="document.getElementById('addForm').reset()">Reset</button>
+    </div>
+  </form>
+
+  <div id="status" style="margin-bottom:12px;color:#333">Idle</div>
+  <ul id="rows"></ul>
+</body>
+</html>
