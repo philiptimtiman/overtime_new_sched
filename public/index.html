@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Edit Layout</title>
-  <meta name="description" content="Overtime scheduler with improved edit layout to avoid overlapping inputs and action buttons on small screens." />
+  <title>Overtime Scheduler — Aligned Rows</title>
+  <meta name="description" content="Overtime scheduler with rows styled to match Add Overtime form; responsive and avoids overlap." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -56,25 +56,46 @@
     .add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0}
     .add-row > div{min-width:0}
 
-    /* Edit layout (inline editing) */
-    .edit-row{display:grid;grid-template-columns:1fr var(--action-col);gap:12px;align-items:start;width:100%;min-width:0}
-    .edit-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;min-width:0}
-    .edit-fields > *{min-width:0}
-    .edit-fields .field-name{grid-column:1 / -1}
-    .edit-fields .field-date{grid-column:1 / 2}
-    .edit-fields .field-notes{grid-column:2 / 3}
-    .action-col{display:flex;align-items:flex-start;justify-content:flex-end;min-width:0}
-    .actions-inline{display:flex;flex-direction:column;gap:8px;align-items:stretch;flex-wrap:wrap}
+    /* Edit layout (inline editing) — match Add Overtime form style */
+    .row-edit {
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      width:100%;
+      min-width:0;
+    }
 
-    /* Make action buttons full width in stacked (desktop) mode so they don't overlap inputs */
-    .actions-inline button{display:block;width:100%;box-sizing:border-box}
+    .row-edit .field {
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:0;
+    }
 
-    /* Inputs */
-    input[type="text"], input[type="date"], .edit-input, textarea{
+    .row-edit label { font-size:13px;color:var(--muted); }
+    .row-edit input[type="text"], .row-edit input[type="date"], .row-edit .edit-input, .row-edit textarea {
       padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);
       background:transparent;color:var(--text);height:var(--input-h);width:100%;min-width:0;font-size:16px;box-sizing:border-box;
     }
-    input[type="date"]{-webkit-appearance:none;appearance:none;padding-right:14px}
+
+    /* Actions area under inputs (desktop: right column; mobile: inline) */
+    .row-edit-actions {
+      display:flex;
+      gap:8px;
+      justify-content:flex-end;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .row-edit-actions .btn { padding:8px 12px; }
+
+    /* When editing on desktop, keep actions in right column */
+    .item.editing { grid-template-columns: 1fr var(--action-col); }
+    .item.editing .row-edit { grid-column: 1 / 2; }
+    .item.editing .row-edit-actions { grid-column: 2 / 3; display:flex;flex-direction:column;align-items:flex-end;gap:8px; }
+
+    /* When not editing, ensure display-left occupies first column */
+    .item:not(.editing) .display-left { grid-column: 1 / 2; }
+    .item:not(.editing) .row-actions { grid-column: 2 / 3; }
 
     /* Prevent shrinking */
     .item, .display-left, .edit-fields, .edit-row, .action-col, .controls, .add-row { min-width:0 }
@@ -106,14 +127,11 @@
 
       /* Stack list row into single column so fields and actions align vertically */
       .item{grid-template-columns:1fr;align-items:stretch;gap:10px}
-      .row-actions{flex-direction:row;justify-content:flex-end;gap:8px;width:100%;order:2}
-      .row-actions .btn{flex:0 1 auto}
-
-      /* Inline edit: stack fields and move actions below; make action buttons inline */
-      .edit-row{grid-template-columns:1fr !important;gap:12px !important}
-      .action-col{justify-content:flex-start}
-      .actions-inline{flex-direction:row;gap:8px;flex-wrap:wrap;justify-content:flex-end;width:100%}
-      .actions-inline button{display:inline-block;width:auto}
+      .item .display-left { order: 1; }
+      .item .row-actions { order: 3; flex-direction:row; justify-content:flex-end; gap:8px; width:100%; }
+      .item.editing { grid-template-columns:1fr; }
+      .item.editing .row-edit { order:1 }
+      .item.editing .row-edit-actions { order:2; display:flex;flex-direction:row;gap:8px;justify-content:flex-end;width:100% }
 
       /* Add form stacks */
       .add-row{grid-template-columns:1fr !important}
@@ -127,11 +145,12 @@
     }
 
     /* Small polish: ensure action buttons wrap and don't overflow */
-    .actions-inline button { white-space:nowrap; }
+    .row-edit-actions button, .row-actions button { white-space:nowrap; }
   </style>
 </head>
 <body>
   <div class="container" id="app">
+    <!-- Header card -->
     <header class="header-card" role="banner" aria-label="Application header">
       <div class="title-block" aria-hidden="true">
         <h1>Overtime Scheduler</h1>
@@ -148,6 +167,7 @@
       </div>
     </header>
 
+    <!-- Entries list -->
     <section class="card list" aria-live="polite">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <strong>Entries</strong>
@@ -159,6 +179,7 @@
       <div class="meta" style="margin-top:12px">Tip: Unlock to enable Add/Edit/Delete.</div>
     </section>
 
+    <!-- Add Overtime form -->
     <aside class="card" id="formCard">
       <strong style="display:block;margin-bottom:8px;text-align:left">Add Overtime</strong>
       <form id="addForm" autocomplete="off">
@@ -185,12 +206,14 @@
       </form>
     </aside>
 
+    <!-- Footer -->
     <footer class="site-footer" role="contentinfo" aria-label="Site copyright and trademark">
       <span class="brand">BoxTechHub™</span>
       <div class="legal">© 2026 BoxTechHub. All rights reserved.</div>
     </footer>
   </div>
 
+  <!-- Modal -->
   <div id="modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <h3 id="modalTitle">Unlock Actions</h3>
@@ -358,20 +381,26 @@
     function enterEditMode(item, id) {
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
+      item.classList.add('editing');
       item.innerHTML = `
-        <div class="edit-row">
-          <div class="edit-fields">
-            <div class="field-name"><input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" aria-label="Edit name" /></div>
-            <div class="field-date"><input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" aria-label="Edit date" /></div>
-            <div class="field-notes"><input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" aria-label="Edit notes" /></div>
+        <div class="row-edit" aria-live="polite">
+          <div class="field">
+            <label>Name</label>
+            <input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" aria-label="Edit name" />
           </div>
-          <div class="action-col">
-            <div class="actions-inline">
-              <button class="btn ghost" data-action="save">Save</button>
-              <button class="btn ghost" data-action="cancel">Cancel</button>
-              <button class="btn danger" data-action="delete">Delete</button>
-            </div>
+          <div class="field">
+            <label>Date</label>
+            <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" aria-label="Edit date" />
           </div>
+          <div class="field">
+            <label>Notes</label>
+            <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" aria-label="Edit notes" />
+          </div>
+        </div>
+        <div class="row-edit-actions" role="group" aria-label="Edit actions">
+          <button class="btn ghost" data-action="save">Save</button>
+          <button class="btn ghost" data-action="cancel">Cancel</button>
+          <button class="btn danger" data-action="delete">Delete</button>
         </div>
       `;
       const nameInput = item.querySelector('[data-edit="name"]');
@@ -384,6 +413,7 @@
     function exitEditMode(item, id) {
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
+      item.classList.remove('editing');
       item.innerHTML = `
         <div class="display-left">
           <div class="name" data-field="name">${escapeHtml(row.name)}</div>
