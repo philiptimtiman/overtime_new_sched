@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Theme Switcher (Smooth)</title>
-  <meta name="description" content="Theme switcher with smoother, low-lag transitions; containers and page background update together." />
+  <title>Overtime Scheduler — Theme Switcher (Swatches Only)</title>
+  <meta name="description" content="Overtime Scheduler with theme swatches (no text) for Ocean Indigo, Warm Sunset, Forest Teal, Violet Glow. Functionality unchanged." />
   <style>
     :root{
       /* Default (Forest Teal) variables */
@@ -36,8 +36,7 @@
       --theme-transition: 220ms ease;
     }
 
-    /* Theme presets (applied by data-theme on #appRoot)
-       Each theme overrides page bg and card bg variables so containers follow the theme. */
+    /* Theme presets (applied by data-theme on #appRoot) */
     #appRoot[data-theme="forest"]{
       --accent:#10b981; --accent-2:#059669;
       --bg-top:#04251f; --bg-bottom:#0b3b36;
@@ -74,10 +73,8 @@
     a{color:inherit;text-decoration:none}
     button{cursor:pointer}
 
-    /* Canvas */
     .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:transparent}
 
-    /* App shell: page background moved to .app and uses theme variables */
     .app{
       width:var(--mobile-width);max-width:100%;
       display:flex;flex-direction:column;gap:12px;align-items:stretch;
@@ -88,13 +85,10 @@
       border: 1px solid rgba(255,255,255,0.03);
       backdrop-filter: blur(4px);
       color:var(--text);
-
-      /* smooth theme transition for the whole shell */
       transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
       will-change: background, color, border-color;
     }
 
-    /* Card: now uses theme-aware card background variables */
     .card{
       background: linear-gradient(180deg, var(--card-bg-top), var(--card-bg-bottom));
       border-radius:var(--radius);
@@ -105,13 +99,10 @@
       -webkit-backdrop-filter: blur(3px);
       backdrop-filter: blur(3px);
       color:var(--text);
-
-      /* ensure cards transition with theme */
       transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition), box-shadow var(--theme-transition);
       will-change: background, color, border-color;
     }
 
-    /* Header-specific tweaks: ensure header uses .card styles and transitions */
     .header.card { display:flex; flex-direction:column; gap:8px; align-items:stretch; }
     .brand{display:flex;flex-direction:column;align-items:center;gap:4px}
     .brand h1{font-size:1rem;margin:0;text-align:center;color:var(--text);transition:color var(--theme-transition)}
@@ -120,15 +111,26 @@
     .controls{display:flex;gap:8px;align-items:center}
     .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--text);min-width:0;font-size:var(--input-font)}
 
-    /* Theme switcher row */
+    /* Theme swatches (no text) */
     .theme-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px}
-    .theme-btn{
-      padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);
-      background:transparent;color:var(--muted);font-weight:600;font-size:.88rem;
-      display:inline-flex;align-items:center;gap:8px;
-      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
+    .theme-swatch{
+      width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,0.06);
+      display:inline-flex;align-items:center;justify-content:center;padding:0;
+      background:transparent;box-sizing:border-box;
+      transition: transform 160ms ease, box-shadow 220ms ease, border-color var(--theme-transition);
     }
-    .theme-btn.active{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent}
+    .theme-swatch:focus{outline:none; transform:scale(1.06); box-shadow:0 6px 18px rgba(0,0,0,0.25);}
+    .theme-swatch .dot{width:24px;height:24px;border-radius:999px;box-shadow:0 4px 10px rgba(0,0,0,0.25);}
+
+    /* specific swatch gradients */
+    .swatch-ocean .dot{background:linear-gradient(180deg,#4f46e5,#3b82f6)}
+    .swatch-warm .dot{background:linear-gradient(180deg,#ff7a59,#ff5a36)}
+    .swatch-forest .dot{background:linear-gradient(180deg,#10b981,#059669)}
+    .swatch-violet .dot{background:linear-gradient(180deg,#d946ef,#a78bfa)}
+
+    /* active state: ring and slightly larger */
+    .theme-swatch.active{border-color:transparent; transform:scale(1.06); box-shadow:0 8px 26px rgba(0,0,0,0.32)}
+    .theme-swatch.active .dot{box-shadow:0 6px 18px rgba(0,0,0,0.35)}
 
     .lock-label-hidden { display: none !important; }
 
@@ -166,10 +168,6 @@
     #formCard{display:flex;flex-direction:column;gap:10px}
     #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block;transition:color var(--theme-transition)}
     .field{display:flex;flex-direction:column;gap:8px;min-width:0}
-
-    #formCard > form > .field:first-of-type { margin-bottom: 10px; }
-    #formCard .add-row { gap: 10px; }
-    #formCard .form-actions { margin-top: 12px; }
 
     input[type="text"], textarea{
       width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
@@ -220,13 +218,8 @@
     }
     .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
 
-    /* Hide action buttons when locked (keeps layout stable) */
     .actions-hidden .item-actions { display: none !important; }
-
-    /* Hide the Add Overtime form when locked */
     .form-hidden #formCard { display: none !important; }
-
-    .item, .field, .add-row, .date-control, .date-text { min-width:0; -webkit-flex-shrink:1; flex-shrink:1; }
 
     @media (max-width:340px){
       .add-row{grid-template-columns:1fr}
@@ -238,7 +231,7 @@
 </head>
 <body>
   <div class="canvas">
-    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler — Theme Switcher" data-theme="forest">
+    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler — Theme Swatches" data-theme="forest">
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle">Overtime Scheduler</h1>
@@ -254,12 +247,12 @@
           <button id="openUnlock" class="btn ghost" title="Unlock actions">Unlock</button>
         </div>
 
-        <!-- Theme switcher -->
+        <!-- Theme swatches (no text) -->
         <div class="theme-row" role="toolbar" aria-label="Theme switcher">
-          <button class="theme-btn" data-theme="ocean" title="Ocean Indigo">Ocean Indigo</button>
-          <button class="theme-btn" data-theme="warm" title="Warm Sunset">Warm Sunset</button>
-          <button class="theme-btn active" data-theme="forest" title="Forest Teal">Forest Teal</button>
-          <button class="theme-btn" data-theme="violet" title="Violet Glow">Violet Glow</button>
+          <button class="theme-swatch swatch-ocean" data-theme="ocean" aria-label="Ocean Indigo" title="Ocean Indigo" type="button"><span class="dot" aria-hidden="true"></span></button>
+          <button class="theme-swatch swatch-warm" data-theme="warm" aria-label="Warm Sunset" title="Warm Sunset" type="button"><span class="dot" aria-hidden="true"></span></button>
+          <button class="theme-swatch swatch-forest active" data-theme="forest" aria-label="Forest Teal" title="Forest Teal" type="button"><span class="dot" aria-hidden="true"></span></button>
+          <button class="theme-swatch swatch-violet" data-theme="violet" aria-label="Violet Glow" title="Violet Glow" type="button"><span class="dot" aria-hidden="true"></span></button>
         </div>
       </header>
 
@@ -354,7 +347,7 @@
     const dateNative = document.getElementById('overtime_date_native');
     const dateBtn = document.getElementById('datePickerBtn');
 
-    const themeButtons = Array.from(document.querySelectorAll('.theme-btn'));
+    const swatches = Array.from(document.querySelectorAll('.theme-swatch'));
     const THEME_KEY = 'overtime_theme_v1';
     const LOCAL_KEY = 'overtime_unlocked_v2';
 
@@ -372,7 +365,7 @@
       if (!theme) theme = 'forest';
 
       // immediate visual feedback: remove active from all
-      themeButtons.forEach(btn => btn.classList.remove('active'));
+      swatches.forEach(btn => btn.classList.remove('active'));
 
       // batch DOM updates to next paint
       requestAnimationFrame(() => {
@@ -380,7 +373,7 @@
 
         // small second rAF to ensure CSS variables applied before toggling active state
         requestAnimationFrame(() => {
-          themeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === theme));
+          swatches.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === theme));
           safeSetLocal(THEME_KEY, theme);
         });
       });
@@ -392,10 +385,17 @@
       applyTheme(saved);
     })();
 
-    themeButtons.forEach(btn => {
+    swatches.forEach(btn => {
       btn.addEventListener('click', () => {
         const t = btn.dataset.theme;
         applyTheme(t);
+      });
+      // keyboard accessibility: Enter/Space triggers
+      btn.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          btn.click();
+        }
       });
     });
 
