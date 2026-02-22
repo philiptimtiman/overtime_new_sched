@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overtime Scheduler — Full Patch</title>
-  <meta name="description" content="Single-file UI: list, add, edit, save, cancel, delete; responsive and accessible." />
+  <title>Overtime Scheduler — Oldest First</title>
+  <meta name="description" content="Single-file UI: list, add, edit, save, cancel, delete; sorted oldest-first and responsive." />
   <style>
     :root{
       --bg:#0f1724;
@@ -83,7 +83,7 @@
       color:var(--text);
     }
 
-    /* Search box improved contrast */
+    /* Search box */
     .controls{display:flex;gap:8px;align-items:center}
     .search{
       padding:10px 12px;
@@ -223,7 +223,7 @@
     <header>
       <div>
         <h1>Overtime Scheduler</h1>
-        <p class="lead">Manage entries — add, edit, save, cancel, delete (responsive)</p>
+        <p class="lead">Sorted oldest first — add, edit, save, cancel, delete</p>
       </div>
       <div class="controls">
         <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" />
@@ -241,7 +241,7 @@
       <div id="empty" class="meta" style="display:none">No entries yet.</div>
 
       <div class="tips" id="tips" style="margin-top:12px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);color:var(--text-muted);font-size:13px;line-height:1.35;">
-        Tips: Use Edit to modify inline. On phones inputs stack and actions move below them.
+        Tips: Table is sorted by overtime date (oldest first). Use Edit to modify inline.
       </div>
     </section>
 
@@ -319,6 +319,15 @@
     }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+    // Sort helper: oldest first (ascending)
+    function sortByDateAsc(arr) {
+      return (arr || []).slice().sort((a, b) => {
+        const da = a?.overtime_date ? new Date(a.overtime_date) : new Date(8640000000000000); // far future if missing
+        const db = b?.overtime_date ? new Date(b.overtime_date) : new Date(8640000000000000);
+        return da - db;
+      });
+    }
+
     // Render list (display mode)
     function renderList(items){
       rowsEl.innerHTML = '';
@@ -349,17 +358,17 @@
       });
     }
 
-    // Load rows from Supabase
+    // Load rows from Supabase (ordered oldest first)
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
         const { data, error } = await supabase
           .from('overtime_data')
           .select('id, name, notes, overtime_date')
-          .order('id', { ascending: true });
+          .order('overtime_date', { ascending: true }); // oldest first
 
         if (error) throw error;
-        dataCache = data || [];
+        dataCache = sortByDateAsc(data || []);
         renderList(dataCache);
         statusEl.textContent = `Loaded ${dataCache.length} rows`;
       } catch (err) {
@@ -385,7 +394,8 @@
           .select();
 
         if (error) throw error;
-        dataCache = [...dataCache, ...data];
+        // merge and sort oldest-first
+        dataCache = sortByDateAsc([...dataCache, ...data]);
         renderList(dataCache);
         form.reset();
       } catch (err) {
@@ -414,7 +424,7 @@
         try {
           const { error } = await supabase.from('overtime_data').delete().eq('id', id);
           if (error) throw error;
-          dataCache = dataCache.filter(r => String(r.id) !== String(id));
+          dataCache = sortByDateAsc(dataCache.filter(r => String(r.id) !== String(id)));
           renderList(dataCache);
         } catch (err) {
           console.error(err);
@@ -500,11 +510,11 @@
         if (error) throw error;
         if (data && data.length) {
           const updated = data[0];
-          dataCache = dataCache.map(r => (String(r.id) === String(id) ? updated : r));
+          dataCache = sortByDateAsc(dataCache.map(r => (String(r.id) === String(id) ? updated : r)));
         } else {
-          dataCache = dataCache.map(r => (String(r.id) === String(id) ? { ...r, name, notes, overtime_date } : r));
+          dataCache = sortByDateAsc(dataCache.map(r => (String(r.id) === String(id) ? { ...r, name, notes, overtime_date } : r)));
         }
-        exitEditMode(item, id);
+        renderList(dataCache);
       } catch (err) {
         console.error(err);
         alert('Update failed: ' + (err.message || err));
@@ -512,7 +522,7 @@
       }
     }
 
-    // Search filter (client-side)
+    // Search filter (client-side) — keep oldest-first order
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
@@ -521,7 +531,7 @@
         (r.notes || '').toLowerCase().includes(q) ||
         (r.overtime_date || '').includes(q)
       );
-      renderList(filtered);
+      renderList(sortByDateAsc(filtered));
     });
 
     // Initial load
