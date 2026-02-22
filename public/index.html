@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Mobile Safe</title>
-  <meta name="description" content="Overtime scheduler with robust mobile layout fixes for iPhone input overlap." />
+  <title>Overtime Scheduler — Search Always Available</title>
+  <meta name="description" content="Overtime scheduler with mobile fixes and search available while locked." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -117,6 +117,13 @@
     }
     .locked #lockToggle { opacity:1; pointer-events:auto; }
 
+    /* Keep search usable while locked */
+    .locked .search,
+    .locked .search * {
+      pointer-events: auto !important;
+      opacity: 1 !important;
+    }
+
     /* Modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
     .modal{background:var(--card);padding:18px;border-radius:12px;min-width:260px;max-width:520px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06);z-index:10000}
@@ -142,7 +149,7 @@
     <header>
       <div class="title-block">
         <h1>Overtime Scheduler</h1>
-        <p class="lead">Responsive edit layout — inputs and buttons won't overlap on phones</p>
+        <p class="lead">Responsive edit layout — search stays available while locked</p>
       </div>
 
       <div class="controls" role="group" aria-label="Search and lock controls">
@@ -241,6 +248,9 @@
     function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+    // Ensure search element reference exists
+    const searchEl = document.getElementById('search');
+
     function setLockedState(val){
       locked = !!val;
       localStorage.setItem('overtime_locked', locked ? 'true' : 'false');
@@ -254,6 +264,14 @@
         lockDot.style.background = '#60a5fa';
         lockText.textContent = 'Unlocked';
         lockToggle.textContent = 'Lock';
+      }
+
+      // Safety: ensure search remains enabled and interactive regardless of locked state
+      if (searchEl) {
+        searchEl.disabled = false;
+        searchEl.setAttribute('aria-disabled', 'false');
+        // keep focusable on mobile/keyboard
+        searchEl.tabIndex = 0;
       }
     }
 
@@ -466,6 +484,13 @@
         if (r.ok) { const j = await r.json(); setLockedState(!j.unlocked); }
         else setLockedState(localStorage.getItem('overtime_locked') === 'true');
       } catch (e) { setLockedState(localStorage.getItem('overtime_locked') === 'true'); }
+    }
+
+    // Keep search usable even if some other code tries to disable it
+    if (searchEl) {
+      searchEl.disabled = false;
+      searchEl.setAttribute('aria-disabled', 'false');
+      searchEl.tabIndex = 0;
     }
 
     searchInput.addEventListener('input', () => {
