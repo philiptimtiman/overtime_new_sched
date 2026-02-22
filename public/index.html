@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Hide Form When Locked</title>
-  <meta name="description" content="Compact readable overtime scheduler. Add Overtime form hides when locked; other functions unchanged." />
+  <title>Overtime Scheduler — Locked by Default</title>
+  <meta name="description" content="Compact readable overtime scheduler. App is locked by default on every load; Add form and action buttons hidden while locked." />
   <style>
     :root{
       --accent:#14b8a6; --accent-2:#0ea5a4;
@@ -127,7 +127,7 @@
     /* Hide action buttons when locked (keeps layout stable) */
     .actions-hidden .item-actions { display: none !important; }
 
-    /* NEW: hide the Add Overtime form when locked */
+    /* Hide the Add Overtime form when locked */
     .form-hidden #formCard { display: none !important; }
 
     .item, .field, .add-row, .date-control, .date-text { min-width:0; -webkit-flex-shrink:1; flex-shrink:1; }
@@ -483,8 +483,8 @@
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
     window.addEventListener('DOMContentLoaded', async () => {
-      const saved = safeGetLocal(LOCAL_KEY);
-      setUnlockedState(saved === 'true');
+      // Force locked state on every load/refresh (user requested)
+      setUnlockedState(false, true);
       await loadRows();
     });
   </script>
