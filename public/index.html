@@ -3,10 +3,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overtime Scheduler — Date aligned with Name & Notes</title>
-  <meta name="description" content="Supabase single-file UI with edit/delete and aligned date" />
+  <title>Overtime Scheduler — Edit & Delete (Responsive Fix)</title>
+  <meta name="description" content="Supabase single-file UI with responsive edit/save/cancel/delete" />
   <style>
-    /* Core variables */
     :root{
       --bg:#0f1724;
       --card:#0b1220;
@@ -67,7 +66,6 @@
     h1{font-size:20px;margin:0}
     p.lead{margin:0;color:var(--text-muted);font-size:13px}
 
-    /* Card */
     .card{
       background: var(--card);
       border-radius:12px;
@@ -77,7 +75,7 @@
       color:var(--text);
     }
 
-    /* Form and inputs */
+    /* Inputs */
     form{display:flex;flex-direction:column;gap:10px}
     label{font-size:13px;color:var(--text-muted);display:block}
     input[type="text"], input[type="date"], textarea{
@@ -96,19 +94,10 @@
       box-sizing:border-box;
     }
     textarea{min-height:84px;resize:vertical;padding-top:10px;padding-bottom:10px;height:auto}
-
     input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.28); }
+    input:focus, textarea:focus{ box-shadow:0 6px 18px rgba(96,165,250,0.08); border-color:var(--accent); }
 
-    input:focus, textarea:focus{
-      box-shadow:0 6px 18px rgba(96,165,250,0.08);
-      border-color:var(--accent);
-    }
-
-    .row{
-      display:flex;
-      gap:8px;
-      align-items:flex-start;
-    }
+    .row{ display:flex; gap:8px; align-items:flex-start; }
     .row > *{ flex:1 1 0; min-width:0; }
 
     .actions{display:flex;gap:8px;align-items:center}
@@ -133,21 +122,13 @@
     }
     .btn-danger{ background:transparent;color:var(--danger);border:1px solid rgba(255,0,0,0.08);padding:8px 10px;border-radius:8px; }
 
-    /* List column */
-    .list{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
+    /* List */
+    .list{ display:flex; flex-direction:column; gap:12px; }
     .item{
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
       padding:12px;
       border-radius:10px;
       background:var(--glass);
       border:1px solid rgba(255,255,255,0.04);
-      align-items:center;
       transition:transform .12s ease, box-shadow .12s;
       color:var(--text);
       min-height:56px;
@@ -157,38 +138,18 @@
     .name{font-weight:700;color:var(--text)}
     .date{font-family:var(--mono);font-size:13px;color:var(--accent-2); margin-top:6px; }
 
-    /* More menu / actions */
     .actions-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .edit-input{ width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:var(--text); height: var(--input-height); box-sizing: border-box; }
 
-    /* Edit layout helpers: date moved into left column to align with name/notes */
-    .edit-row { display:flex; gap:10px; align-items:flex-start; width:100%; }
-    .edit-left { flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:6px; }
-    .edit-right { width:120px; display:flex; flex-direction:column; gap:6px; align-items:flex-end; min-width:0; }
+    /* EDIT layout: desktop side-by-side, mobile stacked */
+    .edit-row { display:flex; gap:12px; align-items:flex-start; width:100%; }
+    .edit-left { flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:8px; }
+    .edit-right { flex:0 0 140px; display:flex; flex-direction:column; gap:8px; align-items:flex-end; min-width:0; }
 
+    /* keep actions aligned on desktop */
     .edit-right .actions-inline { justify-content:flex-end; }
 
-    /* top controls */
-    .controls{display:flex;gap:8px;align-items:center}
-    .search{
-      padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);
-    }
-
-    /* tips area */
-    .tips {
-      margin-top:12px;
-      padding:10px;
-      border-radius:10px;
-      background:rgba(255,255,255,0.02);
-      color:var(--text-muted);
-      font-size:13px;
-      line-height:1.35;
-    }
-
-    /* status */
-    #status{font-size:13px;color:var(--text-muted)}
-
-    /* Responsive adjustments */
+    /* small-screen behavior: stack inputs then actions */
     @media (max-width:760px){
       body{padding:12px}
       .container{grid-template-columns:1fr; gap:12px}
@@ -203,15 +164,16 @@
       .actions{flex-direction:row;flex-wrap:wrap}
       .actions button{flex:1 1 auto; min-width:0}
 
-      /* stack edit layout vertically on small screens so notes won't overlap actions */
-      .edit-row { flex-direction:column; gap:8px; }
-      .edit-right { width:100%; align-items:flex-start; }
-      .edit-right .edit-input[type="date"] { width:100%; }
-      .actions-inline { justify-content:flex-start; gap:8px; }
+      /* CRITICAL: stack edit layout vertically on small screens so actions sit below inputs */
+      .edit-row { flex-direction:column; gap:10px; }
+      .edit-right { width:100%; align-items:flex-start; order:2; }
+      .edit-right .actions-inline { justify-content:flex-start; gap:8px; flex-wrap:wrap; }
+      .edit-right .actions-inline button { flex:1 1 auto; min-width:0; }
+      .edit-left { order:1; }
       .edit-left .edit-input { width:100%; }
     }
 
-    /* ensure consistent vertical alignment between display and edit states */
+    /* small visual tweak: display area layout */
     .display-left { display:flex; flex-direction:column; gap:6px; min-width:0; flex:1; }
     .display-right { display:flex; flex-direction:column; gap:6px; align-items:flex-end; min-width:120px; }
   </style>
@@ -221,7 +183,7 @@
     <header>
       <div>
         <h1>Overtime Scheduler</h1>
-        <p class="lead">Date aligned with Name & Notes — mobile friendly</p>
+        <p class="lead">Responsive edit controls — no overlap on phones</p>
       </div>
       <div class="controls">
         <input id="search" class="search" placeholder="Search name or notes" />
@@ -229,7 +191,6 @@
       </div>
     </header>
 
-    <!-- Left: list -->
     <section class="card list" aria-live="polite">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <strong>Entries</strong>
@@ -240,11 +201,10 @@
       <div id="empty" class="meta" style="display:none">No entries yet.</div>
 
       <div class="tips" id="tips">
-        Tips: Date is now aligned under Name and Notes for consistent layout.
+        Tips: Edit rows inline. On phones the inputs stack and actions move below them.
       </div>
     </section>
 
-    <!-- Right: form -->
     <aside class="card">
       <strong style="display:block;margin-bottom:8px">Add Overtime</strong>
       <form id="addForm" autocomplete="off">
@@ -275,7 +235,7 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // TODO: replace with your Supabase values
+    // Replace with your Supabase values
     const SUPABASE_URL = 'https://bisvmgjgyvludhqsvvcn.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
 
@@ -311,7 +271,6 @@
     // State
     let dataCache = [];
 
-    // Helpers
     function formatDate(d){
       if(!d) return '—';
       const dt = new Date(d + 'T00:00:00');
@@ -319,7 +278,6 @@
     }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Render list with date aligned under name/notes (left column) and actions on right
     function renderList(items){
       rowsEl.innerHTML = '';
       if(!items.length){ emptyEl.style.display = 'block'; return; }
@@ -349,7 +307,6 @@
       });
     }
 
-    // Load rows from Supabase
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -368,7 +325,6 @@
       }
     }
 
-    // Add new row
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = form.name.value.trim();
@@ -399,11 +355,10 @@
 
     resetBtn.addEventListener('click', () => form.reset());
 
-    // Event delegation for Edit/Delete/Save/Cancel
+    // Delegated actions
     rowsEl.addEventListener('click', async (e) => {
       const action = e.target.dataset.action;
       if (!action) return;
-
       const item = e.target.closest('.item');
       const id = item?.dataset?.id;
       if (!id) return;
@@ -412,11 +367,7 @@
         const ok = confirm('Delete this entry? This cannot be undone.');
         if (!ok) return;
         try {
-          const { error } = await supabase
-            .from('overtime_data')
-            .delete()
-            .eq('id', id);
-
+          const { error } = await supabase.from('overtime_data').delete().eq('id', id);
           if (error) throw error;
           dataCache = dataCache.filter(r => String(r.id) !== String(id));
           renderList(dataCache);
@@ -427,23 +378,11 @@
         return;
       }
 
-      if (action === 'edit') {
-        enterEditMode(item, id);
-        return;
-      }
-
-      if (action === 'save') {
-        await saveEdit(item, id);
-        return;
-      }
-
-      if (action === 'cancel') {
-        exitEditMode(item, id);
-        return;
-      }
+      if (action === 'edit') { enterEditMode(item, id); return; }
+      if (action === 'save') { await saveEdit(item, id); return; }
+      if (action === 'cancel') { exitEditMode(item, id); return; }
     });
 
-    // Enter edit mode: date moved into left column under notes for alignment
     function enterEditMode(item, id) {
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
@@ -469,7 +408,6 @@
       if (nameInput) nameInput.focus();
     }
 
-    // Exit edit mode without saving
     function exitEditMode(item, id) {
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
@@ -490,7 +428,6 @@
       `;
     }
 
-    // Save edit
     async function saveEdit(item, id) {
       const nameInput = item.querySelector('[data-edit="name"]');
       const notesInput = item.querySelector('[data-edit="notes"]');
@@ -527,7 +464,6 @@
       }
     }
 
-    // Search filter (client-side)
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
@@ -539,7 +475,6 @@
       renderList(filtered);
     });
 
-    // Initial load
     window.addEventListener('DOMContentLoaded', loadRows);
   </script>
 </body>
