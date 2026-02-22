@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — iOS-safe & Alignment</title>
-  <meta name="description" content="Mobile-first overtime scheduler with contextual alignment, iOS-safe date trigger, and modal stacking fixes." />
+  <title>Overtime Scheduler — Spacing Adjusted</title>
+  <meta name="description" content="Mobile-first overtime scheduler with adjusted spacing between Name, Date, Notes and Add button." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -75,6 +75,16 @@
     #formCard label{font-size:.9rem;color:var(--muted);margin:0 0 10px 0;text-align:center;display:block}
     /* Increased gap between label and input, and between stacked fields */
     .field{display:flex;flex-direction:column;gap:10px;min-width:0}
+
+    /* --- Targeted spacing tweaks (only for Add Overtime form) --- */
+    /* Add extra space below the Name field so Date/Notes sit further down */
+    #formCard > form > .field:first-of-type { margin-bottom: 14px; }
+
+    /* Slightly increase vertical gap inside the add-row so Date and Notes are not cramped */
+    #formCard .add-row { gap: 14px; }
+
+    /* Ensure the Add button is separated from the fields */
+    #formCard .form-actions { margin-top: 16px; }
 
     /* Inputs: placeholders centered, but editable text left-aligned for typing clarity */
     input[type="text"], textarea{
@@ -306,7 +316,6 @@
       try {
         const dateControl = document.querySelector('.date-control');
         if (!dateControl || !dateNative || !dateText || !dateBtn) return;
-        // Ensure native input is inside date-control (already placed in markup)
         // When native input changes, copy value to visible text
         dateNative.addEventListener('change', () => {
           dateText.value = dateNative.value || '';
