@@ -110,6 +110,27 @@
     }
     button:active{transform:translateY(1px)}
 
+    /* Toggle button base and theme-specific colors */
+    #themeToggle {
+      background: transparent;
+      border: 1px solid rgba(15,23,42,0.06);
+      color: var(--muted);
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color .12s ease, background .12s ease, border-color .12s ease;
+    }
+    :root #themeToggle {
+      color: #0f172a;
+      border-color: rgba(15,23,42,0.06);
+    }
+    [data-theme="dark"] #themeToggle {
+      color: #e6f7ff;
+      border-color: rgba(255,255,255,0.06);
+    }
+    #themeToggle:hover { filter: brightness(0.98); }
+
     /* List column */
     .list{
       display:flex;
@@ -229,11 +250,27 @@
     const root = document.documentElement;
     const savedTheme = localStorage.getItem('theme') || 'light';
     if (savedTheme === 'dark') root.setAttribute('data-theme','dark');
+
+    function updateThemeButton() {
+      const isDark = root.getAttribute('data-theme') === 'dark';
+      themeToggle.textContent = isDark ? 'Light mode' : 'Dark mode';
+      themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    }
+
     themeToggle.addEventListener('click', () => {
       const isDark = root.getAttribute('data-theme') === 'dark';
-      if (isDark) { root.removeAttribute('data-theme'); localStorage.setItem('theme','light'); }
-      else { root.setAttribute('data-theme','dark'); localStorage.setItem('theme','dark'); }
+      if (isDark) {
+        root.removeAttribute('data-theme');
+        localStorage.setItem('theme','light');
+      } else {
+        root.setAttribute('data-theme','dark');
+        localStorage.setItem('theme','dark');
+      }
+      updateThemeButton();
     });
+
+    // Initialize button text
+    updateThemeButton();
 
     // State
     let dataCache = [];
