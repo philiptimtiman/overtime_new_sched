@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Refined Buttons</title>
-  <meta name="description" content="Overtime Scheduler with refined Add / Reset buttons (smaller, nicer layout). Functionality unchanged." />
+  <title>Overtime Scheduler — Refined Buttons Fixed</title>
+  <meta name="description" content="Overtime Scheduler with refined Add / Reset buttons — fixed so form boxes are not affected." />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -73,44 +73,68 @@
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:8px 10px}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
 
-    /* --- Refined Add / Reset button styles --- */
-    /* Make form actions compact and visually balanced */
+    /* --- Fixed form layout and refined Add / Reset button styles --- */
+    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+    .field{display:flex;flex-direction:column;gap:8px;min-width:0}
+
+    /* Keep form card content stable: don't let buttons change input widths */
+    #formCard { display:flex; flex-direction:column; gap:10px; }
+    #formCard form { display:flex; flex-direction:column; gap:10px; }
+
+    /* Form actions: align to right, compact buttons, do not stretch */
     .form-actions{
       display:flex;
       gap:8px;
       align-items:center;
-      justify-content:center;
-      margin-top:8px;
+      justify-content:flex-end;
+      margin-top:6px;
+      /* prevent the actions from forcing the form width */
+      flex-shrink:0;
     }
 
-    /* Primary Add button: shorter, pill-like, with icon */
+    /* Primary Add button: compact pill with icon */
     .btn-add{
-      padding:8px 12px;
+      padding:6px 12px;
       height:36px;
       border-radius:999px;
       font-size:0.95rem;
-      box-shadow: 0 6px 18px rgba(2,10,8,0.18);
+      box-shadow: 0 6px 18px rgba(2,10,8,0.12);
       display:inline-flex;align-items:center;gap:8px;
+      white-space:nowrap;
     }
     .btn-add svg{width:16px;height:16px;display:block;flex-shrink:0}
 
-    /* Secondary Reset button: subtle outline, smaller */
+    /* Secondary Reset button: subtle outline, compact */
     .btn-reset{
-      padding:8px 10px;
+      padding:6px 10px;
       height:36px;
       border-radius:999px;
       font-size:0.95rem;
       display:inline-flex;align-items:center;gap:8px;
       background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);
+      white-space:nowrap;
     }
     .btn-reset svg{width:14px;height:14px;display:block;flex-shrink:0}
 
-    /* When form is narrow (mobile), stack buttons but keep compact */
-    @media (max-width:360px){
-      .form-actions{flex-direction:row;gap:8px}
+    /* Ensure inputs keep full width regardless of button sizes */
+    input[type="text"], textarea, .date-text {
+      width:100%;
+      padding:8px 10px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.04);
+      background:rgba(0,0,0,0.12);
+      color:var(--text);
+      height:var(--input-h);
+      box-sizing:border-box;
+      font-size:var(--input-font);
+      text-align:center;
     }
+    input[type="text"]:focus, textarea:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
 
-    /* Icon button for lock (kept from previous) */
+    .date-control{position:relative;display:flex;align-items:center;gap:8px}
+    .date-btn{width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;position:relative;z-index:1;font-size:1rem}
+
+    /* Icon button for lock */
     .icon-btn{
       display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted);padding:0;cursor:pointer;transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;
     }
@@ -120,8 +144,11 @@
     .icon-btn svg { display:block; width:18px; height:18px; }
     .icon-btn .icon-fill, .icon-btn .icon-stroke { fill: currentColor; stroke: none; }
 
-    /* small helpers */
-    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media (max-width:420px){
+      .add-row{grid-template-columns:1fr}
+      .form-actions{justify-content:stretch}
+      .form-actions .btn-add, .form-actions .btn-reset { flex:1; justify-content:center; }
+    }
   </style>
 </head>
 <body>
@@ -178,13 +205,13 @@
             <input id="name" name="name" class="lock-guard" type="text" placeholder="Employee name" required />
           </div>
 
-          <div class="add-row" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="add-row">
             <div class="field">
               <label for="overtime_date_text">Date</label>
-              <div class="date-control" style="position:relative;display:flex;align-items:center;gap:8px">
+              <div class="date-control">
                 <input id="overtime_date_text" name="overtime_date_text" class="date-text lock-guard" type="text" placeholder="YYYY-MM-DD" aria-label="Overtime date" readonly />
                 <button type="button" id="datePickerBtn" class="date-btn" aria-label="Open date picker">📅</button>
-                <input id="overtime_date_native" class="native-date" type="date" style="position:absolute;right:6px;opacity:0" />
+                <input id="overtime_date_native" class="native-date" type="date" />
               </div>
             </div>
 
@@ -195,13 +222,11 @@
           </div>
 
           <div class="form-actions" role="group" aria-label="Form actions">
-            <!-- Add button with plus icon -->
             <button id="submitBtn" class="btn btn-add lock-guard" type="submit" title="Add entry" aria-label="Add entry">
               <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M11 11V6h2v5h5v2h-5v5h-2v-5H6v-2z"/></svg>
               <span>Add</span>
             </button>
 
-            <!-- Reset button with refresh icon -->
             <button id="resetBtn" type="button" class="btn-reset lock-guard" title="Reset form" aria-label="Reset form">
               <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M12 6V3L8 7l4 4V8c2.8 0 5 2.2 5 5 0 .6-.1 1.2-.3 1.7l1.5 1.1C18.9 15 19 14.5 19 14c0-3.9-3.1-7-7-7zM6.3 6.3L4.8 5.2C5.1 4.8 5.9 4 7 4c3.9 0 7 3.1 7 7v1l4-4-4-4v3c-2.8 0-5 2.2-5 5 0 .6.1 1.2.3 1.7L6.3 6.3z"/></svg>
               <span>Reset</span>
@@ -415,10 +440,10 @@
       }
     });
 
-    // Reset button behavior: clear form fields (keeps lock guard)
+    // Reset button behavior
     resetBtn.addEventListener('click', () => { form.reset(); dateText.value = ''; });
 
-    // Row actions (edit/delete/save/cancel)
+    // Row actions
     rowsEl.addEventListener('click', async (ev) => {
       const action = ev.target?.dataset?.action;
       if (!action) return;
@@ -500,7 +525,7 @@
       renderList(filtered);
     });
 
-    // openUnlock behavior unchanged: open modal when locked, lock when unlocked
+    // openUnlock behavior unchanged
     openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
 
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
