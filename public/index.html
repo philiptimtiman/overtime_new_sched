@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Theme Switcher (Containers Update)</title>
-  <meta name="description" content="Theme switcher where page background and container/card backgrounds update together." />
+  <title>Overtime Scheduler — Theme Switcher (Containers Sync)</title>
+  <meta name="description" content="Theme switcher where page background and all containers (including header) update together with smooth transition." />
   <style>
     :root{
       /* Default (Forest Teal) variables */
@@ -31,10 +31,13 @@
       --label-font:0.95rem;
       --input-font:0.98rem;
       --pill-font:0.9rem;
+
+      /* transition timing */
+      --theme-transition: 300ms ease;
     }
 
     /* Theme presets (applied by data-theme on #appRoot)
-       Each theme now overrides both page bg and card bg variables so containers follow the theme. */
+       Each theme overrides page bg and card bg variables so containers follow the theme. */
     #appRoot[data-theme="forest"]{
       --accent:#10b981; --accent-2:#059669;
       --bg-top:#04251f; --bg-bottom:#0b3b36;
@@ -85,6 +88,9 @@
       border: 1px solid rgba(255,255,255,0.03);
       backdrop-filter: blur(6px);
       color:var(--text);
+
+      /* smooth theme transition for the whole shell */
+      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
     }
 
     /* Card: now uses theme-aware card background variables */
@@ -98,12 +104,16 @@
       -webkit-backdrop-filter: blur(4px);
       backdrop-filter: blur(4px);
       color:var(--text);
+
+      /* ensure cards transition with theme */
+      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition), box-shadow var(--theme-transition);
     }
 
-    .header{display:flex;flex-direction:column;gap:8px}
+    /* Header-specific tweaks: ensure header uses .card styles and transitions */
+    .header.card { display:flex; flex-direction:column; gap:8px; align-items:stretch; }
     .brand{display:flex;flex-direction:column;align-items:center;gap:4px}
-    .brand h1{font-size:1rem;margin:0;text-align:center}
-    .brand p{margin:0;color:var(--muted);font-size:.85rem;text-align:center}
+    .brand h1{font-size:1rem;margin:0;text-align:center;color:var(--text);transition:color var(--theme-transition)}
+    .brand p{margin:0;color:var(--muted);font-size:.85rem;text-align:center;transition:color var(--theme-transition)}
 
     .controls{display:flex;gap:8px;align-items:center}
     .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--text);min-width:0;font-size:var(--input-font)}
@@ -114,12 +124,13 @@
       padding:6px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);
       background:transparent;color:var(--muted);font-weight:600;font-size:.88rem;
       display:inline-flex;align-items:center;gap:8px;
+      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
     }
     .theme-btn.active{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent}
 
     .lock-label-hidden { display: none !important; }
 
-    .meta{font-size:.82rem;color:var(--muted);text-align:center}
+    .meta{font-size:.82rem;color:var(--muted);text-align:center;transition:color var(--theme-transition)}
 
     .list{display:flex;flex-direction:column;gap:8px}
     .item{
@@ -128,6 +139,7 @@
       border:1px solid rgba(255,255,255,0.03);
       min-width:0; overflow:visible;
       color:var(--text);
+      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
     }
     .item-top{display:flex;gap:8px;align-items:center;justify-content:space-between}
     .item-left{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -144,13 +156,13 @@
 
     .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 
-    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem}
+    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem;transition:background var(--theme-transition), color var(--theme-transition)}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
     .btn.full{width:100%}
 
     #formCard{display:flex;flex-direction:column;gap:10px}
-    #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block}
+    #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block;transition:color var(--theme-transition)}
     .field{display:flex;flex-direction:column;gap:8px;min-width:0}
 
     #formCard > form > .field:first-of-type { margin-bottom: 10px; }
@@ -160,6 +172,7 @@
     input[type="text"], textarea{
       width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
       text-align:center;
+      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
     }
     input[type="text"]:focus, textarea:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
 
@@ -203,7 +216,7 @@
       background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));
       z-index:99999;
     }
-    .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
+    .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
 
     /* Hide action buttons when locked (keeps layout stable) */
     .actions-hidden .item-actions { display: none !important; }
@@ -233,7 +246,7 @@
         <div class="controls" role="search" style="margin-top:6px;display:flex;gap:8px;align-items:center">
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search entries" />
           <div style="display:flex;align-items:center;gap:8px">
-            <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
+            <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444;transition:background var(--theme-transition)"></div>
             <div class="lock-label-hidden" id="lockLabel">Locked</div>
           </div>
           <button id="openUnlock" class="btn ghost" title="Unlock actions">Unlock</button>
