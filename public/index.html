@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Fixed Edit Layout</title>
-  <meta name="description" content="Overtime scheduler with corrected row positioning during edit actions (no overlapping Name/Date/Notes)." />
+  <title>Overtime Scheduler — Fixed Edit Overlap</title>
+  <meta name="description" content="Overtime scheduler — rows fixed so Name / Date / Notes do not overlap while editing on small screens." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -41,7 +41,7 @@
     /*
       ROWS: desktop layout uses 4 columns:
       [Name] [Date] [Notes] [Actions]
-      Each column is a grid cell so inputs and values align exactly like the Add form.
+      Inputs are present in DOM but hidden until the row is in editing state.
     */
     .item {
       padding:12px;
@@ -62,8 +62,7 @@
       gap:6px;
       min-width:0;
     }
-    .field label { font-size:12px; color:var(--muted); display:none; } /* hidden visual label; kept for semantics */
-    .value {
+    .field .value {
       padding:10px 12px;
       border-radius:10px;
       min-height:var(--input-h);
@@ -99,7 +98,7 @@
     }
     .actions .btn { padding:8px 10px; font-size:14px; white-space:nowrap; }
 
-    /* Editing state: reveal inputs and show Save/Cancel/Delete */
+    /* Editing state: reveal inputs and hide values */
     .item.editing .value { display:none; }
     .item.editing .field input { display:block; }
 
@@ -128,7 +127,9 @@
     .locked #lockToggle { opacity:1; pointer-events:auto }
     .locked .search, .locked .search * { pointer-events:auto !important; opacity:1 !important }
 
-    /* Responsive: stack fields and move actions below on small screens */
+    /* Responsive: stack fields and move actions below on small screens.
+       IMPORTANT: do NOT force inputs visible on mobile globally — only show inputs when .editing is present.
+    */
     @media (max-width:760px){
       .container { grid-template-columns:1fr; gap:12px; padding:12px }
       .header-card { flex-direction:column; align-items:stretch; gap:12px; padding:14px }
@@ -144,9 +145,16 @@
         align-items:stretch;
       }
 
-      .field label { display:block; } /* show labels on mobile for clarity */
-      .value { display:block; }
-      .field input { display:block; }
+      /* show labels on mobile if you want (optional) */
+      .field label { display:block; font-size:12px; color:var(--muted); }
+
+      /* Do NOT show inputs by default on mobile; only show when editing */
+      .field .value { display:block; }
+      .field input { display:none; }
+
+      /* When editing on mobile, reveal inputs and hide values */
+      .item.editing .value { display:none; }
+      .item.editing .field input { display:block; }
 
       .actions {
         flex-direction:row;
@@ -154,11 +162,6 @@
         gap:8px;
         width:100%;
       }
-
-      /* When editing on mobile, actions appear below fields */
-      .item.editing .actions { order: 2; }
-      .item .field { width:100%; }
-      .field input, .value { width:100%; }
     }
 
     /* Small polish */
@@ -203,7 +206,7 @@
           <input id="name" name="name" type="text" placeholder="Employee name" required autocomplete="name" />
         </div>
 
-        <div class="add-row" style="margin-top:8px;min-width:0">
+        <div class="add-row" style="margin-top:8px;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <div>
             <label for="overtime_date">Date</label>
             <input id="overtime_date" name="overtime_date" type="date" autocomplete="bday" />
@@ -296,19 +299,16 @@
       wrapper.dataset.id = row.id;
       wrapper.innerHTML = `
         <div class="field">
-          <label>Name</label>
           <div class="value" data-field="name">${escapeHtml(row.name)}</div>
           <input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" />
         </div>
 
         <div class="field">
-          <label>Date</label>
           <div class="value" data-field="overtime_date">${row.overtime_date ? formatDate(row.overtime_date) : '—'}</div>
           <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" />
         </div>
 
         <div class="field">
-          <label>Notes</label>
           <div class="value" data-field="notes">${escapeHtml(row.notes || '')}</div>
           <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" />
         </div>
@@ -419,7 +419,7 @@
         <button class="btn danger" data-action="delete">Delete</button>
       `;
 
-      // Ensure inputs are visible and populated (they already exist)
+      // Populate inputs (they already exist)
       const nameInput = item.querySelector('[data-edit="name"]');
       const dateInput = item.querySelector('[data-edit="overtime_date"]');
       const notesInput = item.querySelector('[data-edit="notes"]');
@@ -533,6 +533,7 @@
       renderList(filtered);
     });
 
+    // Always start locked on load
     window.addEventListener('DOMContentLoaded', async () => {
       setLockedState(true);
       await loadRows();
