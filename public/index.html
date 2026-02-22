@@ -354,7 +354,7 @@
           <div class="date-pill" data-field="overtime_date">${row.overtime_date ? formatDate(row.overtime_date) : '—'}</div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-          <div class="meta-small" style="color:var(--muted)">${row.id ? 'ID: ' + row.id : ''}</div>
+          <div class="meta-small" style="color:var(--muted)">${row.id ? row.id : ''}</div>
           <div class="item-actions">
             <button class="btn ghost lock-guard" data-action="edit">Edit</button>
             <button class="btn ghost lock-guard" data-action="delete">Delete</button>
