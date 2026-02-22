@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overtime Scheduler — Edit Layout Fix</title>
-  <meta name="description" content="Single-file UI with fixed edit layout so Save/Cancel don't overlap inputs." />
+  <title>Overtime Scheduler — Responsive Edit Fix</title>
+  <meta name="description" content="Overtime scheduler with responsive edit layout; action buttons do not overlap inputs on small screens." />
   <style>
     :root{
       --bg:#0f1724;
@@ -16,9 +16,11 @@
       --glass: rgba(255,255,255,0.03);
       --shadow: 0 8px 30px rgba(2,6,23,0.6);
       --input-h:44px;
-      --action-col:160px;
       --gap:12px;
+      --action-col:160px;
+      --radius:10px;
     }
+
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;padding:18px}
     .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
@@ -31,25 +33,63 @@
     .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);color:var(--text);height:var(--input-h);min-width:160px}
     .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
     .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .btn.ghost{background:transparent;border:0;color:var(--muted);padding:6px 8px;border-radius:8px;cursor:pointer}
+    .btn.ghost{background:transparent;border:0;color:var(--muted);padding:8px 10px;border-radius:8px;cursor:pointer}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger);padding:8px 10px;border-radius:8px}
 
     .list{display:flex;flex-direction:column;gap:12px}
-    .item{padding:12px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);display:flex;flex-direction:column;gap:8px;min-height:64px}
+    .item{padding:12px;border-radius:12px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);display:flex;flex-direction:column;gap:10px;min-height:64px}
     .display-left{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
     .name{font-weight:700}
     .meta{color:var(--muted);font-size:13px}
     .date{font-family:ui-monospace,monospace;color:var(--accent);font-size:13px}
 
-    .actions-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-
     form{display:flex;flex-direction:column;gap:10px}
-    label{font-size:13px;color:var(--muted)}
-    input[type="text"], input[type="date"], .edit-input {padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);width:100%;min-width:0}
-    .row{display:flex;gap:8px}
-    .row > *{flex:1 1 0;min-width:0}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    input[type="text"], input[type="date"], .edit-input {
+      padding:10px 12px;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.04);
+      background:transparent;color:var(--text);height:var(--input-h);width:100%;min-width:0;font-size:14px;
+    }
 
-    /* Disabled state visuals: dim and disable most controls when locked */
+    /* Edit layout: use CSS grid for stable columns on wide screens, stack on small screens */
+    .edit-row {
+      display: grid;
+      grid-template-columns: 1fr var(--action-col);
+      gap: var(--gap);
+      align-items: start;
+      width:100%;
+    }
+    .edit-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap);
+      align-items: start;
+    }
+    /* Make the three inputs occupy two-column grid: Name full width, Date + Notes side-by-side */
+    .edit-fields .field-name { grid-column: 1 / -1; }
+    .edit-fields .field-date { grid-column: 1 / 2; }
+    .edit-fields .field-notes { grid-column: 2 / 3; }
+
+    .action-col { display:flex; align-items:flex-start; justify-content:flex-end; }
+    .action-col .actions-inline { display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+
+    /* Small screens: stack fields and move actions below */
+    @media (max-width:760px){
+      .container{grid-template-columns:1fr;gap:12px;padding:12px}
+      .edit-row { grid-template-columns: 1fr; }
+      .edit-fields { grid-template-columns: 1fr; }
+      .edit-fields .field-name,
+      .edit-fields .field-date,
+      .edit-fields .field-notes { grid-column: auto; }
+      .action-col { justify-content:flex-start; margin-top:6px; }
+      .action-col .actions-inline { flex-direction:row; gap:8px; }
+      .btn { padding:8px 10px; font-size:14px; }
+    }
+
+    /* Prevent overlap: ensure inputs and actions have spacing and do not overflow */
+    .edit-input { box-sizing:border-box; word-break:break-word; }
+    .actions-inline button { white-space:nowrap; }
+
+    /* Locked state visuals */
     .locked .btn,
     .locked .btn.ghost,
     .locked input,
@@ -57,59 +97,13 @@
       opacity: 0.45;
       pointer-events: none;
     }
-
-    /* Exception: always allow the Lock/Unlock control to be clickable and visible */
-    .locked #lockToggle {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    /* Exception: allow the unlock modal and its controls to be interactive while locked */
-    .locked .modal-backdrop,
-    .locked .modal,
-    .locked #pwInput,
-    .locked #pwSubmit,
-    .locked #pwCancel {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    /* ensure modal sits above dimmed UI */
+    .locked #lockToggle { opacity:1; pointer-events:auto; }
     .modal-backdrop { z-index: 9999; }
     .modal { z-index: 10000; }
-
-    .locked .search{opacity:0.7}
-
-    /* Lock indicator */
-    .lock-indicator{display:flex;align-items:center;gap:8px}
-    .lock-dot{width:10px;height:10px;border-radius:50%;background:#60a5fa;box-shadow:0 0 8px rgba(96,165,250,0.25)}
-    .lock-dot.locked{background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,0.25)}
 
     /* Modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center}
     .modal{background:var(--card);padding:18px;border-radius:12px;min-width:280px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06)}
-    .modal h3{margin:0 0 8px 0}
-    .modal p{margin:0 0 12px 0;color:var(--muted);font-size:13px}
-    .modal .row{flex-direction:column}
-    .modal.show{display:flex}
-
-    /* Edit layout fixes */
-    .edit-row { display:flex; gap:var(--gap); align-items:flex-start; width:100%; }
-    .edit-row .edit-fields { flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:8px; }
-    .edit-row .edit-fields .edit-input { width:100%; }
-    .edit-row .action-col { flex:0 0 var(--action-col); display:flex; align-items:flex-start; justify-content:flex-end; gap:8px; }
-    .edit-row .action-col .actions-inline { flex-direction:column; align-items:flex-end; gap:8px; }
-    /* ensure inputs don't overflow and wrap correctly on small screens */
-    .edit-input { box-sizing:border-box; overflow:visible; }
-
-    @media (max-width:760px){
-      .container{grid-template-columns:1fr;gap:12px;padding:12px}
-      header{flex-direction:column;align-items:flex-start}
-      .row{flex-direction:column}
-      .edit-row{flex-direction:column}
-      .edit-row .action-col{flex:0 0 auto;align-items:flex-end;justify-content:flex-start}
-      .edit-row .action-col .actions-inline{flex-direction:row}
-    }
   </style>
 </head>
 <body>
@@ -117,13 +111,13 @@
     <header>
       <div>
         <h1>Overtime Scheduler</h1>
-        <p class="lead">Edit layout fixed so Save/Cancel don't overlap inputs</p>
+        <p class="lead">Responsive edit layout — actions won't overlap inputs on small screens</p>
       </div>
 
       <div class="controls">
         <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" autocomplete="off" />
         <div class="lock-indicator" aria-hidden="true" style="margin-left:6px">
-          <div id="lockDot" class="lock-dot"></div>
+          <div id="lockDot" class="lock-dot" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
           <div id="lockText" style="color:var(--muted);font-size:13px">Checking…</div>
         </div>
         <button id="lockToggle" class="btn secondary" title="Lock or unlock actions">Lock</button>
@@ -150,12 +144,12 @@
           <input id="name" name="name" type="text" placeholder="Employee name" required autocomplete="name" />
         </div>
 
-        <div class="row">
-          <div>
+        <div class="row" style="margin-top:8px">
+          <div style="flex:1">
             <label for="overtime_date">Date</label>
             <input id="overtime_date" name="overtime_date" type="date" autocomplete="bday" />
           </div>
-          <div>
+          <div style="flex:1">
             <label for="notes">Notes</label>
             <input id="notes" name="notes" type="text" placeholder="Short note" autocomplete="off" />
           </div>
@@ -173,11 +167,11 @@
   <div id="modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <h3 id="modalTitle">Unlock Actions</h3>
-      <p id="modalDesc">Enter password to unlock editing, deleting, and adding. (server-validated)</p>
-      <div class="row" style="margin-bottom:10px">
+      <p id="modalDesc" style="color:var(--muted);margin-top:6px">Enter password to unlock editing, deleting, and adding. (server-validated)</p>
+      <div style="margin-top:12px">
         <input id="pwInput" type="password" autocomplete="current-password" placeholder="Password" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);width:100%" />
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
         <button id="pwCancel" class="btn secondary">Cancel</button>
         <button id="pwSubmit" class="btn">Submit</button>
       </div>
@@ -215,11 +209,7 @@
     let locked = true;
 
     // Helpers
-    function formatDate(d){
-      if(!d) return '—';
-      const dt = new Date(d + 'T00:00:00');
-      return dt.toLocaleDateString();
-    }
+    function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
     function setLockedState(val){
@@ -227,18 +217,18 @@
       localStorage.setItem('overtime_locked', locked ? 'true' : 'false');
       if (locked) {
         document.body.classList.add('locked');
-        lockDot.classList.add('locked');
+        lockDot.style.background = '#ef4444';
         lockText.textContent = 'Locked';
         lockToggle.textContent = 'Unlock';
       } else {
         document.body.classList.remove('locked');
-        lockDot.classList.remove('locked');
+        lockDot.style.background = '#60a5fa';
         lockText.textContent = 'Unlocked';
         lockToggle.textContent = 'Lock';
       }
     }
 
-    // Render
+    // Render list
     function renderList(items){
       rowsEl.innerHTML = '';
       if(!items.length){ emptyEl.style.display = 'block'; return; }
@@ -248,7 +238,6 @@
         wrapper.className = 'item';
         wrapper.dataset.id = row.id;
 
-        // default (view) layout
         wrapper.innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%">
             <div class="display-left">
@@ -270,11 +259,7 @@
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
-        const { data, error } = await supabase
-          .from('overtime_data')
-          .select('id, name, notes, overtime_date')
-          .order('overtime_date', { ascending: true });
-
+        const { data, error } = await supabase.from('overtime_data').select('id,name,notes,overtime_date').order('overtime_date',{ascending:true});
         if (error) throw error;
         dataCache = (data || []);
         renderList(dataCache);
@@ -294,24 +279,18 @@
       const overtime_date = form.overtime_date.value || null;
       if (!name) return alert('Name is required');
 
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Adding...';
+      submitBtn.disabled = true; submitBtn.textContent = 'Adding...';
       try {
-        const { data, error } = await supabase
-          .from('overtime_data')
-          .insert([{ name, notes, overtime_date }])
-          .select();
-
+        const { data, error } = await supabase.from('overtime_data').insert([{ name, notes, overtime_date }]).select();
         if (error) throw error;
-        dataCache = [...dataCache, ...data];
+        dataCache = [...dataCache, ...(data||[])];
         renderList(dataCache);
         form.reset();
       } catch (err) {
         console.error(err);
         alert('Insert failed: ' + (err.message || err));
       } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Add';
+        submitBtn.disabled = false; submitBtn.textContent = 'Add';
       }
     });
 
@@ -327,8 +306,7 @@
 
       if (action === 'delete') {
         if (locked) { alert('Actions are locked. Unlock to delete.'); return; }
-        const ok = confirm('Delete this entry? This cannot be undone.');
-        if (!ok) return;
+        if (!confirm('Delete this entry? This cannot be undone.')) return;
         try {
           const { error } = await supabase.from('overtime_data').delete().eq('id', id);
           if (error) throw error;
@@ -359,7 +337,7 @@
       }
     });
 
-    // Edit UI (uses .edit-row layout to avoid overlap)
+    // Edit UI
     function enterEditMode(item, id) {
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
@@ -367,9 +345,9 @@
       item.innerHTML = `
         <div class="edit-row">
           <div class="edit-fields">
-            <input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" />
-            <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" />
-            <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" />
+            <div class="field-name"><input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" aria-label="Edit name" /></div>
+            <div class="field-date"><input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" aria-label="Edit date" /></div>
+            <div class="field-notes"><input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" aria-label="Edit notes" /></div>
           </div>
           <div class="action-col">
             <div class="actions-inline">
@@ -417,18 +395,12 @@
       if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
 
       try {
-        const { data, error } = await supabase
-          .from('overtime_data')
-          .update({ name, notes, overtime_date })
-          .eq('id', id)
-          .select();
-
+        const { data, error } = await supabase.from('overtime_data').update({ name, notes, overtime_date }).eq('id', id).select();
         if (error) throw error;
         if (data && data.length) {
-          const updated = data[0];
-          dataCache = dataCache.map(r => (String(r.id) === String(id) ? updated : r));
+          dataCache = dataCache.map(r => String(r.id) === String(id) ? data[0] : r);
         } else {
-          dataCache = dataCache.map(r => (String(r.id) === String(id) ? { ...r, name, notes, overtime_date } : r));
+          dataCache = dataCache.map(r => String(r.id) === String(id) ? { ...r, name, notes, overtime_date } : r);
         }
         renderList(dataCache);
       } catch (err) {
@@ -438,100 +410,57 @@
       }
     }
 
-    // Modal helpers
-    function openModal() {
-      pwInput.value = '';
-      pwError.style.display = 'none';
-      modal.style.display = 'flex';
-      modal.setAttribute('aria-hidden', 'false');
-      pwInput.focus();
-    }
-    function closeModal() {
-      modal.style.display = 'none';
-      modal.setAttribute('aria-hidden', 'true');
-    }
+    // Modal helpers & unlock (kept minimal)
+    function openModal(){ pwInput.value=''; pwError.style.display='none'; modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); pwInput.focus(); }
+    function closeModal(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); }
 
-    // Submit password (simple flow)
     async function submitPassword(password) {
       try {
         pwError.style.display = 'block';
         pwError.textContent = 'Checking...';
-
-        const res = await fetch('/api/unlock', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password })
-        });
-
+        const res = await fetch('/api/unlock', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password }) });
         const raw = await res.text();
         let parsed;
         try { parsed = raw ? JSON.parse(raw) : null; } catch (e) { parsed = null; }
-
         if (!res.ok) {
           const msg = parsed?.error || parsed?.message || raw || `HTTP ${res.status}`;
           pwError.textContent = `Server: ${msg} (status ${res.status})`;
-          console.warn('unlock response', { status: res.status, body: parsed ?? raw, headers: Object.fromEntries(res.headers) });
           return;
         }
-
-        const check = await fetch('/api/unlocked', { method: 'GET' });
-        const checkJson = await (check.ok ? check.json().catch(() => null) : null);
-
-        if (checkJson && checkJson.unlocked) {
-          setLockedState(false);
-          closeModal();
-          return;
-        }
-
-        pwError.textContent = `Unlock endpoint returned ${res.status} but unlocked check failed. Server response: ${parsed?.error || parsed?.message || raw || 'no body'}`;
-        pwError.style.display = 'block';
+        const check = await fetch('/api/unlocked');
+        const checkJson = check.ok ? await check.json().catch(()=>null) : null;
+        if (checkJson && checkJson.unlocked) { setLockedState(false); closeModal(); return; }
+        pwError.textContent = `Unlock endpoint returned ${res.status} but unlocked check failed.`;
       } catch (err) {
-        console.error('submitPassword error', err);
-        pwError.textContent = 'Network or server error. See console for details.';
-        pwError.style.display = 'block';
+        console.error(err);
+        pwError.textContent = 'Network or server error.';
       }
     }
 
-    // Hook lock toggle
     lockToggle.addEventListener('click', () => {
-      if (locked) {
-        openModal();
-        pwSubmit.onclick = () => submitPassword(pwInput.value || '');
-      } else {
-        const ok = confirm('Locking will disable Add/Edit/Delete. Continue?');
-        if (!ok) return;
-        setLockedState(true);
-      }
+      if (locked) { openModal(); pwSubmit.onclick = () => submitPassword(pwInput.value || ''); }
+      else { if (!confirm('Locking will disable Add/Edit/Delete. Continue?')) return; setLockedState(true); }
     });
-
     pwCancel.addEventListener('click', () => closeModal());
-    pwInput.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); }
-    });
+    pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
     // Check unlocked state on load
     async function checkUnlockedOnLoad() {
       try {
         const r = await fetch('/api/unlocked');
-        if (r.ok) {
-          const j = await r.json();
-          setLockedState(!j.unlocked);
-        } else {
-          setLockedState(localStorage.getItem('overtime_locked') === 'true');
-        }
-      } catch (e) {
-        setLockedState(localStorage.getItem('overtime_locked') === 'true');
-      }
+        if (r.ok) { const j = await r.json(); setLockedState(!j.unlocked); }
+        else setLockedState(localStorage.getItem('overtime_locked') === 'true');
+      } catch (e) { setLockedState(localStorage.getItem('overtime_locked') === 'true'); }
     }
 
-    // Search filter (client-side)
+    // Search filter
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
       const filtered = dataCache.filter(r =>
-        (r.name || '').toLowerCase().includes(q) ||
-        (r.notes || '').toLowerCase().includes(q) ||
-        (r.overtime_date || '').includes(q)
+        (r.name||'').toLowerCase().includes(q) ||
+        (r.notes||'').toLowerCase().includes(q) ||
+        (r.overtime_date||'').includes(q)
       );
       renderList(filtered);
     });
