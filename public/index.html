@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Theme Switcher (Fixed Background)</title>
-  <meta name="description" content="Overtime Scheduler with theme switcher (Ocean Indigo, Warm Sunset, Forest Teal, Violet Glow). Background now updates correctly." />
+  <title>Overtime Scheduler — Theme Switcher (Containers Update)</title>
+  <meta name="description" content="Theme switcher where page background and container/card backgrounds update together." />
   <style>
     :root{
       /* Default (Forest Teal) variables */
@@ -16,10 +16,11 @@
       --muted: #9fcfc3;
       --danger: #ef4444;
 
+      /* Card background fallbacks (overridden per theme) */
       --card-bg-top: rgba(255,255,255,0.02);
       --card-bg-bottom: rgba(255,255,255,0.01);
-      --glass: rgba(255,255,255,0.03);
 
+      --glass: rgba(255,255,255,0.03);
       --shadow: 0 10px 28px rgba(2,6,23,0.55);
 
       --input-h:40px;
@@ -32,51 +33,63 @@
       --pill-font:0.9rem;
     }
 
-    /* Theme presets (applied by data-theme on #appRoot) */
+    /* Theme presets (applied by data-theme on #appRoot)
+       Each theme now overrides both page bg and card bg variables so containers follow the theme. */
     #appRoot[data-theme="forest"]{
       --accent:#10b981; --accent-2:#059669;
       --bg-top:#04251f; --bg-bottom:#0b3b36;
       --text:#e6f7f2; --muted:#9fcfc3;
+      --card-bg-top: rgba(8,40,34,0.06);
+      --card-bg-bottom: rgba(6,30,26,0.03);
     }
     #appRoot[data-theme="warm"]{
       --accent:#ff7a59; --accent-2:#ff5a36;
       --bg-top:#2b0b3a; --bg-bottom:#3b0f2f;
       --text:#f0eef6; --muted:#c9bfc9;
+      --card-bg-top: rgba(60,20,50,0.06);
+      --card-bg-bottom: rgba(50,18,45,0.03);
     }
     #appRoot[data-theme="ocean"]{
       --accent:#4f46e5; --accent-2:#3b82f6;
       --bg-top:#071428; --bg-bottom:#0b1f2b;
       --text:#e6eef8; --muted:#9fb0c6;
+      --card-bg-top: rgba(10,20,40,0.06);
+      --card-bg-bottom: rgba(8,18,34,0.03);
     }
     #appRoot[data-theme="violet"]{
       --accent:#d946ef; --accent-2:#a78bfa;
       --bg-top:#0b0b12; --bg-bottom:#2b1536;
       --text:#f3eefb; --muted:#d6c7e9;
+      --card-bg-top: rgba(40,18,40,0.06);
+      --card-bg-bottom: rgba(36,14,36,0.03);
     }
 
+    /* Base reset and typography */
     *,*::before,*::after{box-sizing:border-box}
     html,body{height:100%;margin:0;padding:0;background:transparent;color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--base-font)}
     input,button,select,textarea{font-family:inherit}
     a{color:inherit;text-decoration:none}
     button{cursor:pointer}
 
+    /* Canvas */
     .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:transparent}
 
-    /* IMPORTANT: background moved to #appRoot so theme variables apply to page bg */
+    /* App shell: page background moved to .app and uses theme variables */
     .app{
       width:var(--mobile-width);max-width:100%;
       display:flex;flex-direction:column;gap:12px;align-items:stretch;
-      /* use theme variables for page gradient */
       background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
       border-radius:14px;
       padding:10px;
       box-shadow: 0 18px 50px rgba(2,10,8,0.55);
       border: 1px solid rgba(255,255,255,0.03);
       backdrop-filter: blur(6px);
+      color:var(--text);
     }
 
+    /* Card: now uses theme-aware card background variables */
     .card{
-      background: linear-gradient(180deg,var(--card-bg-top),var(--card-bg-bottom));
+      background: linear-gradient(180deg, var(--card-bg-top), var(--card-bg-bottom));
       border-radius:var(--radius);
       padding:12px;
       box-shadow:var(--shadow);
@@ -84,6 +97,7 @@
       overflow:visible;
       -webkit-backdrop-filter: blur(4px);
       backdrop-filter: blur(4px);
+      color:var(--text);
     }
 
     .header{display:flex;flex-direction:column;gap:8px}
@@ -113,6 +127,7 @@
       background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
       border:1px solid rgba(255,255,255,0.03);
       min-width:0; overflow:visible;
+      color:var(--text);
     }
     .item-top{display:flex;gap:8px;align-items:center;justify-content:space-between}
     .item-left{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -581,7 +596,6 @@
     window.addEventListener('DOMContentLoaded', async () => {
       // Force locked state on every load/refresh (user requested)
       setUnlockedState(false, true);
-      // Ensure theme persisted (already applied by initTheme)
       await loadRows();
     });
   </script>
