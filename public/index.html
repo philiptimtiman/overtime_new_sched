@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Compact + Readable (Hide actions when locked)</title>
-  <meta name="description" content="Compact mode with improved readability and stronger action color; Edit/Delete hidden when locked." />
+  <title>Overtime Scheduler — Hide Form When Locked</title>
+  <meta name="description" content="Compact readable overtime scheduler. Add Overtime form hides when locked; other functions unchanged." />
   <style>
     :root{
       --accent:#14b8a6; --accent-2:#0ea5a4;
@@ -124,8 +124,11 @@
     }
     .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px}
 
-    /* NEW: helper class to hide action buttons when locked (keeps layout stable) */
+    /* Hide action buttons when locked (keeps layout stable) */
     .actions-hidden .item-actions { display: none !important; }
+
+    /* NEW: hide the Add Overtime form when locked */
+    .form-hidden #formCard { display: none !important; }
 
     .item, .field, .add-row, .date-control, .date-text { min-width:0; -webkit-flex-shrink:1; flex-shrink:1; }
 
@@ -256,19 +259,17 @@
     function isoDateFromText(s){ if(!s) return null; const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[1]}-${m[2]}-${m[3]}` : null; }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Update controls: enable/disable inputs and show/hide action buttons when locked/unlocked
+    // Update controls: enable/disable inputs and show/hide action buttons and form when locked/unlocked
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
       openUnlock.textContent = unlocked ? 'Lock' : 'Unlock';
 
-      // Hide or show Edit/Delete action buttons across the list without changing layout of other elements.
-      // We toggle a class on the root app container so CSS can hide .item-actions cleanly.
-      if (!unlocked) {
-        appRoot.classList.add('actions-hidden');
-      } else {
-        appRoot.classList.remove('actions-hidden');
-      }
+      // Hide or show Edit/Delete action buttons across the list
+      if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
+
+      // Hide or show the Add Overtime form when locked
+      if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
     }
 
     function setUnlockedState(state, persist = true){
@@ -482,7 +483,6 @@
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
     window.addEventListener('DOMContentLoaded', async () => {
-      // restore persisted lock state if available
       const saved = safeGetLocal(LOCAL_KEY);
       setUnlockedState(saved === 'true');
       await loadRows();
