@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Spacing Fix</title>
-  <meta name="description" content="Mobile-first overtime scheduler with adjusted spacing between labels and inputs." />
+  <title>Overtime Scheduler — iOS-safe & Alignment</title>
+  <meta name="description" content="Mobile-first overtime scheduler with contextual alignment, iOS-safe date trigger, and modal stacking fixes." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -29,11 +29,12 @@
     /* Card */
     .card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
 
-    /* Header */
+    /* Header: centered title & subtitle */
     .header{display:flex;flex-direction:column;gap:10px}
     .brand{display:flex;flex-direction:column;align-items:center;gap:6px}
     .brand h1{font-size:1.05rem;margin:0;text-align:center}
     .brand p{margin:0;color:var(--muted);font-size:.9rem;text-align:center}
+
     .controls{display:flex;gap:10px;align-items:center}
     .search{flex:1;border-radius:10px;padding:10px 12px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);min-width:0}
 
@@ -87,14 +88,29 @@
     .date-control{position:relative;display:flex;align-items:center;gap:10px}
     .date-text{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;text-align:center}
     .date-text:focus { text-align:left; }
-    .date-btn{width:44px;height:44px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center}
+    .date-btn{width:44px;height:44px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
 
     .add-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0}
-    .form-actions{display:flex;gap:10px;flex-direction:column;margin-top:8px;z-index:1}
+    .form-actions{display:flex;gap:10px;flex-direction:column;margin-top:8px;z-index:2}
     .form-actions .btn{width:100%}
 
-    /* Hidden native date input used only to trigger native picker when available */
-    .native-date{position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0;border:0;padding:0;margin:0}
+    /* Hidden native date input used only to trigger native picker when available.
+       We'll position it as an invisible overlay so taps open native picker without layout shifts. */
+    .date-control .native-date{
+      position:absolute;
+      right:8px;
+      top:50%;
+      transform:translateY(-50%);
+      width:44px;
+      height:44px;
+      opacity:0;
+      border:0;
+      padding:0;
+      margin:0;
+      background:transparent;
+      z-index:5;
+      cursor:pointer;
+    }
 
     /* Inline edit styles (stacked, full width) */
     .editing .edit-input{display:block}
@@ -103,6 +119,18 @@
     /* When editing, ensure inputs are stacked and won't overflow */
     .item.editing { display:flex; flex-direction:column; gap:10px; }
     .item.editing .edit-input { width:100%; max-width:100%; }
+
+    /* Modal stacking fix: always on top */
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,0.5);
+      z-index:99999;
+    }
+    .modal{z-index:100000;position:relative;transform:translateZ(0);}
 
     /* Defensive: ensure children can shrink on small screens */
     .item, .field, .add-row, .date-control, .date-text { min-width:0; -webkit-flex-shrink:1; flex-shrink:1; }
@@ -126,7 +154,6 @@
 
         <div class="controls" role="search" style="margin-top:6px;display:flex;gap:10px;align-items:center">
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search entries" />
-          <!-- keep only the dot indicator visible; textual label removed per request -->
           <div style="display:flex;align-items:center;gap:8px">
             <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
             <div class="lock-label-hidden" id="lockLabel">Locked</div>
@@ -162,8 +189,9 @@
               <div class="date-control">
                 <input id="overtime_date_text" name="overtime_date_text" class="date-text lock-guard" type="text" placeholder="YYYY-MM-DD" aria-label="Overtime date" readonly />
                 <button type="button" id="datePickerBtn" class="date-btn" aria-label="Open date picker">📅</button>
+                <!-- native date input positioned as invisible overlay to capture taps -->
+                <input id="overtime_date_native" class="native-date" type="date" />
               </div>
-              <input id="overtime_date_native" class="native-date" type="date" />
             </div>
 
             <div class="field">
@@ -187,7 +215,7 @@
   </div>
 
   <!-- Unlock modal -->
-  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" style="display:none">
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document" aria-labelledby="modalTitle">
       <h3 id="modalTitle" style="margin:0 0 8px 0">Unlock Actions</h3>
       <p style="margin:0 0 10px;color:var(--muted)">Enter password to enable Add / Edit / Delete</p>
@@ -248,6 +276,7 @@
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
+    // Modal helpers (ensure display:flex and z-index)
     function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
     function closeModal(){ modalBackdrop.style.display = 'none'; modalBackdrop.setAttribute('aria-hidden','true'); pwError.style.display='none'; }
 
@@ -272,16 +301,37 @@
       }
     }
 
-    function openNativeDatePicker(initialValue){
-      if (initialValue && /^\d{4}-\d{2}-\d{2}$/.test(initialValue)) dateNative.value = initialValue;
-      else dateNative.value = '';
-      if (typeof dateNative.showPicker === 'function') dateNative.showPicker();
-      else { dateNative.focus(); try { dateNative.click(); } catch(e){} }
-    }
-    dateNative.addEventListener('change', () => { const v = dateNative.value; dateText.value = v || ''; });
-    dateBtn.addEventListener('click', () => openNativeDatePicker(isoDateFromText(dateText.value)));
-    dateText.addEventListener('click', () => openNativeDatePicker(isoDateFromText(dateText.value)));
+    // Date picker overlay strategy
+    (function attachNativeOverlay() {
+      try {
+        const dateControl = document.querySelector('.date-control');
+        if (!dateControl || !dateNative || !dateText || !dateBtn) return;
+        // Ensure native input is inside date-control (already placed in markup)
+        // When native input changes, copy value to visible text
+        dateNative.addEventListener('change', () => {
+          dateText.value = dateNative.value || '';
+        });
+        // Open native picker
+        function openNativePicker(initialIso) {
+          if (initialIso && /^\d{4}-\d{2}-\d{2}$/.test(initialIso)) dateNative.value = initialIso;
+          else dateNative.value = '';
+          if (typeof dateNative.showPicker === 'function') {
+            dateNative.showPicker();
+          } else {
+            dateNative.focus();
+            try { dateNative.click(); } catch(e){}
+          }
+        }
+        dateBtn.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
+        dateText.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
+        // Make sure native overlay accepts pointer events
+        dateNative.style.pointerEvents = 'auto';
+      } catch (e) {
+        console.warn('Date overlay attach failed', e);
+      }
+    })();
 
+    // Render list
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -314,6 +364,7 @@
       statusEl.textContent = `Loaded ${items.length} entries`;
     }
 
+    // Load rows (Supabase)
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -327,6 +378,7 @@
       }
     }
 
+    // Add form
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!unlocked) { alert('Actions are locked. Unlock to add entries.'); return; }
@@ -352,6 +404,7 @@
 
     resetBtn.addEventListener('click', () => { form.reset(); dateText.value = ''; });
 
+    // Row actions (edit/delete/save/cancel)
     rowsEl.addEventListener('click', async (ev) => {
       const action = ev.target?.dataset?.action;
       if (!action) return;
@@ -421,6 +474,7 @@
       }
     });
 
+    // Search
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
@@ -432,11 +486,13 @@
       renderList(filtered);
     });
 
+    // Unlock modal handlers
     openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
+    // Init
     window.addEventListener('DOMContentLoaded', async () => {
       setUnlockedState(false, true);
       await loadRows();
