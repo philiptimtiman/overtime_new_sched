@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Compact Add Form</title>
-  <meta name="description" content="Overtime Scheduler — compact Add/Reset buttons and tighter form spacing (Add Overtime section only)." />
+  <title>Overtime Scheduler — Compact Add Form (Fixed)</title>
+  <meta name="description" content="Overtime Scheduler — compact Add/Reset buttons and tighter form spacing (Add Overtime section only). JS behavior preserved." />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -36,7 +36,7 @@
       border-radius:var(--radius);padding:12px;box-shadow:0 8px 20px rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.04);
     }
 
-    /* --- Header / theme / list styles unchanged (kept compact) --- */
+    /* Header / theme / list baseline styles */
     .header.card{display:flex;flex-direction:column;gap:8px}
     .brand{display:flex;flex-direction:column;align-items:center}
     .brand h1{margin:0;font-size:1rem}
@@ -55,28 +55,59 @@
     .list{display:flex;flex-direction:column;gap:8px}
     .item{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
     .item-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-    .name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .notes{color:var(--muted);font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .date-pill{min-width:72px;text-align:center;padding:6px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.02);flex-shrink:0}
+    .item-left{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
 
-    .item-actions{display:flex;gap:6px;align-items:center}
+    .name{font-weight:600;font-size:.96rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .notes{color:var(--muted);font-size:.82rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    .date-pill{
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:72px; max-width:120px; padding:6px 10px;border-radius:8px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+      border:1px solid rgba(255,255,255,0.02); color:var(--text); box-sizing:border-box;
+      font-size:0.88rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;
+    }
+
+    .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+
     .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem;transition:background var(--theme-transition), color var(--theme-transition)}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
+    .btn.full{width:100%}
 
-    /* --- Add Overtime section: compact spacing and buttons (ONLY this area changed) --- */
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999}
+    .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
+
+    .actions-hidden .item-actions { display: none !important; }
+    .form-hidden #formCard { display: none !important; }
+
+    /* Icon button for lock */
+    .icon-btn{
+      display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted);padding:0;cursor:pointer;transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;
+    }
+    .icon-btn:focus{ outline: 2px solid rgba(255,255,255,0.06); outline-offset:2px; }
+    .icon-btn:hover{ transform: translateY(-1px); }
+    .icon-btn.active{ background: linear-gradient(180deg,var(--accent),var(--accent-2)); color:#fff; border-color:transparent; box-shadow: 0 8px 20px rgba(0,0,0,0.25); }
+    .icon-btn svg { display:block; width:18px; height:18px; }
+    .icon-btn .icon-fill, .icon-btn .icon-stroke { fill: currentColor; stroke: none; }
+
+    /* -------------------------
+       ADD OVERTIME SECTION ONLY
+       (compact spacing + smaller buttons)
+       ------------------------- */
     #formCard{display:flex;flex-direction:column;gap:8px}
     #formCard label{
       font-size:0.92rem;
       color:var(--muted);
       margin:0 0 6px 0; /* reduced vertical gap between label and input */
-      text-align:left;   /* align labels to left for compactness */
+      text-align:left;
     }
 
     .add-row{
       display:grid;
       grid-template-columns: 1fr 1fr;
-      gap:8px; /* slightly smaller gap so fields sit closer */
+      gap:8px;
       align-items:start;
     }
 
@@ -138,15 +169,12 @@
     }
     .btn-reset svg{width:14px;height:14px;display:block;flex-shrink:0}
 
-    /* Ensure the Short note field never gets overlapped: allow the form row to expand vertically if needed */
-    .add-row .field:nth-child(2) { min-width:0; }
-
-    /* Mobile adjustments: stack fields and make buttons full width */
     @media (max-width:420px){
-      .add-row{grid-template-columns:1fr;gap:8px}
+      .add-row{grid-template-columns:1fr}
       .form-actions{flex-direction:row;gap:8px}
       .form-actions .btn-add, .form-actions .btn-reset { flex:1; justify-content:center; }
       input[type="text"], .date-text { height:40px; }
+      .date-text{padding-right:48px}
     }
   </style>
 </head>
@@ -164,7 +192,9 @@
           <div style="display:flex;align-items:center;gap:8px">
             <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444;transition:background var(--theme-transition)"></div>
 
+            <!-- Icon button replaces text button; keeps same id openUnlock so JS remains unchanged -->
             <button id="openUnlock" class="icon-btn" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">
+              <!-- lock icon -->
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
                 <path class="icon-fill" d="M12 17a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
                 <path class="icon-fill" d="M17 8h-1V6a4 4 0 10-8 0v2H7a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2v-7a2 2 0 00-2-2zM9 8V6a3 3 0 116 0v2" />
@@ -310,21 +340,36 @@
       btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
-    // Update controls
+    // Update controls: enable/disable inputs and show/hide action buttons and form when locked/unlocked
     function updateGuardedControls(){
+      // enable/disable elements marked with .lock-guard
       document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
+
+      // lock indicator color
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
+
+      // update icon button accessible state and tooltip
       if (openUnlock) {
         openUnlock.setAttribute('aria-pressed', unlocked ? 'true' : 'false');
         openUnlock.title = unlocked ? 'Lock actions' : 'Unlock actions';
         openUnlock.setAttribute('aria-label', unlocked ? 'Lock actions' : 'Unlock actions');
         openUnlock.classList.toggle('active', unlocked);
       }
-      if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
-      if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
+
+      // hide edit/delete buttons and hide form when locked
+      if (!unlocked) {
+        appRoot.classList.add('actions-hidden');
+        appRoot.classList.add('form-hidden');
+      } else {
+        appRoot.classList.remove('actions-hidden');
+        appRoot.classList.remove('form-hidden');
+      }
     }
+
     function setUnlockedState(state, persist = true){
-      unlocked = !!state; updateGuardedControls(); if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
+      unlocked = !!state;
+      updateGuardedControls();
+      if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
     function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
@@ -334,6 +379,7 @@
       try {
         pwError.style.display = 'block';
         pwError.textContent = 'Checking...';
+        // Example server call; keep behavior same as before
         const res = await fetch('/api/unlock', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password }) });
         const raw = await res.text();
         let parsed;
@@ -351,7 +397,7 @@
       }
     }
 
-    // Date picker behavior
+    // Date picker behavior (text + button open native date)
     (function attachDateBehavior(){
       try {
         function openNativePicker(initialIso){
@@ -372,7 +418,7 @@
       } catch (e) { console.warn('Date behavior attach failed', e); }
     })();
 
-    // Render rows
+    // Render rows (uses <time> for date pill)
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -381,7 +427,7 @@
       const dateAttr = row.overtime_date ? row.overtime_date : '';
       el.innerHTML = `
         <div class="item-top">
-          <div style="flex:1;min-width:0">
+          <div class="item-left">
             <div class="name" data-field="name">${escapeHtml(row.name)}</div>
             <div class="notes" data-field="notes">${escapeHtml(row.notes || '')}</div>
           </div>
@@ -398,6 +444,7 @@
       `;
       return el;
     }
+
     function renderList(items){
       rowsEl.innerHTML = '';
       if (!items || !items.length) { emptyEl.style.display = 'block'; statusEl.textContent = 'No entries'; return; }
@@ -407,7 +454,7 @@
       statusEl.textContent = `Loaded ${items.length} entries`;
     }
 
-    // Load rows
+    // Load rows from Supabase
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -448,7 +495,7 @@
     // Reset button
     resetBtn.addEventListener('click', () => { form.reset(); dateText.value = ''; });
 
-    // Row actions
+    // Row actions (edit/delete/save/cancel)
     rowsEl.addEventListener('click', async (ev) => {
       const action = ev.target?.dataset?.action;
       if (!action) return;
@@ -530,13 +577,20 @@
       renderList(filtered);
     });
 
-    // openUnlock behavior unchanged
-    openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
+    // openUnlock behavior: open modal when locked, lock when unlocked
+    openUnlock.addEventListener('click', () => {
+      if (!unlocked) openModal();
+      else {
+        if (!confirm('Lock actions?')) return;
+        setUnlockedState(false, true);
+      }
+    });
 
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
+    // Initialize: force locked on load (per earlier requirement) and load rows
     window.addEventListener('DOMContentLoaded', async () => {
       setUnlockedState(false, true);
       await loadRows();
