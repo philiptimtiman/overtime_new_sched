@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Swipeable Rows</title>
-  <meta name="description" content="Overtime Scheduler with touch-friendly scrolling and drag-to-scroll for long lists." />
+  <title>Overtime Scheduler — Drag to Scroll</title>
+  <meta name="description" content="Overtime Scheduler with optional drag-to-scroll (grab and drag) for the list. Other functions unchanged." />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -12,22 +12,28 @@
       --text:#e6f7f2; --muted:#9fcfc3; --danger:#ef4444;
       --card-bg-top: rgba(8,40,34,0.06);
       --card-bg-bottom: rgba(6,30,26,0.03);
-
       --input-h:40px; --radius:10px; --mobile-width:360px;
       --base-font:15px; --theme-transition:220ms ease;
     }
 
-    *{box-sizing:border-box}
+    *,*::before,*::after{box-sizing:border-box}
     html,body{height:100%;margin:0;padding:0;background:transparent;color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;font-size:var(--base-font)}
     button,input,textarea{font-family:inherit}
-    .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px}
+    .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:transparent}
+
     .app{
-      width:var(--mobile-width);max-width:100%;display:flex;flex-direction:column;gap:12px;align-items:stretch;
-      background:linear-gradient(180deg,var(--bg-top),var(--bg-bottom));border-radius:14px;padding:10px;
-      box-shadow:0 14px 36px rgba(2,10,8,0.45);border:1px solid rgba(255,255,255,0.03);backdrop-filter:blur(4px);
+      width:var(--mobile-width);max-width:100%;
+      display:flex;flex-direction:column;gap:12px;align-items:stretch;
+      background: linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
+      border-radius:14px;padding:10px;box-shadow:0 14px 36px rgba(2,10,8,0.45);border:1px solid rgba(255,255,255,0.03);
       transition:background var(--theme-transition),color var(--theme-transition);
     }
-    .card{background:linear-gradient(180deg,var(--card-bg-top),var(--card-bg-bottom));border-radius:var(--radius);padding:12px;box-shadow:0 8px 20px rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.04)}
+
+    .card{
+      background: linear-gradient(180deg,var(--card-bg-top),var(--card-bg-bottom));
+      border-radius:var(--radius);padding:12px;box-shadow:0 8px 20px rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.04);
+    }
+
     .header.card{display:flex;flex-direction:column;gap:8px}
     .brand{display:flex;flex-direction:column;align-items:center}
     .brand h1{margin:0;font-size:1rem}
@@ -36,7 +42,7 @@
     .controls{display:flex;gap:8px;align-items:center}
     .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--text)}
 
-    /* Theme swatches (kept from previous) */
+    /* Theme swatches (kept) */
     .theme-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px}
     .theme-swatch{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,0.06);display:inline-flex;align-items:center;justify-content:center;padding:0;background:transparent}
     .theme-swatch .dot{width:24px;height:24px;border-radius:999px}
@@ -48,18 +54,13 @@
 
     .meta{font-size:.82rem;color:var(--muted);text-align:center}
 
-    /* LIST area: make it scrollable with a fixed max-height so long lists can scroll */
+    /* LIST wrapper: scrollable area */
     .list-wrap{
-      /* set a comfortable max height so header + form remain visible on small screens */
-      max-height: 44vh; /* adjust as needed (e.g., 50vh) */
-      overflow: auto;
-      -webkit-overflow-scrolling: touch; /* native momentum scrolling on iOS */
-      border-radius:10px;
-      padding:6px;
-      /* subtle background so list stands out */
-      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+      max-height:44vh;
+      overflow:auto;
+      -webkit-overflow-scrolling:touch;
+      border-radius:10px;padding:6px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
       border:1px solid rgba(255,255,255,0.02);
-      /* allow pointer-based drag-to-scroll (we'll implement JS) */
       touch-action: pan-y;
     }
 
@@ -74,20 +75,17 @@
     .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
 
-    /* small visual hint for drag-to-scroll when list is scrollable */
     .drag-hint{font-size:.78rem;color:var(--muted);text-align:center;padding:6px 0}
 
-    /* make interactive elements not start drag-to-scroll */
+    /* interactive elements that should not start drag */
     .no-drag { touch-action: manipulation; -ms-touch-action: manipulation; }
 
-    @media (max-width:420px){
-      .list-wrap{max-height:50vh}
-    }
+    @media (max-width:420px){ .list-wrap{max-height:50vh} }
   </style>
 </head>
 <body>
   <div class="canvas">
-    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler — Swipeable Rows" data-theme="forest">
+    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler" data-theme="forest">
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle">Overtime Scheduler</h1>
@@ -117,12 +115,11 @@
             <span id="status" class="meta">Idle</span>
           </div>
 
-          <!-- Scrollable list wrapper -->
-          <div id="listWrap" class="list-wrap" aria-live="polite" aria-label="Overtime entries list">
+          <div id="rowsWrap" class="list-wrap" aria-live="polite" aria-label="Overtime entries list" tabindex="0">
             <div id="rows" class="list"></div>
           </div>
 
-          <div class="drag-hint">Swipe up/down or drag to scroll</div>
+          <div class="drag-hint">Drag (grab) up/down to scroll</div>
         </div>
       </main>
 
@@ -187,7 +184,7 @@
 
     const appRoot = document.getElementById('appRoot');
     const rowsEl = document.getElementById('rows');
-    const listWrap = document.getElementById('listWrap');
+    const rowsWrap = document.getElementById('rowsWrap');
     const statusEl = document.getElementById('status');
     const form = document.getElementById('addForm');
     const submitBtn = document.getElementById('submitBtn');
@@ -219,7 +216,7 @@
     function isoDateFromText(s){ if(!s) return null; const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[1]}-${m[2]}-${m[3]}` : null; }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Theme handling (batched)
+    // Theme handling (unchanged)
     function applyTheme(theme){
       if (!theme) theme = 'forest';
       swatches.forEach(btn => btn.classList.remove('active'));
@@ -237,7 +234,7 @@
       btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
-    // Update controls
+    // Guarded controls (unchanged)
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
@@ -264,7 +261,7 @@
       } catch (err) { console.error(err); pwError.textContent='Network or server error.'; }
     }
 
-    // Date picker overlay
+    // Date picker overlay (unchanged)
     (function attachNativeOverlay(){
       try {
         if (!dateNative || !dateText || !dateBtn) return;
@@ -278,7 +275,7 @@
       } catch(e){ console.warn('Date overlay attach failed', e); }
     })();
 
-    // Render rows
+    // Render rows (unchanged)
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -309,7 +306,7 @@
       statusEl.textContent = `Loaded ${items.length} entries`;
     }
 
-    // Load rows from supabase
+    // Load rows
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -323,7 +320,7 @@
       }
     }
 
-    // Add form submit
+    // Form submit (unchanged)
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!unlocked) { alert('Actions are locked. Unlock to add entries.'); return; }
@@ -338,8 +335,7 @@
         dataCache = [...dataCache, ...(data||[])];
         renderList(dataCache);
         form.reset(); dateText.value = '';
-        // scroll to bottom to show new entry
-        requestAnimationFrame(()=> listWrap.scrollTop = listWrap.scrollHeight);
+        requestAnimationFrame(()=> rowsWrap.scrollTop = rowsWrap.scrollHeight);
       } catch (err) {
         console.error(err);
         alert('Insert failed: ' + (err.message || err));
@@ -350,7 +346,7 @@
 
     resetBtn.addEventListener('click', () => { form.reset(); dateText.value = ''; });
 
-    // Row actions (edit/delete)
+    // Row actions (unchanged)
     rowsEl.addEventListener('click', async (ev) => {
       const action = ev.target?.dataset?.action;
       if (!action) return;
@@ -438,69 +434,57 @@
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
     // ---------------------------
-    // Drag-to-scroll implementation
+    // Drag-to-scroll (grab and drag) implementation
     // ---------------------------
-    // Behavior:
-    // - Allows dragging the list area (mouse or touch) to scroll vertically.
-    // - Does not start drag when the initial target is an interactive element (buttons, inputs) — those have .no-drag class.
-    // - Uses pointer events for unified handling (works for mouse, touch, pen).
     (function enableDragToScroll(){
       let isDown = false;
       let startY = 0;
       let startScroll = 0;
       let activePointerId = null;
-      const MIN_MOVE_TO_START = 6; // small threshold to avoid accidental drags
+      const MIN_MOVE_TO_START = 6;
 
       function onPointerDown(e){
-        // only left mouse button or touch/pen
         if (e.pointerType === 'mouse' && e.button !== 0) return;
-        // if the initial target (or its ancestor) has .no-drag, don't start drag
         if (e.target.closest('.no-drag')) return;
         isDown = true;
         activePointerId = e.pointerId;
         startY = e.clientY;
-        startScroll = listWrap.scrollTop;
-        listWrap.setPointerCapture(activePointerId);
-        // add a class for possible styling (not required)
-        listWrap.classList.add('dragging');
+        startScroll = rowsWrap.scrollTop;
+        try { rowsWrap.setPointerCapture(activePointerId); } catch(_) {}
+        rowsWrap.classList.add('dragging');
       }
 
       function onPointerMove(e){
         if (!isDown || e.pointerId !== activePointerId) return;
         const dy = e.clientY - startY;
-        // if small movement, don't update yet (prevents accidental drags)
         if (Math.abs(dy) < MIN_MOVE_TO_START) return;
-        // invert dy because dragging up should scroll down
-        listWrap.scrollTop = startScroll - dy;
+        rowsWrap.scrollTop = startScroll - dy;
       }
 
       function endDrag(e){
         if (!isDown || e.pointerId !== activePointerId) return;
         isDown = false;
-        try { listWrap.releasePointerCapture(activePointerId); } catch(_) {}
+        try { rowsWrap.releasePointerCapture(activePointerId); } catch(_) {}
         activePointerId = null;
-        listWrap.classList.remove('dragging');
+        rowsWrap.classList.remove('dragging');
       }
 
-      // attach listeners
-      listWrap.addEventListener('pointerdown', onPointerDown, { passive: true });
+      rowsWrap.addEventListener('pointerdown', onPointerDown, { passive: true });
       window.addEventListener('pointermove', onPointerMove, { passive: true });
       window.addEventListener('pointerup', endDrag);
       window.addEventListener('pointercancel', endDrag);
 
-      // Also support quick flick with wheel (mouse wheel) — nothing special needed; browser handles it.
-      // For accessibility: allow keyboard scrolling when focused
-      listWrap.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowDown') { listWrap.scrollBy({ top: 48, behavior: 'smooth' }); e.preventDefault(); }
-        if (e.key === 'ArrowUp') { listWrap.scrollBy({ top: -48, behavior: 'smooth' }); e.preventDefault(); }
-        if (e.key === 'PageDown') { listWrap.scrollBy({ top: listWrap.clientHeight * 0.9, behavior: 'smooth' }); e.preventDefault(); }
-        if (e.key === 'PageUp') { listWrap.scrollBy({ top: -listWrap.clientHeight * 0.9, behavior: 'smooth' }); e.preventDefault(); }
+      // keyboard scrolling support
+      rowsWrap.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') { rowsWrap.scrollBy({ top: 48, behavior: 'smooth' }); e.preventDefault(); }
+        if (e.key === 'ArrowUp') { rowsWrap.scrollBy({ top: -48, behavior: 'smooth' }); e.preventDefault(); }
+        if (e.key === 'PageDown') { rowsWrap.scrollBy({ top: rowsWrap.clientHeight * 0.9, behavior: 'smooth' }); e.preventDefault(); }
+        if (e.key === 'PageUp') { rowsWrap.scrollBy({ top: -rowsWrap.clientHeight * 0.9, behavior: 'smooth' }); e.preventDefault(); }
       });
-      // make listWrap focusable for keyboard scrolling
-      listWrap.tabIndex = 0;
+      rowsWrap.tabIndex = 0;
     })();
 
-    // Initialize: force locked on load (per earlier requirement) and load rows
+    // Initialize
     window.addEventListener('DOMContentLoaded', async () => {
       setUnlockedState(false, true);
       await loadRows();
