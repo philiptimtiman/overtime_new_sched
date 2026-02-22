@@ -7,33 +7,33 @@
   <meta name="description" content="Simple Supabase-powered overtime schedule UI" />
   <style>
     :root{
+      --bg:#0f1724;           /* default dark background for the whole page */
+      --card:#0b1220;
+      --text:#e6eef8;
+      --text-muted:#9fb0c6;
+      --accent:#60a5fa;
+      --accent-2:#7ee7c7;
+      --danger:#ef4444;
+      --radius:12px;
+      --glass: rgba(255,255,255,0.03);
+      --shadow: 0 8px 30px rgba(2,6,23,0.6);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Segoe UI Mono", monospace;
+      --footer-bg: rgba(255,255,255,0.02);
+      --footer-text: #9fb0c6;
+    }
+
+    /* Light theme override (optional) */
+    [data-theme="light"]{
       --bg:#f6f7fb;
       --card:#ffffff;
       --text:#0f172a;
       --text-muted:#6b7280;
       --accent:#2563eb;
       --accent-2:#06b6d4;
-      --danger:#ef4444;
-      --radius:12px;
       --glass: rgba(255,255,255,0.6);
       --shadow: 0 6px 18px rgba(15,23,42,0.08);
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Segoe UI Mono", monospace;
       --footer-bg: rgba(15,23,42,0.02);
       --footer-text: #6b7280;
-    }
-
-    /* Dark theme variables tuned for mobile readability */
-    [data-theme="dark"]{
-      --bg:#071026;                 /* deep but not pitch black */
-      --card:#071826;               /* slightly lighter card */
-      --text:#e6eef8;               /* high-contrast text */
-      --text-muted:#9fb0c6;         /* readable muted text */
-      --accent:#60a5fa;
-      --accent-2:#7ee7c7;
-      --glass: rgba(255,255,255,0.04); /* subtle card surface */
-      --shadow: 0 8px 30px rgba(2,6,23,0.6);
-      --footer-bg: rgba(255,255,255,0.02); /* very subtle footer background */
-      --footer-text: #9fb0c6;       /* footer text readable on dark */
     }
 
     html,body{height:100%}
@@ -41,8 +41,8 @@
       margin:0;
       min-height:100%;
       font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      background: linear-gradient(180deg,var(--bg), #fff);
-      padding:20px;
+      background: var(--bg); /* solid background color (no gradient) */
+      padding:18px;
       color: var(--text);
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
@@ -71,11 +71,11 @@
 
     /* Card */
     .card{
-      background: linear-gradient(180deg,var(--card), rgba(255,255,255,0.02));
+      background: var(--card);
       border-radius:12px;
       padding:16px;
       box-shadow:var(--shadow);
-      border:1px solid rgba(15,23,42,0.04);
+      border:1px solid rgba(255,255,255,0.04);
       color:var(--text);
     }
 
@@ -85,18 +85,17 @@
       width:100%;
       padding:10px 12px;
       border-radius:10px;
-      border:1px solid rgba(15,23,42,0.06);
+      border:1px solid rgba(255,255,255,0.04);
       background:transparent;
       outline:none;
       font-size:14px;
       color:var(--text);
       transition:box-shadow .12s, border-color .12s;
     }
-    input::placeholder, textarea::placeholder { color: rgba(0,0,0,0.35); }
-    [data-theme="dark"] input::placeholder, [data-theme="dark"] textarea::placeholder { color: rgba(255,255,255,0.28); }
+    input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.28); }
 
     input:focus, textarea:focus{
-      box-shadow:0 6px 18px rgba(37,99,235,0.08);
+      box-shadow:0 6px 18px rgba(96,165,250,0.08);
       border-color:var(--accent);
     }
     textarea{min-height:84px;resize:vertical}
@@ -118,25 +117,22 @@
     button.secondary{
       background:transparent;
       color:var(--text-muted);
-      border:1px solid rgba(15,23,42,0.06);
+      border:1px solid rgba(255,255,255,0.04);
       font-weight:600;
     }
-    [data-theme="dark"] button.secondary{ color:var(--text-muted); border-color: rgba(255,255,255,0.06); }
     button:active{transform:translateY(1px)}
 
-    /* Toggle button base and theme-specific colors */
+    /* Toggle button */
     #themeToggle {
       background: transparent;
-      border: 1px solid rgba(15,23,42,0.06);
-      color: var(--text-muted);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: var(--text);
       padding: 8px 10px;
       border-radius: 10px;
       font-weight: 600;
       cursor: pointer;
       transition: color .12s ease, background .12s ease, border-color .12s ease;
     }
-    :root #themeToggle { color: #0f172a; border-color: rgba(15,23,42,0.06); }
-    [data-theme="dark"] #themeToggle { color: var(--text); border-color: rgba(255,255,255,0.06); }
     #themeToggle:hover { filter: brightness(0.98); }
 
     /* List column */
@@ -152,7 +148,7 @@
       padding:12px;
       border-radius:10px;
       background:var(--glass);
-      border:1px solid rgba(15,23,42,0.04);
+      border:1px solid rgba(255,255,255,0.04);
       align-items:center;
       transition:transform .12s ease, box-shadow .12s;
       color:var(--text);
@@ -166,11 +162,10 @@
     /* top controls */
     .controls{display:flex;gap:8px;align-items:center}
     .search{
-      padding:8px 10px;border-radius:10px;border:1px solid rgba(15,23,42,0.06);background:transparent;color:var(--text);
+      padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);
     }
-    [data-theme="dark"] .search{ border-color: rgba(255,255,255,0.06); }
 
-    /* footer / tips area */
+    /* tips area */
     .tips {
       margin-top:12px;
       padding:10px;
@@ -180,14 +175,13 @@
       font-size:13px;
       line-height:1.35;
     }
-    [data-theme="dark"] .tips { background: rgba(255,255,255,0.02); color:var(--footer-text); }
 
     /* status */
     #status{font-size:13px;color:var(--text-muted)}
 
-    /* responsive: mobile-first adjustments for phones */
+    /* responsive: mobile adjustments */
     @media (max-width:760px){
-      body{padding:14px}
+      body{padding:12px}
       .container{grid-template-columns:1fr; gap:12px}
       header{flex-direction:column;align-items:flex-start;gap:10px}
       .controls{width:100%;display:flex;gap:8px}
@@ -195,13 +189,8 @@
       .card{padding:12px}
       .item{padding:10px}
       .date{font-size:12px}
-      /* ensure footer doesn't overlap or obscure list on small screens */
       .tips{font-size:12px;padding:10px}
     }
-
-    /* extra contrast safety for very long lists on dark mode */
-    [data-theme="dark"] .item { border-color: rgba(255,255,255,0.04); }
-    [data-theme="dark"] .card { border-color: rgba(255,255,255,0.04); }
   </style>
 </head>
 <body>
@@ -209,11 +198,11 @@
     <header>
       <div>
         <h1>Overtime Scheduler</h1>
-        <p class="lead">View and add overtime entries — optimized for phone dark mode</p>
+        <p class="lead">View and add overtime entries — optimized for phones</p>
       </div>
       <div class="controls">
         <input id="search" class="search" placeholder="Search name or notes" />
-        <button id="themeToggle" class="secondary" title="Toggle dark mode">Toggle</button>
+        <button id="themeToggle" class="secondary" title="Toggle theme">Toggle</button>
       </div>
     </header>
 
@@ -226,7 +215,6 @@
       <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
       <div id="empty" class="meta" style="display:none">No entries yet.</div>
 
-      <!-- tips moved inside list card but visually subtle so it won't block data on phones -->
       <div class="tips" id="tips">
         Tips: Use the search box to filter entries locally. For production, move writes to a server endpoint and keep service keys secret.
       </div>
@@ -254,7 +242,7 @@
           <button id="submitBtn" type="submit">Add</button>
           <button type="button" class="secondary" id="resetBtn">Reset</button>
         </div>
-    </form>
+      </form>
     </aside>
   </div>
 
@@ -277,32 +265,26 @@
     const searchInput = document.getElementById('search');
     const themeToggle = document.getElementById('themeToggle');
     const tipsEl = document.getElementById('tips');
-
-    // Theme: initialize and update button text/aria
     const root = document.documentElement;
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    if (savedTheme === 'dark') root.setAttribute('data-theme','dark');
+
+    // Start in dark mode by default (page background is dark). Allow switching to light.
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    if (savedTheme === 'light') root.setAttribute('data-theme','light');
 
     function updateThemeButton() {
-      const isDark = root.getAttribute('data-theme') === 'dark';
-      themeToggle.textContent = isDark ? 'Light mode' : 'Dark mode';
-      themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
-      // ensure tips remain subtle but readable on small screens
-      if (isDark) {
-        tipsEl.style.opacity = '0.95';
-      } else {
-        tipsEl.style.opacity = '0.95';
-      }
+      const isLight = root.getAttribute('data-theme') === 'light';
+      themeToggle.textContent = isLight ? 'Dark mode' : 'Light mode';
+      themeToggle.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
     }
 
     themeToggle.addEventListener('click', () => {
-      const isDark = root.getAttribute('data-theme') === 'dark';
-      if (isDark) {
-        root.removeAttribute('data-theme');
-        localStorage.setItem('theme','light');
-      } else {
-        root.setAttribute('data-theme','dark');
+      const isLight = root.getAttribute('data-theme') === 'light';
+      if (isLight) {
+        root.removeAttribute('data-theme'); // back to dark
         localStorage.setItem('theme','dark');
+      } else {
+        root.setAttribute('data-theme','light');
+        localStorage.setItem('theme','light');
       }
       updateThemeButton();
     });
