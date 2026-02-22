@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Polished Mobile (iOS-safe)</title>
-  <meta name="description" content="Mobile-first overtime scheduler: roomy spacing, accessible controls, iOS-safe date input, locked-by-default." />
+  <title>Overtime Scheduler — Polished Mobile (iOS-safe date fallback)</title>
+  <meta name="description" content="Mobile-first overtime scheduler with robust iOS-safe date handling (text input + native picker fallback), roomy spacing, locked-by-default." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -61,19 +61,21 @@
     #formCard{display:flex;flex-direction:column;gap:12px}
     #formCard label{font-size:.9rem;color:var(--muted);margin:0 0 6px 0;text-align:center;display:block}
     .field{display:flex;flex-direction:column;gap:6px}
-    input[type="text"], input[type="date"], textarea{
+    input[type="text"], textarea{
       width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);text-align:center;box-sizing:border-box;
     }
+
+    /* We replace visible date input with text + calendar button to avoid native overlap */
+    .date-control{position:relative;display:flex;align-items:center;gap:8px}
+    .date-text{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);text-align:center;box-sizing:border-box}
+    .date-btn{width:44px;height:44px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center}
 
     .add-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .form-actions{display:flex;gap:10px;flex-direction:column}
     .form-actions .btn{width:100%}
 
-    /* Date wrapper: reserve space for native calendar icon */
-    .date-wrap{position:relative;width:100%}
-    .date-wrap input[type="date"]{padding:10px 44px 10px 12px;-webkit-appearance:textfield;appearance:textfield}
-    .date-wrap input[type="date"]::-webkit-calendar-picker-indicator{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:28px;height:28px;opacity:0.95;cursor:pointer;padding:4px}
-    .date-wrap input[type="date"]::-webkit-datetime-edit, .date-wrap input[type="date"]::-webkit-datetime-edit-fields-wrapper, .date-wrap input[type="date"]::-webkit-datetime-edit-text { padding:0;margin:0;line-height:1.1; }
+    /* Hidden native date input used only to trigger native picker when available */
+    .native-date{position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0;border:0;padding:0;margin:0}
 
     /* Inline edit styles */
     .editing .edit-input{display:block}
@@ -92,53 +94,14 @@
     /* Defensive shrinkability for grid parents */
     .add-row, .field, .item { min-width:0; -webkit-flex-shrink:1; flex-shrink:1; }
 
-    /* iOS Safari specific adjustments (scoped by .ios-safari class added by JS) */
-    .ios-safari .date-wrap,
-    .ios-safari .date-wrap input[type="date"] {
-      min-width:0;
-      box-sizing:border-box;
-    }
-    .ios-safari .date-wrap input[type="date"]{
-      padding:10px 44px 10px 12px;
-      -webkit-appearance:textfield;
-      appearance:textfield;
-      overflow:visible;
-    }
-    .ios-safari .date-wrap input[type="date"]::-webkit-calendar-picker-indicator{
-      position:absolute; right:10px; top:50%; transform:translateY(-50%); width:28px; height:28px; opacity:0.95; cursor:pointer; padding:4px;
-    }
-    .ios-safari .date-wrap input[type="date"]::-webkit-datetime-edit,
-    .ios-safari .date-wrap input[type="date"]::-webkit-datetime-edit-fields-wrapper,
-    .ios-safari .date-wrap input[type="date"]::-webkit-datetime-edit-text,
-    .ios-safari .date-wrap input[type="date"]::-webkit-datetime-edit-month-field,
-    .ios-safari .date-wrap input[type="date"]::-webkit-datetime-edit-day-field,
-    .ios-safari .date-wrap input[type="date"]::-webkit-datetime-edit-year-field {
-      padding:0; margin:0; line-height:1.1;
-    }
-
-    /* On very narrow screens, reduce reserved space and hide indicator if needed */
+    /* Responsive tweaks */
     @media (max-width:340px){
       .add-row{grid-template-columns:1fr}
-      .ios-safari .date-wrap input[type="date"],
-      .date-wrap input[type="date"] { padding-right:12px; }
-      .ios-safari .date-wrap input[type="date"]::-webkit-calendar-picker-indicator,
-      .date-wrap input[type="date"]::-webkit-calendar-picker-indicator { display:none; }
+      .app{width:320px}
     }
   </style>
 </head>
 <body>
-  <!-- JS detection for iOS Safari: adds .ios-safari to <html> early -->
-  <script>
-    (function(){
-      try {
-        const ua = navigator.userAgent || navigator.vendor || window.opera;
-        const isIOS = /iP(hone|od|ad)/.test(ua);
-        const isSafari = /^((?!CriOS|FxiOS|OPiOS).)*Safari/.test(ua);
-        if (isIOS && isSafari) document.documentElement.classList.add('ios-safari');
-      } catch(e){}
-    })();
-  </script>
-
   <div class="canvas">
     <div class="app" role="application" aria-label="Overtime Scheduler — Mobile">
       <header class="card header" aria-labelledby="appTitle">
@@ -182,10 +145,14 @@
 
           <div class="add-row">
             <div class="field">
-              <label for="overtime_date">Date</label>
-              <div class="date-wrap">
-                <input id="overtime_date" name="overtime_date" class="lock-guard" type="date" />
+              <label for="overtime_date_text">Date</label>
+              <!-- Visible text input + calendar button -->
+              <div class="date-control">
+                <input id="overtime_date_text" name="overtime_date_text" class="date-text lock-guard" type="text" placeholder="YYYY-MM-DD" aria-label="Overtime date" readonly />
+                <button type="button" id="datePickerBtn" class="date-btn" aria-label="Open date picker">📅</button>
               </div>
+              <!-- Hidden native date input used only to trigger native picker when available -->
+              <input id="overtime_date_native" class="native-date" type="date" />
             </div>
 
             <div class="field">
@@ -247,6 +214,11 @@
     const pwCancel = document.getElementById('pwCancel');
     const pwError = document.getElementById('pwError');
 
+    // Date controls
+    const dateText = document.getElementById('overtime_date_text');
+    const dateNative = document.getElementById('overtime_date_native');
+    const dateBtn = document.getElementById('datePickerBtn');
+
     const LOCAL_KEY = 'overtime_unlocked_v2';
     let dataCache = [];
     let unlocked = false;
@@ -254,6 +226,11 @@
     function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
     function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
     function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
+    function isoDateFromText(s){ // expects YYYY-MM-DD
+      if(!s) return null;
+      const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
+    }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
     // Update lock-guarded elements
@@ -299,6 +276,40 @@
         pwError.textContent = 'Network or server error.';
       }
     }
+
+    // Date picker strategy:
+    // Visible input is text (dateText). When user taps calendar button or the text input,
+    // we open a hidden native <input type="date"> (dateNative) to trigger the native picker.
+    // When native picker returns a value, copy it to the visible text input in YYYY-MM-DD.
+    // This avoids layout issues caused by native date control chrome on iOS.
+    function openNativeDatePicker(initialValue){
+      // set native input value if valid ISO
+      if (initialValue && /^\d{4}-\d{2}-\d{2}$/.test(initialValue)) dateNative.value = initialValue;
+      else dateNative.value = '';
+      // If showPicker API exists, use it (modern browsers)
+      if (typeof dateNative.showPicker === 'function') {
+        dateNative.showPicker();
+      } else {
+        // Fallback: focus + click (may work on many mobile browsers)
+        dateNative.focus();
+        try { dateNative.click(); } catch(e){}
+      }
+    }
+
+    // When native date changes, copy to visible text
+    dateNative.addEventListener('change', () => {
+      const v = dateNative.value; // ISO YYYY-MM-DD
+      if (v) dateText.value = v;
+      else dateText.value = '';
+    });
+
+    // Open native picker when user taps visible control
+    dateBtn.addEventListener('click', () => {
+      openNativeDatePicker(isoDateFromText(dateText.value));
+    });
+    dateText.addEventListener('click', () => {
+      openNativeDatePicker(isoDateFromText(dateText.value));
+    });
 
     // Render list
     function createRowElement(row){
@@ -353,7 +364,7 @@
       if (!unlocked) { alert('Actions are locked. Unlock to add entries.'); return; }
       const name = form.name.value.trim();
       const notes = form.notes.value.trim();
-      const overtime_date = form.overtime_date.value || null;
+      const overtime_date = isoDateFromText(dateText.value) || null;
       if (!name) { alert('Name is required'); return; }
       submitBtn.disabled = true; submitBtn.textContent = 'Adding...';
       try {
@@ -362,6 +373,7 @@
         dataCache = [...dataCache, ...(data||[])];
         renderList(dataCache);
         form.reset();
+        dateText.value = '';
       } catch (err) {
         console.error(err);
         alert('Insert failed: ' + (err.message || err));
@@ -370,7 +382,7 @@
       }
     });
 
-    resetBtn.addEventListener('click', () => form.reset());
+    resetBtn.addEventListener('click', () => { form.reset(); dateText.value = ''; });
 
     // Row actions (edit/delete/save/cancel)
     rowsEl.addEventListener('click', async (ev) => {
