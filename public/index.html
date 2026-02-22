@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Final Updated</title>
-  <meta name="description" content="Overtime Scheduler — themes, lock refresh, stable edit date input, compact Add form." />
+  <title>Overtime Scheduler — Final Updated (Background Fix)</title>
+  <meta name="description" content="Overtime Scheduler — themes, lock refresh, stable edit date input, compact Add form, background overlap fixed." />
   <style>
     :root{
       /* default theme variables (will be overwritten by JS applyTheme) */
@@ -41,16 +41,36 @@
     input,button,select,textarea{font-family:inherit}
     button{cursor:pointer}
 
-    .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:transparent}
+    /* --- PATCHED: Prevent background overlap and keep app surface isolated --- */
+    .canvas{
+      min-height:100vh;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:24px;                    /* breathing room so gradient doesn't touch edges */
+      background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+      box-sizing:border-box;
+    }
 
     .app{
-      width:var(--mobile-width);max-width:100%;
-      display:flex;flex-direction:column;gap:12px;align-items:stretch;
-      border-radius:14px;padding:12px;box-shadow:0 14px 36px rgba(2,10,8,0.45);
+      width:var(--mobile-width);
+      max-width:100%;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      align-items:stretch;
+      border-radius:14px;
+      padding:12px;
+      background: linear-gradient(180deg,var(--card-top),var(--card-bottom));
+      box-shadow:0 14px 36px rgba(2,10,8,0.45);
       border:1px solid rgba(255,255,255,0.04);
       transition:background var(--theme-transition), color var(--theme-transition);
-      background: linear-gradient(180deg,var(--card-top),var(--card-bottom));
+      position:relative;               /* create stacking context */
+      z-index:1;                       /* keep app above canvas background */
+      overflow:hidden;                 /* prevent internal content from spilling out */
+      background-clip:padding-box;     /* ensure border doesn't show underlying gradient */
     }
+    /* --- end patch --- */
 
     .card{background:transparent;border-radius:var(--radius);padding:12px}
     .header.card{display:flex;flex-direction:column;gap:8px}
@@ -245,7 +265,8 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
     const SUPABASE_URL = 'https://bisvmgjgyvludhqsvvcn.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8
+';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const appRoot = document.getElementById('appRoot');
