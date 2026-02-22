@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Date Button Fix</title>
-  <meta name="description" content="Overtime Scheduler with fixed date control layout and refined buttons. Functionality unchanged." />
+  <title>Overtime Scheduler — Date Pill Fix</title>
+  <meta name="description" content="Overtime Scheduler with fixed date pill in entries list." />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -56,143 +56,80 @@
     .meta{font-size:.82rem;color:var(--muted);text-align:center}
 
     .list{display:flex;flex-direction:column;gap:8px}
-    .item{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
-    .item-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-    .name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .notes{color:var(--muted);font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .date-pill{min-width:84px;text-align:center;padding:6px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.02)}
-
-    .item-actions{display:flex;gap:6px;align-items:center}
-    .btn{
-      display:inline-flex;align-items:center;gap:8px;
-      background:linear-gradient(180deg,var(--accent),var(--accent-2));
-      color:#fff;border:0;padding:8px 12px;border-radius:10px;font-weight:600;
-      transition:transform 120ms ease, box-shadow 180ms ease, opacity 160ms ease;
+    .item{
+      display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);
     }
-    .btn:active{transform:translateY(1px)}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:8px 10px}
-    .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
+    .item-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .item-left{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
 
-    /* --- Form layout and refined Add / Reset button styles --- */
-    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+    .name{font-weight:600;font-size:.96rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .notes{color:var(--muted);font-size:.82rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    /* FIXED date pill: stable sizing, centered text, accessible time element */
+    .date-pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:72px;        /* ensures pill doesn't collapse */
+      max-width:120px;       /* prevents it from growing too wide */
+      padding:6px 10px;
+      border-radius:8px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+      border:1px solid rgba(255,255,255,0.02);
+      color:var(--text);
+      box-sizing:border-box;
+      font-size:0.88rem;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      flex-shrink:0;         /* important: don't shrink when container is tight */
+      line-height:1;
+    }
+    .date-pill time{ display:block; width:100%; text-align:center; }
+
+    .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+
+    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem;transition:background var(--theme-transition), color var(--theme-transition)}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
+    .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
+    .btn.full{width:100%}
+
+    #formCard{display:flex;flex-direction:column;gap:10px}
+    #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block;transition:color var(--theme-transition)}
     .field{display:flex;flex-direction:column;gap:8px;min-width:0}
 
-    /* Keep form card content stable: don't let buttons change input widths */
-    #formCard { display:flex; flex-direction:column; gap:10px; }
-    #formCard form { display:flex; flex-direction:column; gap:10px; }
-
-    /* Form actions: align to right, compact buttons, do not stretch inputs */
-    .form-actions{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      justify-content:flex-end;
-      margin-top:6px;
-      flex-shrink:0;
-    }
-
-    .btn-add{
-      padding:6px 12px;
-      height:36px;
-      border-radius:999px;
-      font-size:0.95rem;
-      box-shadow: 0 6px 18px rgba(2,10,8,0.12);
-      display:inline-flex;align-items:center;gap:8px;
-      white-space:nowrap;
-    }
-    .btn-add svg{width:16px;height:16px;display:block;flex-shrink:0}
-
-    .btn-reset{
-      padding:6px 10px;
-      height:36px;
-      border-radius:999px;
-      font-size:0.95rem;
-      display:inline-flex;align-items:center;gap:8px;
-      background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);
-      white-space:nowrap;
-    }
-    .btn-reset svg{width:14px;height:14px;display:block;flex-shrink:0}
-
-    /* Ensure inputs keep full width regardless of button sizes */
-    input[type="text"], textarea, .date-text {
-      width:100%;
-      padding:8px 10px;
-      border-radius:8px;
-      border:1px solid rgba(255,255,255,0.04);
-      background:rgba(0,0,0,0.12);
-      color:var(--text);
-      height:var(--input-h);
-      box-sizing:border-box;
-      font-size:var(--input-font);
+    input[type="text"], textarea{
+      width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
       text-align:center;
+      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
     }
     input[type="text"]:focus, textarea:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
 
-    /* --- Date control fix: keep layout stable and button aligned --- */
-    .date-control{
-      position:relative;
-      display:block;
-      min-width:0;
-    }
+    .date-control{position:relative;display:block;min-width:0}
+    .date-text{padding-right:48px;cursor:pointer}
+    .date-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;z-index:2;font-size:1rem;padding:0}
+    .native-date{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;opacity:0;border:0;padding:0;margin:0;background:transparent;z-index:3;cursor:pointer}
 
-    /* The visible text input */
-    .date-text{
-      padding-right:48px; /* room for the button on the right */
-      cursor:pointer;
-    }
+    .editing .edit-input{display:block}
+    .edit-input{display:none;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%;box-sizing:border-box;min-width:0;text-align:left;font-size:var(--input-font)}
 
-    /* The visible button sits absolutely inside the control */
-    .date-btn{
-      position:absolute;
-      right:6px;
-      top:50%;
-      transform:translateY(-50%);
-      width:36px;
-      height:36px;
-      border-radius:8px;
-      border:1px solid rgba(255,255,255,0.04);
-      background:transparent;
-      color:var(--muted);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:2;
-      font-size:1rem;
-      padding:0;
-    }
+    .item.editing { display:flex; flex-direction:column; gap:8px; }
+    .item.editing .edit-input { width:100%; max-width:100%; }
 
-    /* Native date input sits over the button (invisible) to allow native picker on supported browsers */
-    .native-date{
-      position:absolute;
-      right:6px;
-      top:50%;
-      transform:translateY(-50%);
-      width:36px;
-      height:36px;
-      opacity:0;
-      border:0;
-      padding:0;
-      margin:0;
-      background:transparent;
-      z-index:3;
-      cursor:pointer;
+    .modal-backdrop{
+      position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;
     }
+    .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
 
-    /* Icon button for lock */
-    .icon-btn{
-      display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted);padding:0;cursor:pointer;transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;
-    }
-    .icon-btn:focus{ outline: 2px solid rgba(255,255,255,0.06); outline-offset:2px; }
-    .icon-btn:hover{ transform: translateY(-1px); }
-    .icon-btn.active{ background: linear-gradient(180deg,var(--accent),var(--accent-2)); color:#fff; border-color:transparent; box-shadow: 0 8px 20px rgba(0,0,0,0.25); }
-    .icon-btn svg { display:block; width:18px; height:18px; }
-    .icon-btn .icon-fill, .icon-btn .icon-stroke { fill: currentColor; stroke: none; }
+    .actions-hidden .item-actions { display: none !important; }
+    .form-hidden #formCard { display: none !important; }
 
     @media (max-width:420px){
       .add-row{grid-template-columns:1fr}
-      .form-actions{justify-content:stretch}
-      .form-actions .btn-add, .form-actions .btn-reset { flex:1; justify-content:center; }
+      .app{width:320px}
       .date-text{padding-right:48px}
+      .theme-row{flex-wrap:wrap}
+      .date-pill{min-width:64px; max-width:96px; font-size:0.85rem}
     }
   </style>
 </head>
@@ -209,7 +146,6 @@
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search entries" />
           <div style="display:flex;align-items:center;gap:8px">
             <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444;transition:background var(--theme-transition)"></div>
-
             <button id="openUnlock" class="icon-btn" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
                 <path class="icon-fill" d="M12 17a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
@@ -270,9 +206,8 @@
               <span>Add</span>
             </button>
 
-            <button id="resetBtn" type="button" class="btn-reset lock-guard" title="Reset form" aria-label="Reset form">
-              <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M12 6V3L8 7l4 4V8c2.8 0 5 2.2 5 5 0 .6-.1 1.2-.3 1.7l1.5 1.1C18.9 15 19 14.5 19 14c0-3.9-3.1-7-7-7zM6.3 6.3L4.8 5.2C5.1 4.8 5.9 4 7 4c3.9 0 7 3.1 7 7v1l4-4-4-4v3c-2.8 0-5 2.2-5 5 0 .6.1 1.2.3 1.7L6.3 6.3z"/></svg>
-              <span>Reset</span>
+            <button id="resetBtn" type="button" class="btn ghost lock-guard" title="Reset form" aria-label="Reset form">
+              Reset
             </button>
           </div>
         </form>
@@ -397,7 +332,7 @@
       }
     }
 
-    // Date picker behavior: clicking either the text or the button opens native picker (if supported)
+    // Date picker behavior
     (function attachDateBehavior(){
       try {
         function openNativePicker(initialIso){
@@ -407,59 +342,35 @@
           if (typeof dateNative.showPicker === 'function') {
             dateNative.showPicker();
           } else {
-            // fallback: focus and click to open platform picker where supported
             dateNative.focus();
             try { dateNative.click(); } catch(e){}
           }
         }
-
-        // When native date changes, reflect to visible text
-        if (dateNative) {
-          dateNative.addEventListener('change', () => {
-            dateText.value = dateNative.value || '';
-          });
-        }
-
-        // Clicking the visible button opens native picker
-        if (dateBtn) {
-          dateBtn.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
-        }
-
-        // Clicking the visible text also opens native picker for convenience
-        if (dateText) {
-          dateText.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
-        }
-
-        // Keyboard: Enter on the text opens picker
-        if (dateText) {
-          dateText.addEventListener('keydown', (ev) => {
-            if (ev.key === 'Enter' || ev.key === ' ') {
-              ev.preventDefault();
-              openNativePicker(isoDateFromText(dateText.value));
-            }
-          });
-        }
-      } catch (e) {
-        console.warn('Date behavior attach failed', e);
-      }
+        if (dateNative) dateNative.addEventListener('change', () => dateText.value = dateNative.value || '');
+        if (dateBtn) dateBtn.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
+        if (dateText) dateText.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
+        if (dateText) dateText.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openNativePicker(isoDateFromText(dateText.value)); } });
+      } catch (e) { console.warn('Date behavior attach failed', e); }
     })();
 
-    // Render rows
+    // Create row element uses <time> for date pill
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
       el.dataset.id = row.id;
+      const dateDisplay = row.overtime_date ? formatDate(row.overtime_date) : '—';
+      const dateAttr = row.overtime_date ? row.overtime_date : '';
       el.innerHTML = `
         <div class="item-top">
-          <div style="flex:1;min-width:0">
+          <div class="item-left">
             <div class="name" data-field="name">${escapeHtml(row.name)}</div>
             <div class="notes" data-field="notes">${escapeHtml(row.notes || '')}</div>
           </div>
-          <div style="margin-left:8px">
-            <div class="date-pill" data-field="overtime_date">${row.overtime_date ? formatDate(row.overtime_date) : '—'}</div>
+          <div class="date-pill" data-field="overtime_date" aria-hidden="${row.overtime_date ? 'false' : 'true'}">
+            <time datetime="${escapeHtml(dateAttr)}">${escapeHtml(dateDisplay)}</time>
           </div>
         </div>
-        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
           <div class="item-actions">
             <button class="btn ghost lock-guard" data-action="edit">Edit</button>
             <button class="btn ghost lock-guard" data-action="delete">Delete</button>
@@ -468,6 +379,7 @@
       `;
       return el;
     }
+
     function renderList(items){
       rowsEl.innerHTML = '';
       if (!items || !items.length) { emptyEl.style.display = 'block'; statusEl.textContent = 'No entries'; return; }
@@ -515,7 +427,7 @@
       }
     });
 
-    // Reset button behavior
+    // Reset button
     resetBtn.addEventListener('click', () => { form.reset(); dateText.value = ''; });
 
     // Row actions
