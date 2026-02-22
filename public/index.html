@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Default Locked</title>
-  <meta name="description" content="Single-file overtime scheduler: default locked on load, centered Add form, search enabled, guarded edit actions." />
+  <title>Overtime Scheduler — Always Locked on Load</title>
+  <meta name="description" content="Single-file overtime scheduler: Add form centered, responsive rows, search enabled, edit actions guarded, always locked on page load." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -80,11 +80,10 @@
     <header class="header-card" role="banner" aria-label="Application header">
       <div class="title-block" aria-hidden="true">
         <h1>Overtime Scheduler</h1>
-        <p class="lead">Unlock to enable Add / Edit / Delete. Default is Locked on first load.</p>
+        <p class="lead">Unlock to enable Add / Edit / Delete. This page defaults to Locked on every load.</p>
       </div>
 
       <div class="controls" role="group" aria-label="Search and lock controls">
-        <!-- Search is intentionally NOT a lock-guard so it remains enabled always -->
         <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" autocomplete="off" />
         <div style="display:flex;align-items:center;gap:8px">
           <div id="lockDot" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
@@ -102,7 +101,7 @@
 
       <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
       <div id="empty" class="meta" style="display:none">No entries yet.</div>
-      <div class="meta" style="margin-top:12px">Tip: Unlock to enable Add/Edit/Delete.</div>
+      <div class="meta" style="margin-top:12px">Tip: Click Unlock to enter password and enable actions.</div>
     </section>
 
     <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle">
@@ -125,7 +124,6 @@
         </div>
 
         <div class="form-actions">
-          <!-- Buttons that should be disabled when locked get the lock-guard class -->
           <button id="submitBtn" class="btn lock-guard" type="submit">Add</button>
           <button type="button" id="resetBtn" class="btn secondary lock-guard">Reset</button>
         </div>
@@ -456,12 +454,10 @@
       else { if (!confirm('Locking will disable Add/Edit/Delete. Continue?')) return; setUnlockedState(false, true); }
     });
 
-    // On load: restore persisted unlocked state if present; otherwise default to locked (do NOT auto-open modal)
+    // On load: force locked on every page load (overwrites any saved preference)
     window.addEventListener('DOMContentLoaded', async () => {
-      const persisted = readPersistedUnlocked();
-      // If persisted is null (no key), default to locked (false)
-      const initialUnlocked = (persisted === null) ? false : persisted;
-      setUnlockedState(initialUnlocked, false); // don't overwrite storage on initial set
+      // Force locked and persist that state so refresh always shows Locked
+      setUnlockedState(false, true);
       await loadRows();
     });
   </script>
