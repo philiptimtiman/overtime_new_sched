@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Overtime Scheduler — Responsive Header & Edit Fix</title>
-  <meta name="description" content="Overtime scheduler with responsive header and edit layout; actions won't overlap inputs on small screens." />
+  <meta name="description" content="Overtime scheduler with responsive header and edit layout; modal remains interactive while locked." />
   <style>
     :root{
       --bg:#0f1724;
@@ -110,6 +110,15 @@
     /* Modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999}
     .modal{background:var(--card);padding:18px;border-radius:12px;min-width:280px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06);z-index:10000}
+
+    /* Override: keep modal interactive while page is locked */
+    .locked .modal-backdrop,
+    .locked .modal-backdrop *,
+    .locked .modal,
+    .locked .modal * {
+      pointer-events: auto !important;
+      opacity: 1 !important;
+    }
   </style>
 </head>
 <body>
@@ -169,7 +178,7 @@
     </aside>
   </div>
 
-  <!-- Password modal -->
+  <!-- Password modal (direct child of body so override applies) -->
   <div id="modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <h3 id="modalTitle">Unlock Actions</h3>
