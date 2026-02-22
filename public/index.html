@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overtime Scheduler — Responsive Edit Fix</title>
-  <meta name="description" content="Overtime scheduler with responsive edit layout; action buttons do not overlap inputs on small screens." />
+  <title>Overtime Scheduler — Responsive Header & Edit Fix</title>
+  <meta name="description" content="Overtime scheduler with responsive header and edit layout; actions won't overlap inputs on small screens." />
   <style>
     :root{
       --bg:#0f1724;
@@ -25,7 +25,8 @@
     html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;padding:18px}
     .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
     header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
-    h1{font-size:20px;margin:0}
+    header > .title-block { display:flex; flex-direction:column; gap:4px; }
+    h1{font-size:20px;margin:0;line-height:1.05}
     p.lead{margin:0;color:var(--muted);font-size:13px}
 
     .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04)}
@@ -50,7 +51,7 @@
       background:transparent;color:var(--text);height:var(--input-h);width:100%;min-width:0;font-size:14px;
     }
 
-    /* Edit layout: use CSS grid for stable columns on wide screens, stack on small screens */
+    /* Edit layout: grid for stable columns on wide screens, stack on small screens */
     .edit-row {
       display: grid;
       grid-template-columns: 1fr var(--action-col);
@@ -64,7 +65,6 @@
       gap: var(--gap);
       align-items: start;
     }
-    /* Make the three inputs occupy two-column grid: Name full width, Date + Notes side-by-side */
     .edit-fields .field-name { grid-column: 1 / -1; }
     .edit-fields .field-date { grid-column: 1 / 2; }
     .edit-fields .field-notes { grid-column: 2 / 3; }
@@ -75,6 +75,14 @@
     /* Small screens: stack fields and move actions below */
     @media (max-width:760px){
       .container{grid-template-columns:1fr;gap:12px;padding:12px}
+      header{flex-direction:column;align-items:stretch;gap:8px}
+      header > .title-block { align-items:center; text-align:center; width:100% }
+      h1 { font-size:18px; }
+      p.lead { font-size:12px; opacity:0.95; max-width:100% }
+
+      .controls { width:100%; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap }
+      .controls .search { flex:1 1 auto; min-width:0; }
+
       .edit-row { grid-template-columns: 1fr; }
       .edit-fields { grid-template-columns: 1fr; }
       .edit-fields .field-name,
@@ -98,26 +106,24 @@
       pointer-events: none;
     }
     .locked #lockToggle { opacity:1; pointer-events:auto; }
-    .modal-backdrop { z-index: 9999; }
-    .modal { z-index: 10000; }
 
     /* Modal */
-    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center}
-    .modal{background:var(--card);padding:18px;border-radius:12px;min-width:280px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06)}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999}
+    .modal{background:var(--card);padding:18px;border-radius:12px;min-width:280px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06);z-index:10000}
   </style>
 </head>
 <body>
   <div class="container" id="app">
     <header>
-      <div>
+      <div class="title-block">
         <h1>Overtime Scheduler</h1>
         <p class="lead">Responsive edit layout — actions won't overlap inputs on small screens</p>
       </div>
 
-      <div class="controls">
+      <div class="controls" role="group" aria-label="Search and lock controls">
         <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" autocomplete="off" />
-        <div class="lock-indicator" aria-hidden="true" style="margin-left:6px">
-          <div id="lockDot" class="lock-dot" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
+        <div class="lock-indicator" aria-hidden="true" style="display:flex;align-items:center;gap:8px">
+          <div id="lockDot" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
           <div id="lockText" style="color:var(--muted);font-size:13px">Checking…</div>
         </div>
         <button id="lockToggle" class="btn secondary" title="Lock or unlock actions">Lock</button>
@@ -144,7 +150,7 @@
           <input id="name" name="name" type="text" placeholder="Employee name" required autocomplete="name" />
         </div>
 
-        <div class="row" style="margin-top:8px">
+        <div style="display:flex;gap:8px;margin-top:8px">
           <div style="flex:1">
             <label for="overtime_date">Date</label>
             <input id="overtime_date" name="overtime_date" type="date" autocomplete="bday" />
@@ -182,7 +188,7 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // Supabase placeholders (replace with your values)
+    // Replace with your Supabase values
     const SUPABASE_URL = 'https://bisvmgjgyvludhqsvvcn.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -204,11 +210,9 @@
     const pwError = document.getElementById('pwError');
     const emptyEl = document.getElementById('empty');
 
-    // State
     let dataCache = [];
     let locked = true;
 
-    // Helpers
     function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
@@ -228,7 +232,6 @@
       }
     }
 
-    // Render list
     function renderList(items){
       rowsEl.innerHTML = '';
       if(!items.length){ emptyEl.style.display = 'block'; return; }
@@ -237,7 +240,6 @@
         const wrapper = document.createElement('div');
         wrapper.className = 'item';
         wrapper.dataset.id = row.id;
-
         wrapper.innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%">
             <div class="display-left">
@@ -255,7 +257,6 @@
       });
     }
 
-    // Load rows
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -270,7 +271,6 @@
       }
     }
 
-    // Add
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (locked) { alert('Actions are locked. Unlock to add entries.'); return; }
@@ -278,7 +278,6 @@
       const notes = form.notes.value.trim();
       const overtime_date = form.overtime_date.value || null;
       if (!name) return alert('Name is required');
-
       submitBtn.disabled = true; submitBtn.textContent = 'Adding...';
       try {
         const { data, error } = await supabase.from('overtime_data').insert([{ name, notes, overtime_date }]).select();
@@ -296,7 +295,6 @@
 
     resetBtn.addEventListener('click', () => form.reset());
 
-    // Delegated handlers
     rowsEl.addEventListener('click', async (e) => {
       const action = e.target?.dataset?.action;
       if (!action) return;
@@ -337,11 +335,9 @@
       }
     });
 
-    // Edit UI
     function enterEditMode(item, id) {
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
-
       item.innerHTML = `
         <div class="edit-row">
           <div class="edit-fields">
@@ -384,16 +380,12 @@
       const nameInput = item.querySelector('[data-edit="name"]');
       const notesInput = item.querySelector('[data-edit="notes"]');
       const dateInput = item.querySelector('[data-edit="overtime_date"]');
-
       const name = nameInput?.value.trim();
       const notes = notesInput?.value.trim();
       const overtime_date = dateInput?.value || null;
-
       if (!name) { alert('Name is required'); nameInput?.focus(); return; }
-
       const saveBtn = item.querySelector('[data-action="save"]');
       if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
-
       try {
         const { data, error } = await supabase.from('overtime_data').update({ name, notes, overtime_date }).eq('id', id).select();
         if (error) throw error;
@@ -410,7 +402,6 @@
       }
     }
 
-    // Modal helpers & unlock (kept minimal)
     function openModal(){ pwInput.value=''; pwError.style.display='none'; modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); pwInput.focus(); }
     function closeModal(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); }
 
@@ -444,7 +435,6 @@
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
-    // Check unlocked state on load
     async function checkUnlockedOnLoad() {
       try {
         const r = await fetch('/api/unlocked');
@@ -453,7 +443,6 @@
       } catch (e) { setLockedState(localStorage.getItem('overtime_locked') === 'true'); }
     }
 
-    // Search filter
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
@@ -465,7 +454,6 @@
       renderList(filtered);
     });
 
-    // Init
     window.addEventListener('DOMContentLoaded', async () => {
       await checkUnlockedOnLoad();
       await loadRows();
