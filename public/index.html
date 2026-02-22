@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overtime Scheduler — Unlock Fix</title>
-  <meta name="description" content="Single-file UI with Lock/Unlock wired to server; Unlock button remains clickable when locked." />
+  <title>Overtime Scheduler — Unlock Modal Fix</title>
+  <meta name="description" content="Single-file UI with Lock/Unlock; modal controls remain interactive when locked." />
   <style>
     :root{
       --bg:#0f1724;
@@ -51,7 +51,7 @@
     .row{display:flex;gap:8px}
     .row > *{flex:1 1 0;min-width:0}
 
-    /* Disabled state visuals: keep everything disabled except the lock toggle control */
+    /* Disabled state visuals: dim and disable most controls when locked */
     .locked .btn,
     .locked .btn.ghost,
     .locked input,
@@ -66,6 +66,20 @@
       pointer-events: auto;
     }
 
+    /* Exception: allow the unlock modal and its controls to be interactive while locked */
+    .locked .modal-backdrop,
+    .locked .modal,
+    .locked #pwInput,
+    .locked #pwSubmit,
+    .locked #pwCancel {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ensure modal sits above dimmed UI */
+    .modal-backdrop { z-index: 9999; }
+    .modal { z-index: 10000; }
+
     .locked .search{opacity:0.7}
 
     /* Lock indicator */
@@ -74,7 +88,7 @@
     .lock-dot.locked{background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,0.25)}
 
     /* Modal */
-    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:60}
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center}
     .modal{background:var(--card);padding:18px;border-radius:12px;min-width:280px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06)}
     .modal h3{margin:0 0 8px 0}
     .modal p{margin:0 0 12px 0;color:var(--muted);font-size:13px}
@@ -93,7 +107,7 @@
     <header>
       <div>
         <h1>Overtime Scheduler</h1>
-        <p class="lead">Unlock via server endpoint; password stored in Vercel env (server-side)</p>
+        <p class="lead">Unlock via server endpoint; modal controls remain interactive when locked</p>
       </div>
 
       <div class="controls">
@@ -145,7 +159,7 @@
     </aside>
   </div>
 
-  <!-- Password modal -->
+  <!-- Password modal (direct child of body so it sits above locked UI) -->
   <div id="modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <h3 id="modalTitle">Unlock Actions</h3>
