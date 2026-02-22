@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — yyyy/mm/dd Dates (patched)</title>
-  <meta name="description" content="Overtime Scheduler with date format yyyy/mm/dd for entries and Add Overtime form. Date input overlap fixed." />
+  <title>Overtime Scheduler</title>
+  <meta name="description" content="Overtime Schedule for SLT Foreign TE" />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -204,8 +204,9 @@
       <header class="card header" aria-labelledby="appTitle">
         <!-- Header title centered -->
         <div class="brand">
-          <h1 id="appTitle" style="margin:0">Overtime Scheduler</h1>
-          <p class="meta" style="margin-top:6px">Locked by default — unlock to add or edit</p>
+          <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482</p>
+		  <p class="meta" style="margin-top:6px">BxTHPTver202602230600</p>
         </div>
 
         <!-- Live clock centered under the header/p1 -->
@@ -246,11 +247,11 @@
         </div>
 
         <div id="rows" class="list" aria-live="polite"></div>
-        <div id="empty" class="empty" style="display:none;color:var(--muted);padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);text-align:center">Walang entries. I-unlock at magdagdag ng bagong overtime.</div>
+        <div id="empty" class="empty" style="display:none;color:var(--muted);padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);text-align:center">Walang entries. I-unlock at magdagdag ng bagong overtime o leave.</div>
       </main>
 
       <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle" style="display:flex;flex-direction:column;gap:8px">
-        <strong id="addOvertimeTitle" style="display:block;text-align:center">Add Overtime</strong>
+        <strong id="addOvertimeTitle" style="display:block;text-align:center">Add Entries</strong>
 
         <form id="addForm" autocomplete="off" novalidate>
           <div class="field">
@@ -269,7 +270,7 @@
             </div>
 
             <div class="field">
-              <label for="notes">Short note</label>
+              <label for="notes">Notes</label>
               <input id="notes" name="notes" class="lock-guard" type="text" placeholder="Short note" />
             </div>
           </div>
