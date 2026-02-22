@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>SLT Overtime Scheduler</title>
-  <meta name="description" content="Overtime scheduler with a simple header card." />
+  <title>Overtime Scheduler — Responsive</title>
+  <meta name="description" content="Overtime scheduler — always locked on load, search available while locked, mobile input fixes." />
   <style>
     :root{
       --bg:#0f1724;
@@ -29,7 +29,7 @@
     /* Page grid */
     .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
 
-    /* Header card (logo removed) */
+    /* Header card */
     .header-card {
       grid-column: 1 / -1;
       position: relative;
@@ -105,48 +105,78 @@
     .locked #lockToggle { opacity:1; pointer-events:auto }
     .locked .search, .locked .search * { pointer-events:auto !important; opacity:1 !important }
 
-    /* Responsive */
+    /* Mobile-specific fixes and centering */
     @media (max-width:760px){
       .container { grid-template-columns:1fr; gap:12px; padding:12px }
       .header-card { flex-direction:column; align-items:stretch; gap:12px; padding:14px }
       .controls { width:100%; justify-content:space-between; gap:8px; flex-wrap:wrap }
       .controls .search { flex:1 1 auto; min-width:0 }
-      .edit-row { grid-template-columns:1fr }
-      .edit-fields { grid-template-columns:1fr }
-      .action-col { justify-content:flex-start; margin-top:8px }
-      .action-col .actions-inline { flex-direction:row; gap:8px; flex-wrap:wrap }
-      .btn { padding:10px 12px; font-size:15px }
-      input[type="text"], input[type="date"], .edit-input { height:48px; font-size:16px; padding:12px }
-	  
-	  
-  /* Center the main title and subtitle inside the header card */
-  .header-card .title-block,
-  .header-card .title-block h1,
-  .header-card .title-block p.lead {
-    text-align: center;
-    margin-left: 0;
-    margin-right: 0;
-  }
 
+      /* Center header and Add form text on small screens */
+      .header-card .title-block,
+      .header-card .title-block h1,
+      .header-card .title-block p.lead {
+        text-align: center;
+        margin-left: 0;
+        margin-right: 0;
+      }
+      #formCard > strong { display:block; text-align:center; width:100%; }
 
-  /* Center the Add Overtime heading inside the form card */
-  #formCard > strong {
-    display: block;
-    text-align: center;
-    width: 100%;
-  }
-	  
-	  
+      /* Ensure form columns share space and can shrink */
+      .add-row,
+      .add-row > div,
+      .edit-fields,
+      .edit-fields > * {
+        min-width: 0 !important;
+        flex: 1 1 0 !important;
+        box-sizing: border-box;
+      }
+
+      /* Make inputs fill their container and avoid overflow */
+      .add-row input,
+      .edit-fields input,
+      .edit-fields textarea,
+      #formCard input,
+      #formCard textarea {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+      }
+
+      /* Stack action column below fields on very small screens */
+      .edit-row { grid-template-columns: 1fr !important; gap: 12px !important; }
+
+      /* Make action buttons wrap and not force width */
+      .action-col,
+      .action-col .actions-inline,
+      .header-card .controls,
+      .controls {
+        min-width: 0 !important;
+        flex: 0 1 auto !important;
+      }
+
+      /* Reduce input height slightly to avoid visual crowding */
+      input[type="text"], input[type="date"], .edit-input, textarea {
+        height: 44px !important;
+        padding: 10px 12px !important;
+      }
+
+      /* Buttons: avoid fixed widths */
+      .btn, .btn.ghost, .btn.secondary, .btn.danger { min-width: 0 !important; }
+
+      /* Small vertical spacing between stacked fields */
+      .add-row > div + div,
+      .edit-fields > * + * { margin-top: 8px; }
     }
   </style>
 </head>
 <body>
   <div class="container" id="app">
-    <!-- Header card (logo removed) -->
+    <!-- Header card -->
     <header class="header-card" role="banner" aria-label="Application header">
       <div class="title-block" aria-hidden="true">
-        <h1>Foreign TE Overtime Schedule</h1>
-		<p class="lead">Created by philiptimtiman - 20260222 v1.0</p>
+        <h1>Overtime Scheduler</h1>
+        <p class="lead">Always locked on load — search stays available while locked</p>
       </div>
 
       <div class="controls" role="group" aria-label="Search and lock controls">
@@ -169,7 +199,7 @@
       <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
       <div id="empty" class="meta" style="display:none">No entries yet.</div>
 
-      <div class="meta" style="margin-top:12px">Please refresh the page. Schedule updates are made 1–2 days before the scheduled overtime date.</div>
+      <div class="meta" style="margin-top:12px">Tip: Unlock to enable Add/Edit/Delete.</div>
     </section>
 
     <!-- Add Overtime form -->
@@ -181,12 +211,12 @@
           <input id="name" name="name" type="text" placeholder="Employee name" required autocomplete="name" />
         </div>
 
-        <div style="display:flex;gap:8px;margin-top:8px;min-width:0">
-          <div style="flex:1;min-width:0">
+        <div class="add-row" style="margin-top:8px;min-width:0">
+          <div>
             <label for="overtime_date">Date</label>
             <input id="overtime_date" name="overtime_date" type="date" autocomplete="bday" />
           </div>
-          <div style="flex:1;min-width:0">
+          <div>
             <label for="notes">Notes</label>
             <input id="notes" name="notes" type="text" placeholder="Short note" autocomplete="off" />
           </div>
