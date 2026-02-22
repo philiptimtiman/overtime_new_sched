@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Date Pill Fix</title>
-  <meta name="description" content="Overtime Scheduler with fixed date pill in entries list." />
+  <title>Overtime Scheduler — Date & Time Active (yyyymmdd hh:mm:ss)</title>
+  <meta name="description" content="Overtime Scheduler with active date+time input and display in yyyymmdd hh:mm:ss format." />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -71,25 +71,26 @@
       align-items:center;
       justify-content:center;
       min-width:72px;
-      max-width:120px;
+      max-width:160px;
       padding:6px 10px;
       border-radius:8px;
       background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
       border:1px solid rgba(255,255,255,0.02);
       color:var(--text);
       box-sizing:border-box;
-      font-size:0.88rem;
+      font-size:0.82rem;
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
       flex-shrink:0;
       line-height:1;
+      text-align:center;
     }
     .date-pill time{ display:block; width:100%; text-align:center; }
 
     .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 
-    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem;transition:background var(--theme-transition), color var(--theme-transition)}
+    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));Color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem;transition:background var(--theme-transition), color var(--theme-transition)}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
     .btn.full{width:100%}
@@ -121,12 +122,12 @@
     #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block;transition:color var(--theme-transition)}
     .field{display:flex;flex-direction:column;gap:8px;min-width:0}
 
-    input[type="text"], textarea{
+    input[type="text"], textarea, input[type="datetime-local"]{
       width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
       text-align:center;
       transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
     }
-    input[type="text"]:focus, textarea:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
+    input[type="text"]:focus, textarea:focus, input[type="datetime-local"]:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
 
     .date-control{position:relative;display:block;min-width:0}
     .date-text{padding-right:48px;cursor:pointer}
@@ -162,7 +163,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle">OVERTIME & LEAVE SCHEDULE</h1>
-		  <p class="meta">&#169;2026, BoxTechHud&#8482;</p>
+		  <p class="meta">&#169;2026 BoxTechHub&#8482;</p>
           <p class="meta">BxTHPTver202602230600</p>
         </div>
 
@@ -171,7 +172,7 @@
           <div class="lock-group" style="margin-left:6px;display:flex;align-items:center;gap:8px">
             <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444;transition:background var(--theme-transition)"></div>
 
-            <!-- Replaced text button with lock icon button (keeps id and aria attributes) -->
+            <!-- Lock icon button (id preserved) -->
             <button id="openUnlock" class="btn ghost icon-btn" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
                 <rect x="3" y="11" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.4" />
@@ -211,11 +212,11 @@
 
           <div class="add-row" style="display:grid;grid-template-columns:1fr;gap:8px">
             <div class="field">
-              <label for="overtime_date_text">Date</label>
+              <label for="overtime_datetime">Date & Time</label>
               <div class="date-control">
-                <input id="overtime_date_text" name="overtime_date_text" class="date-text lock-guard" type="text" placeholder="YYYY-MM-DD" aria-label="Overtime date" readonly />
-                <button type="button" id="datePickerBtn" class="date-btn lock-guard" aria-label="Open date picker">📅</button>
-                <input id="overtime_date_native" class="native-date" type="date" aria-hidden="true" />
+                <!-- Active datetime-local input -->
+                <input id="overtime_datetime" name="overtime_datetime" class="date-text lock-guard" type="datetime-local" aria-label="Overtime date and time" />
+                <button type="button" id="datePickerBtn" class="date-btn lock-guard" aria-label="Open date/time picker">📅</button>
               </div>
             </div>
 
@@ -270,8 +271,7 @@
     const pwCancel = document.getElementById('pwCancel');
     const pwError = document.getElementById('pwError');
 
-    const dateText = document.getElementById('overtime_date_text');
-    const dateNative = document.getElementById('overtime_date_native');
+    const datetimeInput = document.getElementById('overtime_datetime');
     const dateBtn = document.getElementById('datePickerBtn');
 
     const swatches = Array.from(document.querySelectorAll('.theme-swatch'));
@@ -283,8 +283,53 @@
 
     function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
     function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
-    function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
-    function isoDateFromText(s){ if(!s) return null; const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[1]}-${m[2]}-${m[3]}` : null; }
+
+    // Format display: show local date + time in "yyyymmdd hh:mm:ss"
+    function formatToYMDHMS(iso){
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (isNaN(d)) return '—';
+      const pad = (n) => String(n).padStart(2,'0');
+      const yyyy = d.getFullYear();
+      const mm = pad(d.getMonth()+1);
+      const dd = pad(d.getDate());
+      const hh = pad(d.getHours());
+      const min = pad(d.getMinutes());
+      const ss = pad(d.getSeconds());
+      return `${yyyy}${mm}${dd} ${hh}:${min}:${ss}`;
+    }
+
+    // Convert datetime-local value (YYYY-MM-DDTHH:MM) to ISO string for storage
+    function toIsoFromLocal(val){
+      if (!val) return null;
+      try {
+        // If browser provides a full ISO-like value, Date will handle it
+        const d = new Date(val);
+        if (!isNaN(d)) return d.toISOString();
+      } catch(e){}
+      // Fallback: append seconds and treat as local
+      const parts = val.split('T');
+      if (parts.length !== 2) return null;
+      const [datePart, timePart] = parts;
+      const iso = new Date(datePart + 'T' + timePart + ':00');
+      if (isNaN(iso)) return null;
+      return iso.toISOString();
+    }
+
+    // Convert ISO timestamp to datetime-local value (YYYY-MM-DDTHH:MM) for input value
+    function toLocalInputValue(iso){
+      if (!iso) return '';
+      const d = new Date(iso);
+      if (isNaN(d)) return '';
+      const pad = (n) => String(n).padStart(2,'0');
+      const yyyy = d.getFullYear();
+      const mm = pad(d.getMonth()+1);
+      const dd = pad(d.getDate());
+      const hh = pad(d.getHours());
+      const min = pad(d.getMinutes());
+      return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+    }
+
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
     // Theme map (applies CSS variables so gradients update immediately)
@@ -376,33 +421,25 @@
       }
     }
 
-    // Date picker behavior
+    // Date/time picker helper: focus the datetime-local input
     (function attachDateBehavior(){
       try {
-        function openNativePicker(initialIso){
-          if (!dateNative) return;
-          if (initialIso && /^\d{4}-\d{2}-\d{2}$/.test(initialIso)) dateNative.value = initialIso;
-          else dateNative.value = '';
-          if (typeof dateNative.showPicker === 'function') {
-            dateNative.showPicker();
-          } else {
-            dateNative.focus();
-            try { dateNative.click(); } catch(e){}
-          }
+        function openPicker(){
+          if (!datetimeInput) return;
+          datetimeInput.focus();
+          try { datetimeInput.showPicker && datetimeInput.showPicker(); } catch(e){}
         }
-        if (dateNative) dateNative.addEventListener('change', () => dateText.value = dateNative.value || '');
-        if (dateBtn) dateBtn.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
-        if (dateText) dateText.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
-        if (dateText) dateText.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openNativePicker(isoDateFromText(dateText.value)); } });
+        if (dateBtn) dateBtn.addEventListener('click', openPicker);
+        if (datetimeInput) datetimeInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); } });
       } catch (e) { console.warn('Date behavior attach failed', e); }
     })();
 
-    // Create row element uses <time> for date pill
+    // Create row element uses <time> for date pill and shows both date & time in yyyymmdd hh:mm:ss
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
       el.dataset.id = row.id;
-      const dateDisplay = row.overtime_date ? formatDate(row.overtime_date) : '—';
+      const dateDisplay = row.overtime_date ? formatToYMDHMS(row.overtime_date) : '—';
       const dateAttr = row.overtime_date ? row.overtime_date : '';
       el.innerHTML = `
         <div class="item-top">
@@ -453,7 +490,8 @@
       if (!unlocked) { alert('Actions are locked. Unlock to add entries.'); return; }
       const name = form.name.value.trim();
       const notes = form.notes.value.trim();
-      const overtime_date = isoDateFromText(dateText.value) || null;
+      const dtVal = datetimeInput?.value || '';
+      const overtime_date = toIsoFromLocal(dtVal);
       if (!name) { alert('Name is required'); return; }
       submitBtn.disabled = true; submitBtn.setAttribute('aria-busy','true');
       try {
@@ -462,7 +500,7 @@
         dataCache = [...dataCache, ...(data||[])];
         renderList(dataCache);
         form.reset();
-        dateText.value = '';
+        if (datetimeInput) datetimeInput.value = '';
       } catch (err) {
         console.error(err);
         alert('Insert failed: ' + (err.message || err));
@@ -472,7 +510,7 @@
     });
 
     // Reset button
-    resetBtn.addEventListener('click', () => { form.reset(); dateText.value = ''; });
+    resetBtn.addEventListener('click', () => { form.reset(); if (datetimeInput) datetimeInput.value = ''; });
 
     // Row actions
     rowsEl.addEventListener('click', async (ev) => {
@@ -502,11 +540,12 @@
         const row = dataCache.find(r => String(r.id) === String(id));
         if (!row) return;
         item.classList.add('editing');
+        // Use datetime-local for edit
         item.innerHTML = `
           <div style="display:flex;flex-direction:column;gap:8px">
             <input class="edit-input" data-edit="name" type="text" value="${escapeHtml(row.name)}" />
             <div style="display:flex;gap:8px;align-items:center">
-              <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" style="flex:1;max-width:100%;box-sizing:border-box" />
+              <input class="edit-input" data-edit="overtime_date" type="datetime-local" value="${toLocalInputValue(row.overtime_date)}" style="flex:1;max-width:100%;box-sizing:border-box" />
             </div>
             <input class="edit-input" data-edit="notes" type="text" value="${escapeHtml(row.notes || '')}" />
             <div style="display:flex;gap:8px">
@@ -523,7 +562,8 @@
         if (!unlocked) { alert('Actions are locked. Unlock to save.'); return; }
         const inputs = item.querySelectorAll('.edit-input');
         const name = inputs[0]?.value.trim();
-        const overtime_date = inputs[1]?.value || null;
+        const overtime_local = inputs[1]?.value || null;
+        const overtime_date = toIsoFromLocal(overtime_local);
         const notes = inputs[2]?.value.trim();
         if (!name) { alert('Name required'); return; }
         try {
