@@ -3,25 +3,34 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Compact Mode</title>
-  <meta name="description" content="Compact mode: reduced padding and gaps so more rows fit on small screens. Buttons and functions unchanged." />
+  <title>Overtime Scheduler — Compact + Readable</title>
+  <meta name="description" content="Compact mode with improved readability and stronger action color; buttons and functions unchanged." />
   <style>
     :root{
+      /* Accent changed to teal for stronger call-to-action */
+      --accent:#14b8a6; 
+      --accent-2:#0ea5a4;
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
-      --accent:#60a5fa; --accent-2:#3b82f6; --danger:#ef4444;
+      --danger:#ef4444;
       --glass: rgba(255,255,255,0.03);
       --shadow: 0 10px 28px rgba(2,6,23,0.55);
-      /* Compact adjustments */
-      --input-h:40px;    /* smaller inputs */
+
+      /* Compact mode base sizes */
+      --input-h:40px;    
       --radius:10px;
       --mobile-width:360px;
       --gap:10px;
-      --fs:15px;         /* slightly smaller base font */
+
+      /* Readability tweaks: slightly larger label and input fonts */
+      --base-font:15px;
+      --label-font:0.95rem;   /* labels slightly larger */
+      --input-font:0.98rem;   /* inputs slightly larger */
+      --pill-font:0.9rem;
     }
 
     /* Reset & base */
     *,*::before,*::after{box-sizing:border-box}
-    html,body{height:100%;margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--fs)}
+    html,body{height:100%;margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--base-font)}
     input,button,select,textarea{font-family:inherit}
     a{color:inherit;text-decoration:none}
     button{cursor:pointer}
@@ -40,7 +49,7 @@
     .brand p{margin:0;color:var(--muted);font-size:.85rem;text-align:center}
 
     .controls{display:flex;gap:8px;align-items:center}
-    .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);min-width:0;font-size:.95rem}
+    .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);min-width:0;font-size:var(--input-font)}
 
     /* Hide textual lock label (dot remains) */
     .lock-label-hidden { display: none !important; }
@@ -63,11 +72,11 @@
     .notes{color:var(--muted);font-size:.82rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
     /* Dates centered to keep visual axis */
-    .date-pill{min-width:84px;text-align:center;padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:var(--text);box-sizing:border-box;font-size:.9rem}
+    .date-pill{min-width:84px;text-align:center;padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:var(--text);box-sizing:border-box;font-size:var(--pill-font)}
 
     .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 
-    /* Buttons (unchanged visual style but slightly smaller padding) */
+    /* Buttons: color updated to new accent; padding slightly reduced to keep compact look */
     .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
@@ -75,7 +84,7 @@
 
     /* Add form (compact) */
     #formCard{display:flex;flex-direction:column;gap:10px}
-    #formCard label{font-size:.85rem;color:var(--muted);margin:0 0 8px 0;text-align:center;display:block}
+    #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block}
     .field{display:flex;flex-direction:column;gap:8px;min-width:0}
 
     /* Compact spacing tweaks for Add form */
@@ -85,14 +94,14 @@
 
     /* Inputs: placeholders centered, but editable text left-aligned for typing clarity */
     input[type="text"], textarea{
-      width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:.95rem;
+      width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
       text-align:center;
     }
-    input[type="text"]:focus, textarea:focus { text-align:left; }
+    input[type="text"]:focus, textarea:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(20,184,166,0.08); border-color: rgba(20,184,166,0.18); }
 
     /* Date control: visible text + calendar button */
     .date-control{position:relative;display:flex;align-items:center;gap:8px}
-    .date-text{flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;text-align:center;font-size:.95rem}
+    .date-text{flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;text-align:center;font-size:var(--input-font)}
     .date-text:focus { text-align:left; }
     .date-btn{width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;position:relative;z-index:1;font-size:1rem}
 
@@ -119,7 +128,7 @@
 
     /* Inline edit styles (stacked, full width) */
     .editing .edit-input{display:block}
-    .edit-input{display:none;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%;box-sizing:border-box;min-width:0;text-align:left;font-size:.95rem}
+    .edit-input{display:none;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%;box-sizing:border-box;min-width:0;text-align:left;font-size:var(--input-font)}
 
     .item.editing { display:flex; flex-direction:column; gap:8px; }
     .item.editing .edit-input { width:100%; max-width:100%; }
