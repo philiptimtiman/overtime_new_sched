@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>SLT Overtime Scheduler</title>
-  <meta name="description" content="Overtime scheduler." />
+  <title>Overtime Scheduler — Fix Add Form Overlap</title>
+  <meta name="description" content="Overtime scheduler — fixed Add Overtime form overlap and row edit layout." />
   <style>
     :root{
       --bg:#0f1724;
@@ -128,12 +128,34 @@
     .item.editing .value { display:none; }
     .item.editing .field input { display:block; }
 
-    /* Make Add Overtime form match row field styles */
-    #formCard input[type="text"], #formCard input[type="date"], #formCard textarea {
-      padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04);
-      background:transparent; color:var(--text); height:var(--input-h); width:100%; font-size:16px; box-sizing:border-box;
+    /* Make Add Overtime form match row field styles and prevent overlap */
+    #formCard input[type="text"],
+    #formCard input[type="date"],
+    #formCard textarea {
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.04);
+      background:transparent;
+      color:var(--text);
+      height:var(--input-h);
+      width:100%;
+      font-size:16px;
+      box-sizing:border-box;
       text-align:center;
+      min-width:0;
     }
+
+    /* Add-row: explicit grid, prevent overlap by forcing min-width:0 and box-sizing */
+    .add-row {
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px;
+      align-items:start;
+      min-width:0;
+      width:100%;
+    }
+    .add-row > div { min-width:0; display:flex; flex-direction:column; gap:6px; }
+    .add-row label { font-size:13px; color:var(--muted); margin:0 0 4px 0; text-align:center; }
 
     /* Prevent shrinking/overflow */
     .item, .field, .controls, .actions, #formCard { min-width:0 }
@@ -188,6 +210,8 @@
         width:100%;
       }
       .item.editing .actions { order: 2; }
+      .add-row { grid-template-columns: 1fr; }
+      .add-row > div + div { margin-top:8px; }
     }
 
     /* Small polish */
@@ -198,8 +222,8 @@
   <div class="container" id="app">
     <header class="header-card" role="banner" aria-label="Application header">
       <div class="title-block" aria-hidden="true">
-        <h1>FOREIGN TE OVERTIME SCHEDULE</h1>
-        <p class="lead">Created by philiptimtiman - V20260222.1.1</p>
+        <h1>Overtime Scheduler</h1>
+        <p class="lead">Please refresh the page. Schedule updates occur 1–2 days before the overtime date.</p>
       </div>
 
       <div class="controls" role="group" aria-label="Search and lock controls">
@@ -221,18 +245,18 @@
       <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
       <div id="empty" class="meta" style="display:none">No entries yet.</div>
 
-      <div class="meta" style="margin-top:12px">Please refresh the page. Schedule updates are made 1–2 days before the scheduled overtime date.</div>
+      <div class="meta" style="margin-top:12px">Tip: Unlock to enable Add/Edit/Delete.</div>
     </section>
 
     <aside class="card" id="formCard">
       <strong style="display:block;margin-bottom:8px">Add Overtime</strong>
       <form id="addForm" autocomplete="off">
-        <div>
-          <label for="name">Name</label>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label for="name" style="font-size:13px;color:var(--muted);margin:0;text-align:center">Name</label>
           <input id="name" name="name" type="text" placeholder="Employee name" required autocomplete="name" />
         </div>
 
-        <div class="add-row" style="margin-top:8px;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="add-row" style="margin-top:8px;">
           <div>
             <label for="overtime_date">Date</label>
             <input id="overtime_date" name="overtime_date" type="date" autocomplete="bday" />
