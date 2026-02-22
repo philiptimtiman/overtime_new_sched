@@ -6,7 +6,6 @@ const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 const COOKIE_NAME = 'overtime_unlocked';
 const COOKIE_MAX_AGE = 15 * 60; // 15 minutes in seconds
 
-// simple in-memory rate limiter (per-instance). Works reasonably for low traffic.
 const attempts = new Map();
 
 function getClientIp(req) {
@@ -53,18 +52,12 @@ export default async function handler(req, res) {
   const ADMIN = process.env.ADMIN_PASSWORD;
   if (!ADMIN) return res.status(500).json({ error: 'Server misconfigured' });
 
-  // constant-time compare
   try {
-    const a = Buffer.from(password);
-    const b = Buffer.from(ADMIN);
-    let ok = false;
-    if (a.length === b.length) {
-      ok = crypto.timingSafeEqual(a, b);
-    } else {
-      // still call timingSafeEqual on equal-length buffers to avoid timing leaks
-      const pad = Buffer.alloc(Math.max(a.length, b.length));
-      ok = false;
-    }
+    // Constant-time comparison using HMAC to avoid length issues
+    const key = crypto.randomBytes(32);
+    const h1 = crypto.createHmac('sha256', key).update(password).digest();
+    const h2 = crypto.createHmac('sha256', key).update(ADMIN).digest();
+    const ok = crypto.timingSafeEqual(h1, h2);
 
     if (!ok) {
       const count = recordAttempt(ip);
@@ -82,7 +75,6 @@ export default async function handler(req, res) {
       'Secure'
     ];
     res.setHeader('Set-Cookie', cookieParts.join('; '));
-    // reset attempts for this IP on success
     attempts.delete(ip);
     return res.status(200).json({ ok: true, expires_in: COOKIE_MAX_AGE });
   } catch (err) {
