@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Refined Buttons Fixed</title>
-  <meta name="description" content="Overtime Scheduler with refined Add / Reset buttons — fixed so form boxes are not affected." />
+  <title>Overtime Scheduler — Date Button Fix</title>
+  <meta name="description" content="Overtime Scheduler with fixed date control layout and refined buttons. Functionality unchanged." />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -73,7 +73,7 @@
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:8px 10px}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
 
-    /* --- Fixed form layout and refined Add / Reset button styles --- */
+    /* --- Form layout and refined Add / Reset button styles --- */
     .add-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
     .field{display:flex;flex-direction:column;gap:8px;min-width:0}
 
@@ -81,18 +81,16 @@
     #formCard { display:flex; flex-direction:column; gap:10px; }
     #formCard form { display:flex; flex-direction:column; gap:10px; }
 
-    /* Form actions: align to right, compact buttons, do not stretch */
+    /* Form actions: align to right, compact buttons, do not stretch inputs */
     .form-actions{
       display:flex;
       gap:8px;
       align-items:center;
       justify-content:flex-end;
       margin-top:6px;
-      /* prevent the actions from forcing the form width */
       flex-shrink:0;
     }
 
-    /* Primary Add button: compact pill with icon */
     .btn-add{
       padding:6px 12px;
       height:36px;
@@ -104,7 +102,6 @@
     }
     .btn-add svg{width:16px;height:16px;display:block;flex-shrink:0}
 
-    /* Secondary Reset button: subtle outline, compact */
     .btn-reset{
       padding:6px 10px;
       height:36px;
@@ -131,8 +128,55 @@
     }
     input[type="text"]:focus, textarea:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
 
-    .date-control{position:relative;display:flex;align-items:center;gap:8px}
-    .date-btn{width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;position:relative;z-index:1;font-size:1rem}
+    /* --- Date control fix: keep layout stable and button aligned --- */
+    .date-control{
+      position:relative;
+      display:block;
+      min-width:0;
+    }
+
+    /* The visible text input */
+    .date-text{
+      padding-right:48px; /* room for the button on the right */
+      cursor:pointer;
+    }
+
+    /* The visible button sits absolutely inside the control */
+    .date-btn{
+      position:absolute;
+      right:6px;
+      top:50%;
+      transform:translateY(-50%);
+      width:36px;
+      height:36px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.04);
+      background:transparent;
+      color:var(--muted);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:2;
+      font-size:1rem;
+      padding:0;
+    }
+
+    /* Native date input sits over the button (invisible) to allow native picker on supported browsers */
+    .native-date{
+      position:absolute;
+      right:6px;
+      top:50%;
+      transform:translateY(-50%);
+      width:36px;
+      height:36px;
+      opacity:0;
+      border:0;
+      padding:0;
+      margin:0;
+      background:transparent;
+      z-index:3;
+      cursor:pointer;
+    }
 
     /* Icon button for lock */
     .icon-btn{
@@ -148,6 +192,7 @@
       .add-row{grid-template-columns:1fr}
       .form-actions{justify-content:stretch}
       .form-actions .btn-add, .form-actions .btn-reset { flex:1; justify-content:center; }
+      .date-text{padding-right:48px}
     }
   </style>
 </head>
@@ -165,9 +210,7 @@
           <div style="display:flex;align-items:center;gap:8px">
             <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444;transition:background var(--theme-transition)"></div>
 
-            <!-- Icon button replaces text button; keeps same id openUnlock so JS remains unchanged -->
             <button id="openUnlock" class="icon-btn" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">
-              <!-- lock icon -->
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
                 <path class="icon-fill" d="M12 17a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
                 <path class="icon-fill" d="M17 8h-1V6a4 4 0 10-8 0v2H7a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2v-7a2 2 0 00-2-2zM9 8V6a3 3 0 116 0v2" />
@@ -211,7 +254,7 @@
               <div class="date-control">
                 <input id="overtime_date_text" name="overtime_date_text" class="date-text lock-guard" type="text" placeholder="YYYY-MM-DD" aria-label="Overtime date" readonly />
                 <button type="button" id="datePickerBtn" class="date-btn" aria-label="Open date picker">📅</button>
-                <input id="overtime_date_native" class="native-date" type="date" />
+                <input id="overtime_date_native" class="native-date" type="date" aria-hidden="true" />
               </div>
             </div>
 
@@ -354,19 +397,51 @@
       }
     }
 
-    // Date picker overlay
-    (function attachNativeOverlay() {
+    // Date picker behavior: clicking either the text or the button opens native picker (if supported)
+    (function attachDateBehavior(){
       try {
-        if (!dateNative || !dateText || !dateBtn) return;
-        dateNative.addEventListener('change', () => dateText.value = dateNative.value || '');
-        function openNativePicker(initialIso) {
+        function openNativePicker(initialIso){
+          if (!dateNative) return;
           if (initialIso && /^\d{4}-\d{2}-\d{2}$/.test(initialIso)) dateNative.value = initialIso;
           else dateNative.value = '';
-          if (typeof dateNative.showPicker === 'function') dateNative.showPicker(); else { dateNative.focus(); try { dateNative.click(); } catch(e){} }
+          if (typeof dateNative.showPicker === 'function') {
+            dateNative.showPicker();
+          } else {
+            // fallback: focus and click to open platform picker where supported
+            dateNative.focus();
+            try { dateNative.click(); } catch(e){}
+          }
         }
-        dateBtn.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
-        dateText.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
-      } catch (e) { console.warn('Date overlay attach failed', e); }
+
+        // When native date changes, reflect to visible text
+        if (dateNative) {
+          dateNative.addEventListener('change', () => {
+            dateText.value = dateNative.value || '';
+          });
+        }
+
+        // Clicking the visible button opens native picker
+        if (dateBtn) {
+          dateBtn.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
+        }
+
+        // Clicking the visible text also opens native picker for convenience
+        if (dateText) {
+          dateText.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
+        }
+
+        // Keyboard: Enter on the text opens picker
+        if (dateText) {
+          dateText.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+              ev.preventDefault();
+              openNativePicker(isoDateFromText(dateText.value));
+            }
+          });
+        }
+      } catch (e) {
+        console.warn('Date behavior attach failed', e);
+      }
     })();
 
     // Render rows
