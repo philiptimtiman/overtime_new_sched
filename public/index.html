@@ -153,8 +153,16 @@
     .date{font-family:var(--mono);font-size:13px;color:var(--accent-2)}
 
     /* More menu / actions */
-    .actions-inline{display:flex;gap:8px;align-items:center}
-    .edit-input{ width:100%; padding:6px 8px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:var(--text); }
+    .actions-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .edit-input{ width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:var(--text); }
+
+    /* Edit layout helpers */
+    .edit-row { display:flex; gap:10px; align-items:flex-start; width:100%; }
+    .edit-left { flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:6px; }
+    .edit-right { width:160px; display:flex; flex-direction:column; gap:6px; align-items:flex-end; min-width:0; }
+
+    /* ensure date input fits on desktop but becomes full width on mobile */
+    .edit-right .edit-input[type="date"] { width:140px; }
 
     /* top controls */
     .controls{display:flex;gap:8px;align-items:center}
@@ -190,6 +198,13 @@
       .row{flex-direction:column}
       .actions{flex-direction:row;flex-wrap:wrap}
       .actions button{flex:1 1 auto; min-width:0}
+
+      /* CRITICAL: stack edit layout vertically on small screens so notes won't overlap actions */
+      .edit-row { flex-direction:column; gap:8px; }
+      .edit-right { width:100%; align-items:flex-start; }
+      .edit-right .edit-input[type="date"] { width:100%; }
+      .actions-inline { justify-content:flex-start; gap:8px; }
+      .edit-left .edit-input { width:100%; }
     }
   </style>
 </head>
@@ -307,7 +322,6 @@
         wrapper.className = 'item';
         wrapper.dataset.id = row.id;
 
-        // display area (will be replaced with inputs when editing)
         wrapper.innerHTML = `
           <div style="flex:1;min-width:0">
             <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
@@ -365,7 +379,6 @@
           .select();
 
         if (error) throw error;
-        // append new row(s) to cache and re-render
         dataCache = [...dataCache, ...data];
         renderList(dataCache);
         form.reset();
@@ -390,7 +403,6 @@
       if (!id) return;
 
       if (action === 'delete') {
-        // Confirm then delete
         const ok = confirm('Delete this entry? This cannot be undone.');
         if (!ok) return;
         try {
@@ -400,7 +412,6 @@
             .eq('id', id);
 
           if (error) throw error;
-          // remove from cache and re-render
           dataCache = dataCache.filter(r => String(r.id) !== String(id));
           renderList(dataCache);
         } catch (err) {
@@ -426,21 +437,20 @@
       }
     });
 
-    // Enter edit mode: replace display with inputs and show Save/Cancel
+    // Enter edit mode
     function enterEditMode(item, id) {
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
 
-      // Build edit UI
       const editHtml = `
         <div style="flex:1;min-width:0">
-          <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
-            <div style="min-width:0">
+          <div class="edit-row">
+            <div class="edit-left">
               <input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" />
-              <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" style="margin-top:6px" />
+              <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" />
             </div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;min-width:120px">
-              <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" style="width:140px" />
+            <div class="edit-right">
+              <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" />
               <div class="actions-inline">
                 <button class="btn-ghost" data-action="save">Save</button>
                 <button class="btn-ghost" data-action="cancel">Cancel</button>
@@ -451,16 +461,14 @@
         </div>
       `;
       item.innerHTML = editHtml;
-      // focus first input
       const nameInput = item.querySelector('[data-edit="name"]');
       if (nameInput) nameInput.focus();
     }
 
-    // Exit edit mode without saving (restore from cache)
+    // Exit edit mode without saving
     function exitEditMode(item, id) {
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
-      // Rebuild display HTML for this single item
       item.innerHTML = `
         <div style="flex:1;min-width:0">
           <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
@@ -480,7 +488,7 @@
       `;
     }
 
-    // Save edit: read inputs, call Supabase update, update cache and UI
+    // Save edit
     async function saveEdit(item, id) {
       const nameInput = item.querySelector('[data-edit="name"]');
       const notesInput = item.querySelector('[data-edit="notes"]');
@@ -492,7 +500,6 @@
 
       if (!name) { alert('Name is required'); nameInput?.focus(); return; }
 
-      // optimistic UI: disable buttons
       const saveBtn = item.querySelector('[data-action="save"]');
       if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
 
@@ -504,15 +511,12 @@
           .select();
 
         if (error) throw error;
-        // update cache (replace the row)
         if (data && data.length) {
           const updated = data[0];
           dataCache = dataCache.map(r => (String(r.id) === String(id) ? updated : r));
         } else {
-          // fallback: update fields locally
           dataCache = dataCache.map(r => (String(r.id) === String(id) ? { ...r, name, notes, overtime_date } : r));
         }
-        // exit edit mode and render updated row
         exitEditMode(item, id);
       } catch (err) {
         console.error(err);
