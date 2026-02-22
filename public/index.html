@@ -20,11 +20,12 @@
       --action-col:140px;
       --date-col:160px;
       --radius:12px;
+      --container-pad:18px;
     }
 
     /* Reset & base */
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;padding:18px;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased}
+    *, *::before, *::after { box-sizing: border-box; }
+    html,body{height:100%;margin:0;padding:var(--container-pad);background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased}
     input,button,select,textarea{font-family:inherit;font-size:16px}
 
     /* Page grid */
@@ -44,9 +45,9 @@
       gap:12px;
       min-height:84px;
     }
-    .title-block{display:flex;flex-direction:column;gap:4px}
+    .title-block{display:flex;flex-direction:column;gap:4px;min-width:0}
     h1{font-size:20px;margin:0}
-    p.lead{margin:0;color:var(--muted);font-size:13px}
+    p.lead{margin:0;color:var(--muted);font-size:13px;min-width:0}
 
     .controls{display:flex;gap:8px;align-items:center;min-width:0}
     .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:var(--text);height:var(--input-h);flex:1 1 auto;min-width:0}
@@ -59,12 +60,7 @@
     .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04)}
     .list{display:flex;flex-direction:column;gap:12px}
 
-    /*
-      Rows layout:
-      Desktop: [Name] [Date] [Notes] [Actions]
-      Inputs exist in DOM but are hidden until the row has .editing
-      Values and inputs are centered.
-    */
+    /* Rows layout */
     .item {
       padding:12px;
       border-radius:12px;
@@ -109,7 +105,7 @@
       width:100%;
       box-sizing:border-box;
       display:none; /* inputs hidden until editing */
-      text-align:center; /* center input text */
+      text-align:center;
       min-width:0;
     }
 
@@ -128,7 +124,7 @@
     .item.editing .value { display:none; }
     .item.editing .field input { display:block; }
 
-    /* Make Add Overtime form match row field styles and prevent overlap */
+    /* Add Overtime form styles and overlap fixes */
     #formCard input[type="text"],
     #formCard input[type="date"],
     #formCard textarea {
@@ -157,6 +153,14 @@
     .add-row > div { min-width:0; display:flex; flex-direction:column; gap:6px; }
     .add-row label { font-size:13px; color:var(--muted); margin:0 0 4px 0; text-align:center; }
 
+    /* Specific fix: ensure date input doesn't overflow its grid cell in all browsers */
+    .add-row input[type="date"] {
+      max-width:100%;
+      width:100%;
+      min-width:0;
+      box-sizing:border-box;
+    }
+
     /* Prevent shrinking/overflow */
     .item, .field, .controls, .actions, #formCard { min-width:0 }
     .field > * { min-width:0; overflow-wrap:break-word }
@@ -180,7 +184,9 @@
        Important: inputs remain hidden unless .editing is present to avoid duplicate visible inputs/values.
     */
     @media (max-width:760px){
-      .container { grid-template-columns:1fr; gap:12px; padding:12px }
+      :root { --container-pad:12px; }
+      html,body { padding: var(--container-pad); }
+      .container { grid-template-columns:1fr; gap:12px; }
       .header-card { flex-direction:column; align-items:stretch; gap:12px; padding:14px }
       .title-block, .title-block h1, .title-block p.lead { text-align:center; margin:0 auto; }
 
@@ -210,6 +216,8 @@
         width:100%;
       }
       .item.editing .actions { order: 2; }
+
+      /* Make add-row stack on small screens to avoid overlap */
       .add-row { grid-template-columns: 1fr; }
       .add-row > div + div { margin-top:8px; }
     }
@@ -461,7 +469,6 @@
       if (!row) return;
       item.classList.add('editing');
 
-      // Replace actions with Save/Cancel/Delete
       const actions = item.querySelector('.actions');
       actions.innerHTML = `
         <button class="btn ghost" data-action="save">Save</button>
@@ -469,7 +476,6 @@
         <button class="btn danger" data-action="delete">Delete</button>
       `;
 
-      // Populate inputs (they already exist)
       const nameInput = item.querySelector('[data-edit="name"]');
       const dateInput = item.querySelector('[data-edit="overtime_date"]');
       const notesInput = item.querySelector('[data-edit="notes"]');
@@ -478,7 +484,6 @@
       if (dateInput) dateInput.value = row.overtime_date || '';
       if (notesInput) notesInput.value = row.notes || '';
 
-      // Focus first input and scroll into view on mobile
       if (nameInput) {
         nameInput.focus();
         setTimeout(()=> nameInput.scrollIntoView({behavior:'smooth', block:'center'}), 120);
@@ -490,7 +495,6 @@
       if (!row) return;
       item.classList.remove('editing');
 
-      // Restore displayed values
       const nameVal = item.querySelector('[data-field="name"]');
       const dateVal = item.querySelector('[data-field="overtime_date"]');
       const notesVal = item.querySelector('[data-field="notes"]');
@@ -499,7 +503,6 @@
       if (dateVal) dateVal.textContent = row.overtime_date ? formatDate(row.overtime_date) : '—';
       if (notesVal) notesVal.textContent = row.notes || '';
 
-      // Restore actions
       const actions = item.querySelector('.actions');
       actions.innerHTML = `
         <button class="btn ghost" data-action="edit">Edit</button>
