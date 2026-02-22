@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Balanced & Centered</title>
-  <meta name="description" content="Balanced centered layout; Add form inputs disabled when locked; iOS-safe date input; all labels centered." />
+  <title>Overtime Scheduler — Truly Centered</title>
+  <meta name="description" content="Balanced centered layout; Add form inputs disabled when locked; iOS-safe date input; main content visually centered." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
       --accent:#60a5fa; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
       --shadow: 0 8px 30px rgba(2,6,23,0.6); --input-h:44px; --gap:14px;
-      --right-col-min:220px; --right-col-max:320px; --page-max:980px; --pad:18px; --radius:12px;
+      --right-col:260px; --page-max:980px; --pad:18px; --radius:12px;
     }
 
     /* Reset */
@@ -19,7 +19,7 @@
     input,button,select,textarea{font-family:inherit;font-size:16px}
     a{color:inherit}
 
-    /* Page wrapper: symmetric gutters and centered content */
+    /* Page wrapper: center everything and keep symmetric gutters */
     .page{
       width:100%;
       max-width:var(--page-max);
@@ -29,23 +29,32 @@
       display:flex;
       flex-direction:column;
       gap:18px;
-      align-items:center;
+      align-items:stretch;
     }
 
-    /* Container: balanced grid with flexible right column */
-    .container{
+    /*
+      Layout approach:
+      - Use a 3-column grid to visually center the main area:
+        left spacer | main content (entries) | right sidebar
+      - The left and right spacers are flexible so the main column stays centered.
+      - On narrow screens the grid collapses to a single column.
+    */
+    .container {
       width:100%;
       display:grid;
-      grid-template-columns: 1fr minmax(var(--right-col-min), var(--right-col-max));
+      grid-template-columns: 1fr minmax(0, 720px) 1fr;
       gap:20px;
       align-items:start;
       justify-items:stretch;
     }
 
-    /* Header */
+    /* Place main and sidebar into the center column using subgrid wrappers */
+    .main { grid-column:2; display:grid; grid-template-columns: 1fr; gap:16px; }
+    .sidebar { grid-column:3; width:100%; max-width:var(--right-col); justify-self:center; }
+
+    /* Header spans full width but content is centered inside the center column */
+    .header-wrap { grid-column:2; width:100%; }
     .header-card{
-      grid-column:1/-1;
-      width:100%;
       border-radius:var(--radius);
       padding:14px;
       background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
@@ -57,11 +66,11 @@
       gap:12px;
       min-height:72px;
     }
+
     .title-block{display:flex;flex-direction:column;gap:4px}
     .title-block h1{font-size:18px;margin:0}
     .title-block p{margin:0;color:var(--muted);font-size:13px}
 
-    /* Controls */
     .controls{display:flex;gap:8px;align-items:center;min-width:0}
     .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:var(--text);height:var(--input-h);flex:1 1 auto;min-width:0}
     .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
@@ -86,10 +95,10 @@
     .item.editing .value{display:none}
     .item.editing .field input{display:block}
 
-    /* Add form: center labels and inputs */
+    /* Add form (in sidebar) */
     #formCard{width:100%}
     #formCard .card{padding:12px}
-    #formCard h2, #formCard strong { text-align:center; display:block; margin:0 0 8px 0; }
+    #formCard strong{ text-align:center; display:block; margin:0 0 8px 0; }
     #formCard label{font-size:13px;color:var(--muted);margin:0 0 6px 0;text-align:center;display:block}
     #formCard input[type="text"], #formCard input[type="date"], #formCard textarea{
       padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);width:100%;font-size:15px;box-sizing:border-box;text-align:center;min-width:0;display:block;
@@ -116,23 +125,19 @@
     /* Defensive */
     .item, .field, .add-row, .container, #formCard { min-width:0; }
 
-    /* Responsive: stack and center on small screens */
-    @media (max-width:820px){
-      .container{grid-template-columns:1fr;gap:12px}
-      .header-card{flex-direction:column;align-items:stretch;gap:10px;padding:12px}
+    /* Responsive: collapse to single column and keep everything centered */
+    @media (max-width:980px){
+      .container { grid-template-columns: 1fr; }
+      .header-wrap { grid-column:1; }
+      .main { grid-column:1; }
+      .sidebar { grid-column:1; justify-self:stretch; max-width:none; }
+      .header-card{padding:12px}
       .item{grid-template-columns:1fr;gap:10px;align-items:stretch}
       .add-row{grid-template-columns:1fr}
       .add-row>div+div{margin-top:8px}
       .actions{flex-direction:row;justify-content:center;width:100%}
       .item.editing .actions{order:2}
       .page{padding:12px}
-      .form-actions{justify-content:center}
-    }
-
-    @media (max-width:420px){
-      .header-card{padding-left:10px;padding-right:10px}
-      .page{padding-left:10px;padding-right:10px}
-      .add-row input[type="date"]{-webkit-appearance:none;appearance:none}
     }
 
     /* Visual disabled style for lock-guard elements */
@@ -141,58 +146,67 @@
 </head>
 <body>
   <div class="page">
-    <div class="container" id="app">
-      <header class="header-card" role="banner" aria-label="Application header">
-        <div class="title-block" aria-hidden="true">
-          <h1>Overtime Scheduler</h1>
-          <p class="lead">Unlock to enable Add / Edit / Delete. Default: Locked on load.</p>
-        </div>
-
-        <div class="controls" role="group" aria-label="Search and lock controls">
-          <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" autocomplete="off" />
-          <div style="display:flex;align-items:center;gap:8px">
-            <div id="lockDot" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
-            <div id="lockText" style="color:var(--muted);font-size:13px">Locked</div>
-          </div>
-          <button id="lockToggle" class="btn secondary" title="Lock or unlock actions">Unlock</button>
-        </div>
-      </header>
-
-      <section class="card list" aria-live="polite">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <strong>Entries</strong>
-          <span id="status">Idle</span>
-        </div>
-
-        <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
-        <div id="empty" class="meta" style="display:none;text-align:center">No entries yet.</div>
-        <div class="meta" style="margin-top:12px;text-align:center">Tip: Click Unlock to enter password and enable actions.</div>
-      </section>
-
-      <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle">
-        <strong id="addOvertimeTitle">Add Overtime</strong>
-        <form id="addForm" autocomplete="off" novalidate>
-          <div style="display:flex;flex-direction:column;gap:6px">
-            <label for="name">Name</label>
-            <input id="name" name="name" class="lock-guard" type="text" placeholder="Employee name" required autocomplete="name" />
+    <div class="container" id="layoutRoot">
+      <!-- Header centered in middle column -->
+      <div class="header-wrap">
+        <header class="header-card" role="banner" aria-label="Application header">
+          <div class="title-block" aria-hidden="true">
+            <h1>Overtime Scheduler</h1>
+            <p class="lead">Unlock to enable Add / Edit / Delete. Default: Locked on load.</p>
           </div>
 
-          <div class="add-row" style="margin-top:8px;">
-            <div>
-              <label for="overtime_date">Date</label>
-              <input id="overtime_date" name="overtime_date" class="lock-guard" type="date" autocomplete="bday" />
+          <div class="controls" role="group" aria-label="Search and lock controls">
+            <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" autocomplete="off" />
+            <div style="display:flex;align-items:center;gap:8px">
+              <div id="lockDot" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
+              <div id="lockText" style="color:var(--muted);font-size:13px">Locked</div>
             </div>
-            <div>
-              <label for="notes">Notes</label>
-              <input id="notes" name="notes" class="lock-guard" type="text" placeholder="Short note" autocomplete="off" />
-            </div>
+            <button id="lockToggle" class="btn secondary" title="Lock or unlock actions">Unlock</button>
+          </div>
+        </header>
+      </div>
+
+      <!-- Main column (center) -->
+      <main class="main" id="mainColumn" aria-live="polite">
+        <section class="card list">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <strong>Entries</strong>
+            <span id="status">Idle</span>
           </div>
 
-          <div class="form-actions">
-            <button id="submitBtn" class="btn lock-guard" type="submit">Add</button>
-            <button type="button" id="resetBtn" class="btn secondary lock-guard">Reset</button>
-          </div>
-        </form>
+          <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
+          <div id="empty" class="meta" style="display:none;text-align:center">No entries yet.</div>
+          <div class="meta" style="margin-top:12px;text-align:center">Tip: Click Unlock to enter password and enable actions.</div>
+        </section>
+      </main>
+
+      <!-- Sidebar (right) -->
+      <aside class="sidebar" id="sidebarColumn">
+        <div id="formCard" class="card" aria-labelledby="addOvertimeTitle">
+          <strong id="addOvertimeTitle">Add Overtime</strong>
+          <form id="addForm" autocomplete="off" novalidate>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+              <label for="name">Name</label>
+              <input id="name" name="name" class="lock-guard" type="text" placeholder="Employee name" required autocomplete="name" />
+            </div>
+
+            <div class="add-row" style="margin-top:8px;">
+              <div>
+                <label for="overtime_date">Date</label>
+                <input id="overtime_date" name="overtime_date" class="lock-guard" type="date" autocomplete="bday" />
+              </div>
+              <div>
+                <label for="notes">Notes</label>
+                <input id="notes" name="notes" class="lock-guard" type="text" placeholder="Short note" autocomplete="off" />
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button id="submitBtn" class="btn lock-guard" type="submit">Add</button>
+              <button type="button" id="resetBtn" class="btn secondary lock-guard">Reset</button>
+            </div>
+          </form>
+        </div>
       </aside>
     </div>
 
@@ -202,6 +216,7 @@
     </footer>
   </div>
 
+  <!-- Unlock modal -->
   <div id="modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:9999;padding:20px">
     <div class="modal" role="document" style="background:var(--card);padding:18px;border-radius:12px;min-width:260px;max-width:520px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06);z-index:10000">
       <h3 id="modalTitle">Unlock Actions</h3>
@@ -248,21 +263,17 @@
     function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Toggle disabled state for all lock-guarded elements (including Add form inputs)
     function updateGuardedControls(){
       const guarded = document.querySelectorAll('.lock-guard');
       guarded.forEach(el => {
         if (unlocked) el.removeAttribute('disabled');
         else el.setAttribute('disabled','true');
       });
-
-      // Row action buttons
       const rowActionButtons = rowsEl.querySelectorAll('[data-action]');
       rowActionButtons.forEach(btn => {
         const action = btn.dataset.action;
         if (['edit','delete','save','cancel'].includes(action)) {
-          if (unlocked) btn.removeAttribute('disabled');
-          else btn.setAttribute('disabled','true');
+          if (unlocked) btn.removeAttribute('disabled'); else btn.setAttribute('disabled','true');
         }
       });
     }
@@ -280,7 +291,6 @@
         lockText.textContent = 'Locked';
         lockToggle.textContent = 'Unlock';
       }
-      // keep search always enabled
       if (searchInput) { searchInput.disabled = false; searchInput.setAttribute('aria-disabled','false'); searchInput.tabIndex = 0; }
       updateGuardedControls();
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
@@ -511,7 +521,7 @@
       else { if (!confirm('Locking will disable Add/Edit/Delete. Continue?')) return; setUnlockedState(false, true); }
     });
 
-    // On load: force locked on every page load (overwrites any saved preference)
+    // On load: force locked on every page load
     window.addEventListener('DOMContentLoaded', async () => {
       setUnlockedState(false, true);
       await loadRows();
