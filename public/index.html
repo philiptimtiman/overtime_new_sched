@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Complete</title>
-  <meta name="description" content="Overtime scheduler — single-file app with centered Add form, responsive rows, and persisted lock state." />
+  <title>Overtime Scheduler — Search & Edit Enabled Fix</title>
+  <meta name="description" content="Overtime scheduler — search always enabled; edit/add/delete properly guarded and not accidentally disabled by global CSS." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -29,6 +29,7 @@
     p.lead{margin:0;color:var(--muted);font-size:13px}
 
     .controls{display:flex;gap:8px;align-items:center;min-width:0}
+    /* Search must always be interactive — do not let .locked disable it */
     .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:var(--text);height:var(--input-h);flex:1 1 auto;min-width:0}
     .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
     .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
@@ -72,9 +73,19 @@
     /* Modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
     .modal{background:var(--card);padding:18px;border-radius:12px;min-width:260px;max-width:520px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06);z-index:10000}
-    .locked .btn, .locked .btn.ghost, .locked input, .locked button{opacity:0.45;pointer-events:none}
-    .locked #lockToggle{opacity:1;pointer-events:auto}
 
+    /*
+      Locking behavior:
+      - We intentionally do NOT disable all inputs/buttons via a global selector like `.locked input`.
+      - Instead, elements that should be disabled when locked get the class `lock-guard`.
+      - This prevents accidental disabling of the search box or other controls that must remain interactive.
+    */
+    .locked .lock-guard {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    /* Accessibility: also set disabled attribute via JS for screen readers */
     /* Responsive */
     @media (max-width:760px){
       .container{grid-template-columns:1fr;gap:12px;padding:12px}
@@ -99,11 +110,13 @@
       </div>
 
       <div class="controls" role="group" aria-label="Search and lock controls">
+        <!-- Search is intentionally NOT a lock-guard so it remains enabled always -->
         <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" autocomplete="off" />
         <div style="display:flex;align-items:center;gap:8px">
           <div id="lockDot" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
           <div id="lockText" style="color:var(--muted);font-size:13px">Locked</div>
         </div>
+        <!-- Unlock/Lock button remains interactive; it toggles the lock state -->
         <button id="lockToggle" class="btn secondary" title="Lock or unlock actions">Unlock</button>
       </div>
     </header>
@@ -124,6 +137,7 @@
       <form id="addForm" autocomplete="off" novalidate>
         <div style="display:flex;flex-direction:column;gap:6px">
           <label for="name" style="font-size:13px;color:var(--muted);margin:0">Name</label>
+          <!-- Add form container is a lock-guard so Add/Reset are disabled when locked -->
           <input id="name" name="name" type="text" placeholder="Employee name" required autocomplete="name" />
         </div>
 
@@ -139,8 +153,9 @@
         </div>
 
         <div class="form-actions">
-          <button id="submitBtn" class="btn" type="submit">Add</button>
-          <button type="button" id="resetBtn" class="btn secondary">Reset</button>
+          <!-- Buttons that should be disabled when locked get the lock-guard class -->
+          <button id="submitBtn" class="btn lock-guard" type="submit">Add</button>
+          <button type="button" id="resetBtn" class="btn secondary lock-guard">Reset</button>
         </div>
       </form>
     </aside>
@@ -200,6 +215,30 @@
     function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+    // Update lock-guarded controls' disabled attribute for accessibility
+    function updateGuardedControls() {
+      const guarded = document.querySelectorAll('.lock-guard');
+      guarded.forEach(el => {
+        if (unlocked) {
+          el.removeAttribute('disabled');
+        } else {
+          el.setAttribute('disabled', 'true');
+        }
+      });
+
+      // Also ensure row action buttons (Edit/Delete) are guarded when locked.
+      // We mark them with data-action and toggle disabled attribute here.
+      const rowActionButtons = rowsEl.querySelectorAll('[data-action]');
+      rowActionButtons.forEach(btn => {
+        const action = btn.dataset.action;
+        // Only guard edit/save/cancel/delete actions (not search)
+        if (['edit','delete','save','cancel'].includes(action)) {
+          if (unlocked) btn.removeAttribute('disabled');
+          else btn.setAttribute('disabled','true');
+        }
+      });
+    }
+
     // Lock state
     function setUnlockedState(isUnlocked, persist = true){
       unlocked = !!isUnlocked;
@@ -214,7 +253,17 @@
         lockText.textContent = 'Locked';
         lockToggle.textContent = 'Unlock';
       }
-      if (searchInput) { searchInput.disabled = false; searchInput.setAttribute('aria-disabled','false'); searchInput.tabIndex = 0; }
+
+      // Search must remain enabled always — ensure it's not disabled by JS
+      if (searchInput) {
+        searchInput.disabled = false;
+        searchInput.setAttribute('aria-disabled','false');
+        searchInput.tabIndex = 0;
+      }
+
+      // Update guarded controls (visual + disabled attribute)
+      updateGuardedControls();
+
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
     function readPersistedUnlocked(){ const v = safeGetLocal(LOCAL_KEY); if (v === 'true') return true; if (v === 'false') return false; return false; }
@@ -268,8 +317,8 @@
         </div>
 
         <div class="actions" role="group" aria-label="Row actions">
-          <button class="btn ghost" data-action="edit">Edit</button>
-          <button class="btn ghost" data-action="delete">Delete</button>
+          <button class="btn ghost lock-guard" data-action="edit">Edit</button>
+          <button class="btn ghost lock-guard" data-action="delete">Delete</button>
         </div>
       `;
       return wrapper;
@@ -279,6 +328,8 @@
       if(!items.length){ emptyEl.style.display = 'block'; return; }
       emptyEl.style.display = 'none';
       items.forEach(row => rowsEl.appendChild(createRowElement(row)));
+      // After rendering, ensure guarded controls reflect current lock state
+      updateGuardedControls();
     }
 
     // Load rows from Supabase
@@ -369,7 +420,7 @@
       actions.innerHTML = `
         <button class="btn ghost" data-action="save">Save</button>
         <button class="btn ghost" data-action="cancel">Cancel</button>
-        <button class="btn danger" data-action="delete">Delete</button>
+        <button class="btn danger lock-guard" data-action="delete">Delete</button>
       `;
       const nameInput = item.querySelector('[data-edit="name"]');
       const dateInput = item.querySelector('[data-edit="overtime_date"]');
@@ -378,6 +429,8 @@
       if (dateInput) dateInput.value = row.overtime_date || '';
       if (notesInput) notesInput.value = row.notes || '';
       if (nameInput) { nameInput.focus(); setTimeout(()=> nameInput.scrollIntoView({behavior:'smooth', block:'center'}), 120); }
+      // Update guarded controls (save/cancel should be enabled when unlocked)
+      updateGuardedControls();
     }
 
     function exitEditMode(item, id){
@@ -392,9 +445,10 @@
       if (notesVal) notesVal.textContent = row.notes || '';
       const actions = item.querySelector('.actions');
       actions.innerHTML = `
-        <button class="btn ghost" data-action="edit">Edit</button>
-        <button class="btn ghost" data-action="delete">Delete</button>
+        <button class="btn ghost lock-guard" data-action="edit">Edit</button>
+        <button class="btn ghost lock-guard" data-action="delete">Delete</button>
       `;
+      updateGuardedControls();
     }
 
     async function saveEdit(item, id){
@@ -435,7 +489,7 @@
       renderList(filtered);
     });
 
-    // Modal handlers (wired)
+    // Modal handlers
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
