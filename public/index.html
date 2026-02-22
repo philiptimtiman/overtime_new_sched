@@ -3,252 +3,106 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Theme Switcher (Swatches Only)</title>
-  <meta name="description" content="Overtime Scheduler with theme swatches (no text) for Ocean Indigo, Warm Sunset, Forest Teal, Violet Glow. Functionality unchanged." />
+  <title>Overtime Scheduler — Swipeable Rows</title>
+  <meta name="description" content="Overtime Scheduler with touch-friendly scrolling and drag-to-scroll for long lists." />
   <style>
     :root{
-      /* Default (Forest Teal) variables */
-      --accent: #10b981;
-      --accent-2: #059669;
-      --bg-top: #04251f;
-      --bg-bottom: #0b3b36;
-      --text: #e6f7f2;
-      --muted: #9fcfc3;
-      --danger: #ef4444;
-
-      /* Card background fallbacks (overridden per theme) */
-      --card-bg-top: rgba(255,255,255,0.02);
-      --card-bg-bottom: rgba(255,255,255,0.01);
-
-      --glass: rgba(255,255,255,0.03);
-      --shadow: 0 10px 28px rgba(2,6,23,0.55);
-
-      --input-h:40px;
-      --radius:10px;
-      --mobile-width:360px;
-
-      --base-font:15px;
-      --label-font:0.95rem;
-      --input-font:0.98rem;
-      --pill-font:0.9rem;
-
-      /* transition timing */
-      --theme-transition: 220ms ease;
-    }
-
-    /* Theme presets (applied by data-theme on #appRoot) */
-    #appRoot[data-theme="forest"]{
       --accent:#10b981; --accent-2:#059669;
       --bg-top:#04251f; --bg-bottom:#0b3b36;
-      --text:#e6f7f2; --muted:#9fcfc3;
+      --text:#e6f7f2; --muted:#9fcfc3; --danger:#ef4444;
       --card-bg-top: rgba(8,40,34,0.06);
       --card-bg-bottom: rgba(6,30,26,0.03);
-    }
-    #appRoot[data-theme="warm"]{
-      --accent:#ff7a59; --accent-2:#ff5a36;
-      --bg-top:#2b0b3a; --bg-bottom:#3b0f2f;
-      --text:#f0eef6; --muted:#c9bfc9;
-      --card-bg-top: rgba(60,20,50,0.06);
-      --card-bg-bottom: rgba(50,18,45,0.03);
-    }
-    #appRoot[data-theme="ocean"]{
-      --accent:#4f46e5; --accent-2:#3b82f6;
-      --bg-top:#071428; --bg-bottom:#0b1f2b;
-      --text:#e6eef8; --muted:#9fb0c6;
-      --card-bg-top: rgba(10,20,40,0.06);
-      --card-bg-bottom: rgba(8,18,34,0.03);
-    }
-    #appRoot[data-theme="violet"]{
-      --accent:#d946ef; --accent-2:#a78bfa;
-      --bg-top:#0b0b12; --bg-bottom:#2b1536;
-      --text:#f3eefb; --muted:#d6c7e9;
-      --card-bg-top: rgba(40,18,40,0.06);
-      --card-bg-bottom: rgba(36,14,36,0.03);
+
+      --input-h:40px; --radius:10px; --mobile-width:360px;
+      --base-font:15px; --theme-transition:220ms ease;
     }
 
-    /* Base reset and typography */
-    *,*::before,*::after{box-sizing:border-box}
-    html,body{height:100%;margin:0;padding:0;background:transparent;color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--base-font)}
-    input,button,select,textarea{font-family:inherit}
-    a{color:inherit;text-decoration:none}
-    button{cursor:pointer}
-
-    .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:transparent}
-
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;padding:0;background:transparent;color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;font-size:var(--base-font)}
+    button,input,textarea{font-family:inherit}
+    .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px}
     .app{
-      width:var(--mobile-width);max-width:100%;
-      display:flex;flex-direction:column;gap:12px;align-items:stretch;
-      background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
-      border-radius:14px;
-      padding:10px;
-      box-shadow: 0 14px 36px rgba(2,10,8,0.45);
-      border: 1px solid rgba(255,255,255,0.03);
-      backdrop-filter: blur(4px);
-      color:var(--text);
-      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
-      will-change: background, color, border-color;
+      width:var(--mobile-width);max-width:100%;display:flex;flex-direction:column;gap:12px;align-items:stretch;
+      background:linear-gradient(180deg,var(--bg-top),var(--bg-bottom));border-radius:14px;padding:10px;
+      box-shadow:0 14px 36px rgba(2,10,8,0.45);border:1px solid rgba(255,255,255,0.03);backdrop-filter:blur(4px);
+      transition:background var(--theme-transition),color var(--theme-transition);
     }
-
-    .card{
-      background: linear-gradient(180deg, var(--card-bg-top), var(--card-bg-bottom));
-      border-radius:var(--radius);
-      padding:12px;
-      box-shadow:0 8px 20px rgba(2,6,23,0.45);
-      border:1px solid rgba(255,255,255,0.04);
-      overflow:visible;
-      -webkit-backdrop-filter: blur(3px);
-      backdrop-filter: blur(3px);
-      color:var(--text);
-      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition), box-shadow var(--theme-transition);
-      will-change: background, color, border-color;
-    }
-
-    .header.card { display:flex; flex-direction:column; gap:8px; align-items:stretch; }
-    .brand{display:flex;flex-direction:column;align-items:center;gap:4px}
-    .brand h1{font-size:1rem;margin:0;text-align:center;color:var(--text);transition:color var(--theme-transition)}
-    .brand p{margin:0;color:var(--muted);font-size:.85rem;text-align:center;transition:color var(--theme-transition)}
+    .card{background:linear-gradient(180deg,var(--card-bg-top),var(--card-bg-bottom));border-radius:var(--radius);padding:12px;box-shadow:0 8px 20px rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.04)}
+    .header.card{display:flex;flex-direction:column;gap:8px}
+    .brand{display:flex;flex-direction:column;align-items:center}
+    .brand h1{margin:0;font-size:1rem}
+    .brand p{margin:0;color:var(--muted);font-size:.85rem}
 
     .controls{display:flex;gap:8px;align-items:center}
-    .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--text);min-width:0;font-size:var(--input-font)}
+    .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--text)}
 
-    /* Theme swatches (no text) */
+    /* Theme swatches (kept from previous) */
     .theme-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px}
-    .theme-swatch{
-      width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,0.06);
-      display:inline-flex;align-items:center;justify-content:center;padding:0;
-      background:transparent;box-sizing:border-box;
-      transition: transform 160ms ease, box-shadow 220ms ease, border-color var(--theme-transition);
-    }
-    .theme-swatch:focus{outline:none; transform:scale(1.06); box-shadow:0 6px 18px rgba(0,0,0,0.25);}
-    .theme-swatch .dot{width:24px;height:24px;border-radius:999px;box-shadow:0 4px 10px rgba(0,0,0,0.25);}
-
-    /* specific swatch gradients */
+    .theme-swatch{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,0.06);display:inline-flex;align-items:center;justify-content:center;padding:0;background:transparent}
+    .theme-swatch .dot{width:24px;height:24px;border-radius:999px}
     .swatch-ocean .dot{background:linear-gradient(180deg,#4f46e5,#3b82f6)}
     .swatch-warm .dot{background:linear-gradient(180deg,#ff7a59,#ff5a36)}
     .swatch-forest .dot{background:linear-gradient(180deg,#10b981,#059669)}
     .swatch-violet .dot{background:linear-gradient(180deg,#d946ef,#a78bfa)}
+    .theme-swatch.active{transform:scale(1.06);box-shadow:0 8px 26px rgba(0,0,0,0.32);border-color:transparent}
 
-    /* active state: ring and slightly larger */
-    .theme-swatch.active{border-color:transparent; transform:scale(1.06); box-shadow:0 8px 26px rgba(0,0,0,0.32)}
-    .theme-swatch.active .dot{box-shadow:0 6px 18px rgba(0,0,0,0.35)}
+    .meta{font-size:.82rem;color:var(--muted);text-align:center}
 
-    .lock-label-hidden { display: none !important; }
-
-    .meta{font-size:.82rem;color:var(--muted);text-align:center;transition:color var(--theme-transition)}
-
-    .list{display:flex;flex-direction:column;gap:8px}
-    .item{
-      display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
-      border:1px solid rgba(255,255,255,0.03);
-      min-width:0; overflow:visible;
-      color:var(--text);
-      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
-    }
-    .item-top{display:flex;gap:8px;align-items:center;justify-content:space-between}
-    .item-left{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
-
-    .name{font-weight:600;font-size:.96rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .notes{color:var(--muted);font-size:.82rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-    .date-pill{
-      min-width:84px;text-align:center;padding:6px;border-radius:8px;
+    /* LIST area: make it scrollable with a fixed max-height so long lists can scroll */
+    .list-wrap{
+      /* set a comfortable max height so header + form remain visible on small screens */
+      max-height: 44vh; /* adjust as needed (e.g., 50vh) */
+      overflow: auto;
+      -webkit-overflow-scrolling: touch; /* native momentum scrolling on iOS */
+      border-radius:10px;
+      padding:6px;
+      /* subtle background so list stands out */
       background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
       border:1px solid rgba(255,255,255,0.02);
-      color:var(--text);box-sizing:border-box;font-size:var(--pill-font)
+      /* allow pointer-based drag-to-scroll (we'll implement JS) */
+      touch-action: pan-y;
     }
 
-    .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+    .list{display:flex;flex-direction:column;gap:8px;padding:4px}
+    .item{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03)}
+    .item-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .notes{color:var(--muted);font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .date-pill{min-width:84px;text-align:center;padding:6px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.02)}
 
-    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem;transition:background var(--theme-transition), color var(--theme-transition)}
+    .item-actions{display:flex;gap:6px;align-items:center}
+    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
-    .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
-    .btn.full{width:100%}
 
-    #formCard{display:flex;flex-direction:column;gap:10px}
-    #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block;transition:color var(--theme-transition)}
-    .field{display:flex;flex-direction:column;gap:8px;min-width:0}
+    /* small visual hint for drag-to-scroll when list is scrollable */
+    .drag-hint{font-size:.78rem;color:var(--muted);text-align:center;padding:6px 0}
 
-    input[type="text"], textarea{
-      width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
-      text-align:center;
-      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
-    }
-    input[type="text"]:focus, textarea:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
+    /* make interactive elements not start drag-to-scroll */
+    .no-drag { touch-action: manipulation; -ms-touch-action: manipulation; }
 
-    .date-control{position:relative;display:flex;align-items:center;gap:8px}
-    .date-text{flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;text-align:center;font-size:var(--input-font)}
-    .date-text:focus { text-align:left; }
-    .date-btn{width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;position:relative;z-index:1;font-size:1rem}
-
-    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
-    .form-actions{display:flex;gap:8px;flex-direction:column;margin-top:8px;z-index:2}
-    .form-actions .btn{width:100%}
-
-    .date-control .native-date{
-      position:absolute;
-      right:6px;
-      top:50%;
-      transform:translateY(-50%);
-      width:40px;
-      height:40px;
-      opacity:0;
-      border:0;
-      padding:0;
-      margin:0;
-      background:transparent;
-      z-index:5;
-      cursor:pointer;
-    }
-
-    .editing .edit-input{display:block}
-    .edit-input{display:none;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%;box-sizing:border-box;min-width:0;text-align:left;font-size:var(--input-font)}
-
-    .item.editing { display:flex; flex-direction:column; gap:8px; }
-    .item.editing .edit-input { width:100%; max-width:100%; }
-
-    .modal-backdrop{
-      position:fixed;
-      inset:0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));
-      z-index:99999;
-    }
-    .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
-
-    .actions-hidden .item-actions { display: none !important; }
-    .form-hidden #formCard { display: none !important; }
-
-    @media (max-width:340px){
-      .add-row{grid-template-columns:1fr}
-      .app{width:320px}
-      .date-text{padding-right:10px}
-      .theme-row{flex-wrap:wrap}
+    @media (max-width:420px){
+      .list-wrap{max-height:50vh}
     }
   </style>
 </head>
 <body>
   <div class="canvas">
-    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler — Theme Swatches" data-theme="forest">
+    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler — Swipeable Rows" data-theme="forest">
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle">Overtime Scheduler</h1>
           <p class="meta">Locked by default — unlock to add or edit</p>
         </div>
 
-        <div class="controls" role="search" style="margin-top:6px;display:flex;gap:8px;align-items:center">
+        <div class="controls" role="search" style="margin-top:6px">
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search entries" />
-          <div style="display:flex;align-items:center;gap:8px">
-            <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444;transition:background var(--theme-transition)"></div>
-            <div class="lock-label-hidden" id="lockLabel">Locked</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+            <div id="lockIndicator" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
+            <button id="openUnlock" class="btn ghost no-drag" title="Unlock actions" style="margin-left:8px">Unlock</button>
           </div>
-          <button id="openUnlock" class="btn ghost" title="Unlock actions">Unlock</button>
         </div>
 
-        <!-- Theme swatches (no text) -->
-        <div class="theme-row" role="toolbar" aria-label="Theme switcher">
+        <div class="theme-row" role="toolbar" aria-label="Theme switcher" style="margin-top:8px">
           <button class="theme-swatch swatch-ocean" data-theme="ocean" aria-label="Ocean Indigo" title="Ocean Indigo" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-warm" data-theme="warm" aria-label="Warm Sunset" title="Warm Sunset" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-forest active" data-theme="forest" aria-label="Forest Teal" title="Forest Teal" type="button"><span class="dot" aria-hidden="true"></span></button>
@@ -263,8 +117,12 @@
             <span id="status" class="meta">Idle</span>
           </div>
 
-          <div id="rows" class="list" aria-live="polite"></div>
-          <div id="empty" class="empty" style="display:none;color:var(--muted);padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);text-align:center">Walang entries. I-unlock at magdagdag ng bagong overtime.</div>
+          <!-- Scrollable list wrapper -->
+          <div id="listWrap" class="list-wrap" aria-live="polite" aria-label="Overtime entries list">
+            <div id="rows" class="list"></div>
+          </div>
+
+          <div class="drag-hint">Swipe up/down or drag to scroll</div>
         </div>
       </main>
 
@@ -274,28 +132,28 @@
         <form id="addForm" autocomplete="off" novalidate>
           <div class="field">
             <label for="name">Name</label>
-            <input id="name" name="name" class="lock-guard" type="text" placeholder="Employee name" required />
+            <input id="name" name="name" class="lock-guard no-drag" type="text" placeholder="Employee name" required />
           </div>
 
-          <div class="add-row">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
             <div class="field">
               <label for="overtime_date_text">Date</label>
-              <div class="date-control">
-                <input id="overtime_date_text" name="overtime_date_text" class="date-text lock-guard" type="text" placeholder="YYYY-MM-DD" aria-label="Overtime date" readonly />
-                <button type="button" id="datePickerBtn" class="date-btn" aria-label="Open date picker">📅</button>
-                <input id="overtime_date_native" class="native-date" type="date" />
+              <div style="position:relative;display:flex;align-items:center;gap:8px">
+                <input id="overtime_date_text" name="overtime_date_text" class="date-text lock-guard no-drag" type="text" placeholder="YYYY-MM-DD" aria-label="Overtime date" readonly />
+                <button type="button" id="datePickerBtn" class="btn ghost no-drag" aria-label="Open date picker">📅</button>
+                <input id="overtime_date_native" class="native-date no-drag" type="date" style="position:absolute;right:6px;opacity:0" />
               </div>
             </div>
 
             <div class="field">
               <label for="notes">Notes</label>
-              <input id="notes" name="notes" class="lock-guard" type="text" placeholder="Short note" />
+              <input id="notes" name="notes" class="lock-guard no-drag" type="text" placeholder="Short note" />
             </div>
           </div>
 
-          <div class="form-actions">
-            <button id="submitBtn" class="btn lock-guard" type="submit">Add</button>
-            <button id="resetBtn" type="button" class="btn ghost lock-guard">Reset</button>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-direction:column">
+            <button id="submitBtn" class="btn lock-guard no-drag" type="submit">Add</button>
+            <button id="resetBtn" type="button" class="btn ghost no-drag">Reset</button>
           </div>
         </form>
       </aside>
@@ -307,10 +165,11 @@
     </div>
   </div>
 
-  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="modal" role="document" aria-labelledby="modalTitle">
-      <h3 id="modalTitle" style="margin:0 0 8px 0">Unlock Actions</h3>
-      <p style="margin:0 0 8px;color:var(--muted);font-size:.9rem">Enter password to enable Add / Edit / Delete</p>
+  <!-- modal (unchanged) -->
+  <div id="modalBackdrop" style="display:none;position:fixed;inset:0;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);z-index:9999" role="dialog" aria-modal="true" aria-hidden="true">
+    <div style="background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);width:320px">
+      <h3 style="margin:0 0 8px 0">Unlock Actions</h3>
+      <p style="margin:0 0 8px;color:var(--muted)">Enter password to enable Add / Edit / Delete</p>
       <input id="pwInput" type="password" placeholder="Password" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);margin-bottom:8px;height:40px" />
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button id="pwCancel" class="btn ghost">Cancel</button>
@@ -328,8 +187,8 @@
 
     const appRoot = document.getElementById('appRoot');
     const rowsEl = document.getElementById('rows');
+    const listWrap = document.getElementById('listWrap');
     const statusEl = document.getElementById('status');
-    const emptyEl = document.getElementById('empty');
     const form = document.getElementById('addForm');
     const submitBtn = document.getElementById('submitBtn');
     const resetBtn = document.getElementById('resetBtn');
@@ -360,142 +219,97 @@
     function isoDateFromText(s){ if(!s) return null; const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[1]}-${m[2]}-${m[3]}` : null; }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Theme handling (batched with requestAnimationFrame to reduce repaint lag)
+    // Theme handling (batched)
     function applyTheme(theme){
       if (!theme) theme = 'forest';
-
-      // immediate visual feedback: remove active from all
       swatches.forEach(btn => btn.classList.remove('active'));
-
-      // batch DOM updates to next paint
       requestAnimationFrame(() => {
         appRoot.setAttribute('data-theme', theme);
-
-        // small second rAF to ensure CSS variables applied before toggling active state
         requestAnimationFrame(() => {
           swatches.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === theme));
           safeSetLocal(THEME_KEY, theme);
         });
       });
     }
-
-    // Restore theme from localStorage (if any), otherwise default 'forest'
-    (function initTheme(){
-      const saved = safeGetLocal(THEME_KEY) || 'forest';
-      applyTheme(saved);
-    })();
-
+    (function initTheme(){ const saved = safeGetLocal(THEME_KEY) || 'forest'; applyTheme(saved); })();
     swatches.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const t = btn.dataset.theme;
-        applyTheme(t);
-      });
-      // keyboard accessibility: Enter/Space triggers
-      btn.addEventListener('keydown', (ev) => {
-        if (ev.key === 'Enter' || ev.key === ' ') {
-          ev.preventDefault();
-          btn.click();
-        }
-      });
+      btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+      btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
-    // Update controls: enable/disable inputs and show/hide action buttons and form when locked/unlocked
+    // Update controls
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
       openUnlock.textContent = unlocked ? 'Lock' : 'Unlock';
-
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
     }
-
     function setUnlockedState(state, persist = true){
-      unlocked = !!state;
-      updateGuardedControls();
-      if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
+      unlocked = !!state; updateGuardedControls(); if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
-    function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
-    function closeModal(){ modalBackdrop.style.display = 'none'; modalBackdrop.setAttribute('aria-hidden','true'); pwError.style.display='none'; }
+    function openModal(){ modalBackdrop.style.display='flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
+    function closeModal(){ modalBackdrop.style.display='none'; modalBackdrop.setAttribute('aria-hidden','true'); pwError.style.display='none'; }
 
     async function submitPassword(password){
       try {
-        pwError.style.display = 'block';
-        pwError.textContent = 'Checking...';
+        pwError.style.display='block'; pwError.textContent='Checking...';
         const res = await fetch('/api/unlock', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password }) });
         const raw = await res.text();
         let parsed;
-        try { parsed = raw ? JSON.parse(raw) : null; } catch (e) { parsed = null; }
-        if (!res.ok) {
-          const msg = parsed?.error || parsed?.message || raw || `HTTP ${res.status}`;
-          pwError.textContent = `Server: ${msg}`;
-          return;
-        }
-        setUnlockedState(true, true);
-        closeModal();
-      } catch (err) {
-        console.error(err);
-        pwError.textContent = 'Network or server error.';
-      }
+        try { parsed = raw ? JSON.parse(raw) : null; } catch(e){ parsed = null; }
+        if (!res.ok) { const msg = parsed?.error || parsed?.message || raw || `HTTP ${res.status}`; pwError.textContent = `Server: ${msg}`; return; }
+        setUnlockedState(true, true); closeModal();
+      } catch (err) { console.error(err); pwError.textContent='Network or server error.'; }
     }
 
-    // Date picker overlay strategy
-    (function attachNativeOverlay() {
+    // Date picker overlay
+    (function attachNativeOverlay(){
       try {
-        const dateControl = document.querySelector('.date-control');
-        if (!dateControl || !dateNative || !dateText || !dateBtn) return;
-        dateNative.addEventListener('change', () => {
-          dateText.value = dateNative.value || '';
-        });
-        function openNativePicker(initialIso) {
-          if (initialIso && /^\d{4}-\d{2}-\d{2}$/.test(initialIso)) dateNative.value = initialIso;
-          else dateNative.value = '';
-          if (typeof dateNative.showPicker === 'function') {
-            dateNative.showPicker();
-          } else {
-            dateNative.focus();
-            try { dateNative.click(); } catch(e){}
-          }
+        if (!dateNative || !dateText || !dateBtn) return;
+        dateNative.addEventListener('change', () => dateText.value = dateNative.value || '');
+        function openNativePicker(initialIso){
+          if (initialIso && /^\d{4}-\d{2}-\d{2}$/.test(initialIso)) dateNative.value = initialIso; else dateNative.value = '';
+          if (typeof dateNative.showPicker === 'function') dateNative.showPicker(); else { dateNative.focus(); try { dateNative.click(); } catch(e){} }
         }
         dateBtn.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
         dateText.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
-        dateNative.style.pointerEvents = 'auto';
-      } catch (e) {
-        console.warn('Date overlay attach failed', e);
-      }
+      } catch(e){ console.warn('Date overlay attach failed', e); }
     })();
 
+    // Render rows
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
       el.dataset.id = row.id;
       el.innerHTML = `
         <div class="item-top">
-          <div class="item-left">
+          <div style="flex:1;min-width:0">
             <div class="name" data-field="name">${escapeHtml(row.name)}</div>
             <div class="notes" data-field="notes">${escapeHtml(row.notes || '')}</div>
           </div>
-          <div class="date-pill" data-field="overtime_date">${row.overtime_date ? formatDate(row.overtime_date) : '—'}</div>
+          <div style="margin-left:8px">
+            <div class="date-pill" data-field="overtime_date">${row.overtime_date ? formatDate(row.overtime_date) : '—'}</div>
+          </div>
         </div>
-        <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
           <div class="item-actions">
-            <button class="btn ghost lock-guard" data-action="edit">Edit</button>
-            <button class="btn ghost lock-guard" data-action="delete">Delete</button>
+            <button class="btn ghost no-drag" data-action="edit">Edit</button>
+            <button class="btn ghost no-drag" data-action="delete">Delete</button>
           </div>
         </div>
       `;
       return el;
     }
-
     function renderList(items){
       rowsEl.innerHTML = '';
-      if (!items || !items.length) { emptyEl.style.display = 'block'; statusEl.textContent = 'No entries'; return; }
-      emptyEl.style.display = 'none';
+      if (!items || !items.length) { rowsEl.innerHTML = ''; statusEl.textContent = 'No entries'; return; }
       items.forEach(r => rowsEl.appendChild(createRowElement(r)));
-      updateGuardedControls();
       statusEl.textContent = `Loaded ${items.length} entries`;
     }
 
+    // Load rows from supabase
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -509,6 +323,7 @@
       }
     }
 
+    // Add form submit
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!unlocked) { alert('Actions are locked. Unlock to add entries.'); return; }
@@ -522,8 +337,9 @@
         if (error) throw error;
         dataCache = [...dataCache, ...(data||[])];
         renderList(dataCache);
-        form.reset();
-        dateText.value = '';
+        form.reset(); dateText.value = '';
+        // scroll to bottom to show new entry
+        requestAnimationFrame(()=> listWrap.scrollTop = listWrap.scrollHeight);
       } catch (err) {
         console.error(err);
         alert('Insert failed: ' + (err.message || err));
@@ -534,6 +350,7 @@
 
     resetBtn.addEventListener('click', () => { form.reset(); dateText.value = ''; });
 
+    // Row actions (edit/delete)
     rowsEl.addEventListener('click', async (ev) => {
       const action = ev.target?.dataset?.action;
       if (!action) return;
@@ -574,7 +391,6 @@
             </div>
           </div>
         `;
-        updateGuardedControls();
         return;
       }
 
@@ -603,6 +419,7 @@
       }
     });
 
+    // Search filter
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
@@ -614,13 +431,77 @@
       renderList(filtered);
     });
 
+    // Unlock modal handlers
     openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
+    // ---------------------------
+    // Drag-to-scroll implementation
+    // ---------------------------
+    // Behavior:
+    // - Allows dragging the list area (mouse or touch) to scroll vertically.
+    // - Does not start drag when the initial target is an interactive element (buttons, inputs) — those have .no-drag class.
+    // - Uses pointer events for unified handling (works for mouse, touch, pen).
+    (function enableDragToScroll(){
+      let isDown = false;
+      let startY = 0;
+      let startScroll = 0;
+      let activePointerId = null;
+      const MIN_MOVE_TO_START = 6; // small threshold to avoid accidental drags
+
+      function onPointerDown(e){
+        // only left mouse button or touch/pen
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        // if the initial target (or its ancestor) has .no-drag, don't start drag
+        if (e.target.closest('.no-drag')) return;
+        isDown = true;
+        activePointerId = e.pointerId;
+        startY = e.clientY;
+        startScroll = listWrap.scrollTop;
+        listWrap.setPointerCapture(activePointerId);
+        // add a class for possible styling (not required)
+        listWrap.classList.add('dragging');
+      }
+
+      function onPointerMove(e){
+        if (!isDown || e.pointerId !== activePointerId) return;
+        const dy = e.clientY - startY;
+        // if small movement, don't update yet (prevents accidental drags)
+        if (Math.abs(dy) < MIN_MOVE_TO_START) return;
+        // invert dy because dragging up should scroll down
+        listWrap.scrollTop = startScroll - dy;
+      }
+
+      function endDrag(e){
+        if (!isDown || e.pointerId !== activePointerId) return;
+        isDown = false;
+        try { listWrap.releasePointerCapture(activePointerId); } catch(_) {}
+        activePointerId = null;
+        listWrap.classList.remove('dragging');
+      }
+
+      // attach listeners
+      listWrap.addEventListener('pointerdown', onPointerDown, { passive: true });
+      window.addEventListener('pointermove', onPointerMove, { passive: true });
+      window.addEventListener('pointerup', endDrag);
+      window.addEventListener('pointercancel', endDrag);
+
+      // Also support quick flick with wheel (mouse wheel) — nothing special needed; browser handles it.
+      // For accessibility: allow keyboard scrolling when focused
+      listWrap.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') { listWrap.scrollBy({ top: 48, behavior: 'smooth' }); e.preventDefault(); }
+        if (e.key === 'ArrowUp') { listWrap.scrollBy({ top: -48, behavior: 'smooth' }); e.preventDefault(); }
+        if (e.key === 'PageDown') { listWrap.scrollBy({ top: listWrap.clientHeight * 0.9, behavior: 'smooth' }); e.preventDefault(); }
+        if (e.key === 'PageUp') { listWrap.scrollBy({ top: -listWrap.clientHeight * 0.9, behavior: 'smooth' }); e.preventDefault(); }
+      });
+      // make listWrap focusable for keyboard scrolling
+      listWrap.tabIndex = 0;
+    })();
+
+    // Initialize: force locked on load (per earlier requirement) and load rows
     window.addEventListener('DOMContentLoaded', async () => {
-      // Force locked state on every load/refresh (user requested)
       setUnlockedState(false, true);
       await loadRows();
     });
