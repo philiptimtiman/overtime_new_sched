@@ -3,16 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Spacing Adjusted (No ID Display)</title>
-  <meta name="description" content="Mobile-first overtime scheduler with adjusted spacing between Name, Date, Notes and Add button. ID display removed." />
+  <title>Overtime Scheduler — Compact Mode</title>
+  <meta name="description" content="Compact mode: reduced padding and gaps so more rows fit on small screens. Buttons and functions unchanged." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
       --accent:#60a5fa; --accent-2:#3b82f6; --danger:#ef4444;
       --glass: rgba(255,255,255,0.03);
-      --shadow: 0 12px 40px rgba(2,6,23,0.6);
-      --input-h:46px; --radius:12px;
-      --mobile-width:360px; --gap:14px; --fs:16px;
+      --shadow: 0 10px 28px rgba(2,6,23,0.55);
+      /* Compact adjustments */
+      --input-h:40px;    /* smaller inputs */
+      --radius:10px;
+      --mobile-width:360px;
+      --gap:10px;
+      --fs:15px;         /* slightly smaller base font */
     }
 
     /* Reset & base */
@@ -23,96 +27,87 @@
     button{cursor:pointer}
 
     /* Canvas */
-    .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:22px;background:var(--bg)}
-    .app{width:var(--mobile-width);max-width:100%;display:flex;flex-direction:column;gap:18px;align-items:stretch}
+    .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:var(--bg)}
+    .app{width:var(--mobile-width);max-width:100%;display:flex;flex-direction:column;gap:12px;align-items:stretch}
 
-    /* Card */
-    .card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
+    /* Card (reduced padding) */
+    .card{background:var(--card);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
 
     /* Header: centered title & subtitle */
-    .header{display:flex;flex-direction:column;gap:10px}
-    .brand{display:flex;flex-direction:column;align-items:center;gap:6px}
-    .brand h1{font-size:1.05rem;margin:0;text-align:center}
-    .brand p{margin:0;color:var(--muted);font-size:.9rem;text-align:center}
+    .header{display:flex;flex-direction:column;gap:8px}
+    .brand{display:flex;flex-direction:column;align-items:center;gap:4px}
+    .brand h1{font-size:1rem;margin:0;text-align:center}
+    .brand p{margin:0;color:var(--muted);font-size:.85rem;text-align:center}
 
-    .controls{display:flex;gap:10px;align-items:center}
-    .search{flex:1;border-radius:10px;padding:10px 12px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);min-width:0}
+    .controls{display:flex;gap:8px;align-items:center}
+    .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);min-width:0;font-size:.95rem}
 
     /* Hide textual lock label (dot remains) */
     .lock-label-hidden { display: none !important; }
 
     /* Status / small text */
-    .meta{font-size:.88rem;color:var(--muted);text-align:center}
+    .meta{font-size:.82rem;color:var(--muted);text-align:center}
 
-    /* Entries list */
-    .list{display:flex;flex-direction:column;gap:12px}
+    /* Entries list (tighter spacing) */
+    .list{display:flex;flex-direction:column;gap:8px}
     .item{
-      display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:12px;background:var(--glass);
+      display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:var(--glass);
       border:1px solid rgba(255,255,255,0.04);
       min-width:0; overflow:visible;
     }
-    .item-top{display:flex;gap:10px;align-items:center;justify-content:space-between}
-    .item-left{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+    .item-top{display:flex;gap:8px;align-items:center;justify-content:space-between}
+    .item-left{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
 
     /* Contextual alignment: names/notes left for readability */
-    .name{font-weight:600;font-size:0.98rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .notes{color:var(--muted);font-size:.88rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .name{font-weight:600;font-size:.96rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .notes{color:var(--muted);font-size:.82rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
     /* Dates centered to keep visual axis */
-    .date-pill{min-width:96px;text-align:center;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:var(--text);box-sizing:border-box}
+    .date-pill{min-width:84px;text-align:center;padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:var(--text);box-sizing:border-box;font-size:.9rem}
 
-    .item-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 
-    /* Buttons */
-    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:9px 12px;border-radius:10px;font-weight:600}
+    /* Buttons (unchanged visual style but slightly smaller padding) */
+    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
     .btn.full{width:100%}
 
-    /* Add form */
-    #formCard{display:flex;flex-direction:column;gap:12px}
-    /* Labels centered for visual balance */
-    #formCard label{font-size:.9rem;color:var(--muted);margin:0 0 10px 0;text-align:center;display:block}
-    /* Increased gap between label and input, and between stacked fields */
-    .field{display:flex;flex-direction:column;gap:10px;min-width:0}
+    /* Add form (compact) */
+    #formCard{display:flex;flex-direction:column;gap:10px}
+    #formCard label{font-size:.85rem;color:var(--muted);margin:0 0 8px 0;text-align:center;display:block}
+    .field{display:flex;flex-direction:column;gap:8px;min-width:0}
 
-    /* --- Targeted spacing tweaks (only for Add Overtime form) --- */
-    /* Add extra space below the Name field so Date/Notes sit further down */
-    #formCard > form > .field:first-of-type { margin-bottom: 14px; }
-
-    /* Slightly increase vertical gap inside the add-row so Date and Notes are not cramped */
-    #formCard .add-row { gap: 14px; }
-
-    /* Ensure the Add button is separated from the fields */
-    #formCard .form-actions { margin-top: 16px; }
+    /* Compact spacing tweaks for Add form */
+    #formCard > form > .field:first-of-type { margin-bottom: 10px; }
+    #formCard .add-row { gap: 10px; }
+    #formCard .form-actions { margin-top: 12px; }
 
     /* Inputs: placeholders centered, but editable text left-aligned for typing clarity */
     input[type="text"], textarea{
-      width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;
-      text-align:center; /* placeholder centered */
+      width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:.95rem;
+      text-align:center;
     }
-    /* When user focuses, align text left for typing readability */
     input[type="text"]:focus, textarea:focus { text-align:left; }
 
-    /* Date control: visible text + calendar button (placeholders centered) */
-    .date-control{position:relative;display:flex;align-items:center;gap:10px}
-    .date-text{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;text-align:center}
+    /* Date control: visible text + calendar button */
+    .date-control{position:relative;display:flex;align-items:center;gap:8px}
+    .date-text{flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;text-align:center;font-size:.95rem}
     .date-text:focus { text-align:left; }
-    .date-btn{width:44px;height:44px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+    .date-btn{width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;position:relative;z-index:1;font-size:1rem}
 
-    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0}
-    .form-actions{display:flex;gap:10px;flex-direction:column;margin-top:8px;z-index:2}
+    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
+    .form-actions{display:flex;gap:8px;flex-direction:column;margin-top:8px;z-index:2}
     .form-actions .btn{width:100%}
 
-    /* Hidden native date input used only to trigger native picker when available.
-       We'll position it as an invisible overlay so taps open native picker without layout shifts. */
+    /* Native date overlay (compact) */
     .date-control .native-date{
       position:absolute;
-      right:8px;
+      right:6px;
       top:50%;
       transform:translateY(-50%);
-      width:44px;
-      height:44px;
+      width:40px;
+      height:40px;
       opacity:0;
       border:0;
       padding:0;
@@ -124,10 +119,9 @@
 
     /* Inline edit styles (stacked, full width) */
     .editing .edit-input{display:block}
-    .edit-input{display:none;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%;box-sizing:border-box;min-width:0;text-align:left}
+    .edit-input{display:none;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%;box-sizing:border-box;min-width:0;text-align:left;font-size:.95rem}
 
-    /* When editing, ensure inputs are stacked and won't overflow */
-    .item.editing { display:flex; flex-direction:column; gap:10px; }
+    .item.editing { display:flex; flex-direction:column; gap:8px; }
     .item.editing .edit-input { width:100%; max-width:100%; }
 
     /* Modal stacking fix: always on top */
@@ -140,7 +134,7 @@
       background:rgba(0,0,0,0.5);
       z-index:99999;
     }
-    .modal{z-index:100000;position:relative;transform:translateZ(0);}
+    .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px}
 
     /* Defensive: ensure children can shrink on small screens */
     .item, .field, .add-row, .date-control, .date-text { min-width:0; -webkit-flex-shrink:1; flex-shrink:1; }
@@ -149,20 +143,20 @@
     @media (max-width:340px){
       .add-row{grid-template-columns:1fr}
       .app{width:320px}
-      .date-text{padding-right:12px}
+      .date-text{padding-right:10px}
     }
   </style>
 </head>
 <body>
   <div class="canvas">
-    <div class="app" role="application" aria-label="Overtime Scheduler — Mobile">
+    <div class="app" role="application" aria-label="Overtime Scheduler — Compact">
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle">Overtime Scheduler</h1>
           <p class="meta">Locked by default — unlock to add or edit</p>
         </div>
 
-        <div class="controls" role="search" style="margin-top:6px;display:flex;gap:10px;align-items:center">
+        <div class="controls" role="search" style="margin-top:6px;display:flex;gap:8px;align-items:center">
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search entries" />
           <div style="display:flex;align-items:center;gap:8px">
             <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
@@ -173,19 +167,19 @@
       </header>
 
       <main class="card" aria-live="polite">
-        <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;flex-direction:column;gap:10px">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <strong>Entries</strong>
             <span id="status" class="meta">Idle</span>
           </div>
 
           <div id="rows" class="list" aria-live="polite"></div>
-          <div id="empty" class="empty" style="display:none">Walang entries. I-unlock at magdagdag ng bagong overtime.</div>
+          <div id="empty" class="empty" style="display:none;color:var(--muted);padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);text-align:center">Walang entries. I-unlock at magdagdag ng bagong overtime.</div>
         </div>
       </main>
 
       <aside id="formCard" class="card" aria-labelledby="addOvertimeTitle">
-        <strong id="addOvertimeTitle" style="display:block;text-align:center">Add Overtime</strong>
+        <strong id="addOvertimeTitle" style="display:block;text-align:center;font-size:1rem">Add Overtime</strong>
 
         <form id="addForm" autocomplete="off" novalidate>
           <div class="field">
@@ -199,7 +193,6 @@
               <div class="date-control">
                 <input id="overtime_date_text" name="overtime_date_text" class="date-text lock-guard" type="text" placeholder="YYYY-MM-DD" aria-label="Overtime date" readonly />
                 <button type="button" id="datePickerBtn" class="date-btn" aria-label="Open date picker">📅</button>
-                <!-- native date input positioned as invisible overlay to capture taps -->
                 <input id="overtime_date_native" class="native-date" type="date" />
               </div>
             </div>
@@ -217,9 +210,9 @@
         </form>
       </aside>
 
-      <footer style="text-align:center;color:var(--muted);font-size:.85rem;padding:6px 0">
+      <footer style="text-align:center;color:var(--muted);font-size:.8rem;padding:6px 0">
         <div style="font-weight:700">BoxTechHub™</div>
-        <div style="font-size:.8rem;margin-top:4px">© 2026 BoxTechHub</div>
+        <div style="font-size:.75rem;margin-top:4px">© 2026 BoxTechHub</div>
       </footer>
     </div>
   </div>
@@ -228,8 +221,8 @@
   <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document" aria-labelledby="modalTitle">
       <h3 id="modalTitle" style="margin:0 0 8px 0">Unlock Actions</h3>
-      <p style="margin:0 0 10px;color:var(--muted)">Enter password to enable Add / Edit / Delete</p>
-      <input id="pwInput" type="password" placeholder="Password" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);margin-bottom:10px" />
+      <p style="margin:0 0 8px;color:var(--muted);font-size:.9rem">Enter password to enable Add / Edit / Delete</p>
+      <input id="pwInput" type="password" placeholder="Password" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);margin-bottom:8px;height:40px" />
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button id="pwCancel" class="btn ghost">Cancel</button>
         <button id="pwSubmit" class="btn">Submit</button>
@@ -286,7 +279,6 @@
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
-    // Modal helpers (ensure display:flex and z-index)
     function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
     function closeModal(){ modalBackdrop.style.display = 'none'; modalBackdrop.setAttribute('aria-hidden','true'); pwError.style.display='none'; }
 
@@ -311,16 +303,14 @@
       }
     }
 
-    // Date picker overlay strategy
+    // Date picker overlay strategy (compact)
     (function attachNativeOverlay() {
       try {
         const dateControl = document.querySelector('.date-control');
         if (!dateControl || !dateNative || !dateText || !dateBtn) return;
-        // When native input changes, copy value to visible text
         dateNative.addEventListener('change', () => {
           dateText.value = dateNative.value || '';
         });
-        // Open native picker
         function openNativePicker(initialIso) {
           if (initialIso && /^\d{4}-\d{2}-\d{2}$/.test(initialIso)) dateNative.value = initialIso;
           else dateNative.value = '';
@@ -333,14 +323,12 @@
         }
         dateBtn.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
         dateText.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
-        // Make sure native overlay accepts pointer events
         dateNative.style.pointerEvents = 'auto';
       } catch (e) {
         console.warn('Date overlay attach failed', e);
       }
     })();
 
-    // Render list
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -372,7 +360,6 @@
       statusEl.textContent = `Loaded ${items.length} entries`;
     }
 
-    // Load rows (Supabase)
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -386,7 +373,6 @@
       }
     }
 
-    // Add form
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!unlocked) { alert('Actions are locked. Unlock to add entries.'); return; }
@@ -412,7 +398,6 @@
 
     resetBtn.addEventListener('click', () => { form.reset(); dateText.value = ''; });
 
-    // Row actions (edit/delete/save/cancel)
     rowsEl.addEventListener('click', async (ev) => {
       const action = ev.target?.dataset?.action;
       if (!action) return;
@@ -441,7 +426,7 @@
         if (!row) return;
         item.classList.add('editing');
         item.innerHTML = `
-          <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;flex-direction:column;gap:8px">
             <input class="edit-input" data-edit="name" type="text" value="${escapeHtml(row.name)}" />
             <div style="display:flex;gap:8px;align-items:center">
               <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" style="flex:1;max-width:100%;box-sizing:border-box" />
@@ -482,7 +467,6 @@
       }
     });
 
-    // Search
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
@@ -494,13 +478,11 @@
       renderList(filtered);
     });
 
-    // Unlock modal handlers
     openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
-    // Init
     window.addEventListener('DOMContentLoaded', async () => {
       setUnlockedState(false, true);
       await loadRows();
