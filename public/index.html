@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overtime Scheduler</title>
-  <meta name="description" content="Simple Supabase-powered overtime schedule UI" />
+  <title>Overtime Scheduler — Edit & Delete</title>
+  <meta name="description" content="Supabase single-file UI with edit, save, cancel, delete per row" />
   <style>
     /* Core variables */
     :root{
@@ -14,13 +14,12 @@
       --text-muted:#9fb0c6;
       --accent:#60a5fa;
       --accent-2:#7ee7c7;
+      --danger:#ef4444;
       --radius:12px;
       --glass: rgba(255,255,255,0.03);
       --shadow: 0 8px 30px rgba(2,6,23,0.6);
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Segoe UI Mono", monospace;
     }
-
-    /* Light theme override (optional) */
     [data-theme="light"]{
       --bg:#f6f7fb;
       --card:#ffffff;
@@ -90,7 +89,7 @@
       font-size:14px;
       color:var(--text);
       transition:box-shadow .12s, border-color .12s;
-      min-width:0; /* critical to prevent overflow in flex children */
+      min-width:0;
     }
     input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.28); }
 
@@ -100,16 +99,12 @@
     }
     textarea{min-height:84px;resize:vertical}
 
-    /* Row layout: two fields side-by-side on wide screens, stacked on small */
     .row{
       display:flex;
       gap:8px;
       align-items:flex-start;
     }
-    .row > *{
-      flex:1 1 0; /* allow shrinking */
-      min-width:0; /* prevents overflow when flexing */
-    }
+    .row > *{ flex:1 1 0; min-width:0; }
 
     .actions{display:flex;gap:8px;align-items:center}
     button{
@@ -128,20 +123,10 @@
       border:1px solid rgba(255,255,255,0.04);
       font-weight:600;
     }
-    button:active{transform:translateY(1px)}
-
-    /* Toggle button */
-    #themeToggle {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.06);
-      color: var(--text);
-      padding: 8px 10px;
-      border-radius: 10px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: color .12s ease, background .12s ease, border-color .12s ease;
+    .btn-ghost{
+      background:transparent;color:var(--text-muted);border:0;padding:6px 8px;border-radius:8px;cursor:pointer;
     }
-    #themeToggle:hover { filter: brightness(0.98); }
+    .btn-danger{ background:transparent;color:var(--danger);border:1px solid rgba(255,0,0,0.08);padding:8px 10px;border-radius:8px; }
 
     /* List column */
     .list{
@@ -166,6 +151,10 @@
     .meta{color:var(--text-muted);font-size:13px}
     .name{font-weight:700;color:var(--text)}
     .date{font-family:var(--mono);font-size:13px;color:var(--accent-2)}
+
+    /* More menu / actions */
+    .actions-inline{display:flex;gap:8px;align-items:center}
+    .edit-input{ width:100%; padding:6px 8px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:var(--text); }
 
     /* top controls */
     .controls{display:flex;gap:8px;align-items:center}
@@ -198,24 +187,10 @@
       .item{padding:10px}
       .date{font-size:12px}
       .tips{font-size:12px;padding:10px}
-
-      /* STACK the row fields vertically on small screens to avoid overlap */
       .row{flex-direction:column}
       .actions{flex-direction:row;flex-wrap:wrap}
       .actions button{flex:1 1 auto; min-width:0}
     }
-
-    /* Extra safety: ensure the right column doesn't force horizontal scroll */
-    .container, .card, input, textarea { -webkit-overflow-scrolling: touch; }
-	
-	
-	@media (max-width:760px){
-  .container { grid-template-columns: 1fr; }
-  aside.card { order: 2; }      /* put form after list if you prefer */
-  section.card.list { order: 1; }
-  .row { flex-direction: column; gap: 10px; }
-}
-
   </style>
 </head>
 <body>
@@ -223,7 +198,7 @@
     <header>
       <div>
         <h1>Overtime Scheduler</h1>
-        <p class="lead">View and add overtime entries — optimized for phones</p>
+        <p class="lead">View, edit, and delete overtime entries</p>
       </div>
       <div class="controls">
         <input id="search" class="search" placeholder="Search name or notes" />
@@ -237,11 +212,12 @@
         <strong>Entries</strong>
         <span id="status">Idle</span>
       </div>
+
       <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
       <div id="empty" class="meta" style="display:none">No entries yet.</div>
 
       <div class="tips" id="tips">
-        Tips: Use the search box to filter entries locally. For production, move writes to a server endpoint and keep service keys secret.
+        Tips: Use the More menu to Edit or Delete rows. Edits are saved to Supabase.
       </div>
     </section>
 
@@ -254,7 +230,6 @@
           <input id="name" name="name" type="text" placeholder="Employee name" required />
         </div>
 
-        <!-- row: will stack on small screens -->
         <div class="row">
           <div>
             <label for="overtime_date">Date</label>
@@ -277,13 +252,13 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // Replace with your Supabase values
+    // TODO: replace with your Supabase values
     const SUPABASE_URL = 'https://bisvmgjgyvludhqsvvcn.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // DOM
+    // DOM refs
     const rowsEl = document.getElementById('rows');
     const statusEl = document.getElementById('status');
     const form = document.getElementById('addForm');
@@ -292,31 +267,22 @@
     const emptyEl = document.getElementById('empty');
     const searchInput = document.getElementById('search');
     const themeToggle = document.getElementById('themeToggle');
-    const tipsEl = document.getElementById('tips');
-    const root = document.documentElement;
 
-    // Start in dark mode by default
+    // Theme init
+    const root = document.documentElement;
     const savedTheme = localStorage.getItem('theme') || 'dark';
     if (savedTheme === 'light') root.setAttribute('data-theme','light');
-
     function updateThemeButton() {
       const isLight = root.getAttribute('data-theme') === 'light';
       themeToggle.textContent = isLight ? 'Dark mode' : 'Light mode';
       themeToggle.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
     }
-
     themeToggle.addEventListener('click', () => {
       const isLight = root.getAttribute('data-theme') === 'light';
-      if (isLight) {
-        root.removeAttribute('data-theme'); // back to dark
-        localStorage.setItem('theme','dark');
-      } else {
-        root.setAttribute('data-theme','light');
-        localStorage.setItem('theme','light');
-      }
+      if (isLight) { root.removeAttribute('data-theme'); localStorage.setItem('theme','dark'); }
+      else { root.setAttribute('data-theme','light'); localStorage.setItem('theme','light'); }
       updateThemeButton();
     });
-
     updateThemeButton();
 
     // State
@@ -330,28 +296,40 @@
     }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+    // Render list with inline More actions (Edit/Delete)
     function renderList(items){
       rowsEl.innerHTML = '';
       if(!items.length){ emptyEl.style.display = 'block'; return; }
       emptyEl.style.display = 'none';
-      items.forEach(r => {
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `
+
+      items.forEach(row => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'item';
+        wrapper.dataset.id = row.id;
+
+        // display area (will be replaced with inputs when editing)
+        wrapper.innerHTML = `
           <div style="flex:1;min-width:0">
             <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
               <div style="min-width:0">
-                <div class="name">${escapeHtml(r.name)}</div>
-                <div class="meta">${escapeHtml(r.notes || '')}</div>
+                <div class="name" data-field="name">${escapeHtml(row.name)}</div>
+                <div class="meta" data-field="notes">${escapeHtml(row.notes || '')}</div>
               </div>
-              <div class="date">${formatDate(r.overtime_date)}</div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+                <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
+                <div class="actions-inline" aria-hidden="false">
+                  <button class="btn-ghost" data-action="edit">Edit</button>
+                  <button class="btn-ghost" data-action="delete">Delete</button>
+                </div>
+              </div>
             </div>
           </div>
         `;
-        rowsEl.appendChild(div);
+        rowsEl.appendChild(wrapper);
       });
     }
 
+    // Load rows from Supabase
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -370,25 +348,27 @@
       }
     }
 
+    // Add new row
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = form.name.value.trim();
       const notes = form.notes.value.trim();
       const overtime_date = form.overtime_date.value || null;
-
-      if(!name){ alert('Name is required'); return; }
+      if (!name) return alert('Name is required');
 
       submitBtn.disabled = true;
       submitBtn.textContent = 'Adding...';
-
       try {
         const { data, error } = await supabase
           .from('overtime_data')
-          .insert([{ name, notes, overtime_date }]);
+          .insert([{ name, notes, overtime_date }])
+          .select();
 
         if (error) throw error;
+        // append new row(s) to cache and re-render
+        dataCache = [...dataCache, ...data];
+        renderList(dataCache);
         form.reset();
-        await loadRows();
       } catch (err) {
         console.error(err);
         alert('Insert failed: ' + (err.message || err));
@@ -400,10 +380,151 @@
 
     resetBtn.addEventListener('click', () => form.reset());
 
+    // Event delegation for Edit/Delete/Save/Cancel
+    rowsEl.addEventListener('click', async (e) => {
+      const action = e.target.dataset.action;
+      if (!action) return;
+
+      const item = e.target.closest('.item');
+      const id = item?.dataset?.id;
+      if (!id) return;
+
+      if (action === 'delete') {
+        // Confirm then delete
+        const ok = confirm('Delete this entry? This cannot be undone.');
+        if (!ok) return;
+        try {
+          const { error } = await supabase
+            .from('overtime_data')
+            .delete()
+            .eq('id', id);
+
+          if (error) throw error;
+          // remove from cache and re-render
+          dataCache = dataCache.filter(r => String(r.id) !== String(id));
+          renderList(dataCache);
+        } catch (err) {
+          console.error(err);
+          alert('Delete failed: ' + (err.message || err));
+        }
+        return;
+      }
+
+      if (action === 'edit') {
+        enterEditMode(item, id);
+        return;
+      }
+
+      if (action === 'save') {
+        await saveEdit(item, id);
+        return;
+      }
+
+      if (action === 'cancel') {
+        exitEditMode(item, id);
+        return;
+      }
+    });
+
+    // Enter edit mode: replace display with inputs and show Save/Cancel
+    function enterEditMode(item, id) {
+      const row = dataCache.find(r => String(r.id) === String(id));
+      if (!row) return;
+
+      // Build edit UI
+      const editHtml = `
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
+            <div style="min-width:0">
+              <input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" />
+              <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" style="margin-top:6px" />
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;min-width:120px">
+              <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" style="width:140px" />
+              <div class="actions-inline">
+                <button class="btn-ghost" data-action="save">Save</button>
+                <button class="btn-ghost" data-action="cancel">Cancel</button>
+                <button class="btn-danger" data-action="delete">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      item.innerHTML = editHtml;
+      // focus first input
+      const nameInput = item.querySelector('[data-edit="name"]');
+      if (nameInput) nameInput.focus();
+    }
+
+    // Exit edit mode without saving (restore from cache)
+    function exitEditMode(item, id) {
+      const row = dataCache.find(r => String(r.id) === String(id));
+      if (!row) return;
+      // Rebuild display HTML for this single item
+      item.innerHTML = `
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
+            <div style="min-width:0">
+              <div class="name" data-field="name">${escapeHtml(row.name)}</div>
+              <div class="meta" data-field="notes">${escapeHtml(row.notes || '')}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+              <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
+              <div class="actions-inline" aria-hidden="false">
+                <button class="btn-ghost" data-action="edit">Edit</button>
+                <button class="btn-ghost" data-action="delete">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Save edit: read inputs, call Supabase update, update cache and UI
+    async function saveEdit(item, id) {
+      const nameInput = item.querySelector('[data-edit="name"]');
+      const notesInput = item.querySelector('[data-edit="notes"]');
+      const dateInput = item.querySelector('[data-edit="overtime_date"]');
+
+      const name = nameInput?.value.trim();
+      const notes = notesInput?.value.trim();
+      const overtime_date = dateInput?.value || null;
+
+      if (!name) { alert('Name is required'); nameInput?.focus(); return; }
+
+      // optimistic UI: disable buttons
+      const saveBtn = item.querySelector('[data-action="save"]');
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+
+      try {
+        const { data, error } = await supabase
+          .from('overtime_data')
+          .update({ name, notes, overtime_date })
+          .eq('id', id)
+          .select();
+
+        if (error) throw error;
+        // update cache (replace the row)
+        if (data && data.length) {
+          const updated = data[0];
+          dataCache = dataCache.map(r => (String(r.id) === String(id) ? updated : r));
+        } else {
+          // fallback: update fields locally
+          dataCache = dataCache.map(r => (String(r.id) === String(id) ? { ...r, name, notes, overtime_date } : r));
+        }
+        // exit edit mode and render updated row
+        exitEditMode(item, id);
+      } catch (err) {
+        console.error(err);
+        alert('Update failed: ' + (err.message || err));
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+      }
+    }
+
     // Search filter (client-side)
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
-      if(!q) return renderList(dataCache);
+      if (!q) return renderList(dataCache);
       const filtered = dataCache.filter(r =>
         (r.name || '').toLowerCase().includes(q) ||
         (r.notes || '').toLowerCase().includes(q) ||
