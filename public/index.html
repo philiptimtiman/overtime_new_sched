@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Theme Switcher (Containers Sync)</title>
-  <meta name="description" content="Theme switcher where page background and all containers (including header) update together with smooth transition." />
+  <title>Overtime Scheduler — Theme Switcher (Smooth)</title>
+  <meta name="description" content="Theme switcher with smoother, low-lag transitions; containers and page background update together." />
   <style>
     :root{
       /* Default (Forest Teal) variables */
@@ -33,7 +33,7 @@
       --pill-font:0.9rem;
 
       /* transition timing */
-      --theme-transition: 300ms ease;
+      --theme-transition: 220ms ease;
     }
 
     /* Theme presets (applied by data-theme on #appRoot)
@@ -84,13 +84,14 @@
       background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
       border-radius:14px;
       padding:10px;
-      box-shadow: 0 18px 50px rgba(2,10,8,0.55);
+      box-shadow: 0 14px 36px rgba(2,10,8,0.45);
       border: 1px solid rgba(255,255,255,0.03);
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(4px);
       color:var(--text);
 
       /* smooth theme transition for the whole shell */
       transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
+      will-change: background, color, border-color;
     }
 
     /* Card: now uses theme-aware card background variables */
@@ -98,15 +99,16 @@
       background: linear-gradient(180deg, var(--card-bg-top), var(--card-bg-bottom));
       border-radius:var(--radius);
       padding:12px;
-      box-shadow:var(--shadow);
+      box-shadow:0 8px 20px rgba(2,6,23,0.45);
       border:1px solid rgba(255,255,255,0.04);
       overflow:visible;
-      -webkit-backdrop-filter: blur(4px);
-      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(3px);
+      backdrop-filter: blur(3px);
       color:var(--text);
 
       /* ensure cards transition with theme */
       transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition), box-shadow var(--theme-transition);
+      will-change: background, color, border-color;
     }
 
     /* Header-specific tweaks: ensure header uses .card styles and transitions */
@@ -365,12 +367,23 @@
     function isoDateFromText(s){ if(!s) return null; const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[1]}-${m[2]}-${m[3]}` : null; }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Theme handling
+    // Theme handling (batched with requestAnimationFrame to reduce repaint lag)
     function applyTheme(theme){
       if (!theme) theme = 'forest';
-      appRoot.setAttribute('data-theme', theme);
-      themeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === theme));
-      safeSetLocal(THEME_KEY, theme);
+
+      // immediate visual feedback: remove active from all
+      themeButtons.forEach(btn => btn.classList.remove('active'));
+
+      // batch DOM updates to next paint
+      requestAnimationFrame(() => {
+        appRoot.setAttribute('data-theme', theme);
+
+        // small second rAF to ensure CSS variables applied before toggling active state
+        requestAnimationFrame(() => {
+          themeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === theme));
+          safeSetLocal(THEME_KEY, theme);
+        });
+      });
     }
 
     // Restore theme from localStorage (if any), otherwise default 'forest'
