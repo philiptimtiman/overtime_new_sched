@@ -3,14 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Fixed Edit Overlap</title>
-  <meta name="description" content="Overtime scheduler — rows fixed so Name / Date / Notes do not overlap while editing on small screens." />
+  <title>Overtime Scheduler — Centered Inputs</title>
+  <meta name="description" content="Overtime scheduler — rows styled to match Add Overtime form; inputs and displayed values centered." />
   <style>
     :root{
-      --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
-      --accent:#60a5fa; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
-      --shadow: 0 8px 30px rgba(2,6,23,0.6); --input-h:44px; --gap:12px;
-      --action-col:140px; --date-col:160px; --radius:12px;
+      --bg:#0f1724;
+      --card:#0b1220;
+      --text:#e6eef8;
+      --muted:#9fb0c6;
+      --accent:#60a5fa;
+      --danger:#ef4444;
+      --glass: rgba(255,255,255,0.03);
+      --shadow: 0 8px 30px rgba(2,6,23,0.6);
+      --input-h:44px;
+      --gap:12px;
+      --action-col:140px;
+      --date-col:160px;
+      --radius:12px;
     }
 
     /* Reset & base */
@@ -22,7 +31,19 @@
     .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
 
     /* Header card */
-    .header-card{grid-column:1/-1;border-radius:var(--radius);padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:84px}
+    .header-card {
+      grid-column: 1 / -1;
+      border-radius: var(--radius);
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow: var(--shadow);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      min-height:84px;
+    }
     .title-block{display:flex;flex-direction:column;gap:4px}
     h1{font-size:20px;margin:0}
     p.lead{margin:0;color:var(--muted);font-size:13px}
@@ -39,9 +60,10 @@
     .list{display:flex;flex-direction:column;gap:12px}
 
     /*
-      ROWS: desktop layout uses 4 columns:
-      [Name] [Date] [Notes] [Actions]
-      Inputs are present in DOM but hidden until the row is in editing state.
+      Rows layout:
+      Desktop: [Name] [Date] [Notes] [Actions]
+      Inputs exist in DOM but are hidden until the row has .editing
+      Values and inputs are centered.
     */
     .item {
       padding:12px;
@@ -55,25 +77,28 @@
       min-width:0;
     }
 
-    /* Field block (value + hidden input) */
     .field {
       display:flex;
       flex-direction:column;
       gap:6px;
       min-width:0;
     }
+
     .field .value {
       padding:10px 12px;
       border-radius:10px;
       min-height:var(--input-h);
       display:flex;
       align-items:center;
+      justify-content:center;
       color:var(--text);
       background:transparent;
       border:1px solid rgba(255,255,255,0.02);
       box-sizing:border-box;
       word-break:break-word;
+      text-align:center;
     }
+
     .field input {
       padding:10px 12px;
       border-radius:10px;
@@ -84,6 +109,7 @@
       width:100%;
       box-sizing:border-box;
       display:none; /* inputs hidden until editing */
+      text-align:center; /* center input text */
       min-width:0;
     }
 
@@ -102,10 +128,11 @@
     .item.editing .value { display:none; }
     .item.editing .field input { display:block; }
 
-    /* Keep Add Overtime form styles consistent */
+    /* Make Add Overtime form match row field styles */
     #formCard input[type="text"], #formCard input[type="date"], #formCard textarea {
       padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04);
       background:transparent; color:var(--text); height:var(--input-h); width:100%; font-size:16px; box-sizing:border-box;
+      text-align:center;
     }
 
     /* Prevent shrinking/overflow */
@@ -128,7 +155,7 @@
     .locked .search, .locked .search * { pointer-events:auto !important; opacity:1 !important }
 
     /* Responsive: stack fields and move actions below on small screens.
-       IMPORTANT: do NOT force inputs visible on mobile globally — only show inputs when .editing is present.
+       Important: inputs remain hidden unless .editing is present to avoid duplicate visible inputs/values.
     */
     @media (max-width:760px){
       .container { grid-template-columns:1fr; gap:12px; padding:12px }
@@ -145,10 +172,8 @@
         align-items:stretch;
       }
 
-      /* show labels on mobile if you want (optional) */
-      .field label { display:block; font-size:12px; color:var(--muted); }
-
-      /* Do NOT show inputs by default on mobile; only show when editing */
+      /* On mobile show labels (optional) and keep values visible unless editing */
+      .field label { display:block; font-size:12px; color:var(--muted); text-align:center; margin-bottom:4px; }
       .field .value { display:block; }
       .field input { display:none; }
 
@@ -158,10 +183,11 @@
 
       .actions {
         flex-direction:row;
-        justify-content:flex-end;
+        justify-content:center;
         gap:8px;
         width:100%;
       }
+      .item.editing .actions { order: 2; }
     }
 
     /* Small polish */
@@ -173,7 +199,7 @@
     <header class="header-card" role="banner" aria-label="Application header">
       <div class="title-block" aria-hidden="true">
         <h1>Overtime Scheduler</h1>
-        <p class="lead">Always locked on load — schedule updates occur 1–2 days before the overtime date.</p>
+        <p class="lead">Please refresh the page. Schedule updates occur 1–2 days before the overtime date.</p>
       </div>
 
       <div class="controls" role="group" aria-label="Search and lock controls">
@@ -217,7 +243,7 @@
           </div>
         </div>
 
-        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
+        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start">
           <button id="submitBtn" class="btn" type="submit">Add</button>
           <button type="button" id="resetBtn" class="btn secondary">Reset</button>
         </div>
