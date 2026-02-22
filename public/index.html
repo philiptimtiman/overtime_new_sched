@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overtime Scheduler — Edit & Delete</title>
-  <meta name="description" content="Supabase single-file UI with edit, save, cancel, delete per row" />
+  <title>Overtime Scheduler — Edit & Delete (Aligned Inputs)</title>
+  <meta name="description" content="Supabase single-file UI with edit, save, cancel, delete per row — inputs aligned" />
   <style>
     /* Core variables */
     :root{
@@ -19,6 +19,7 @@
       --glass: rgba(255,255,255,0.03);
       --shadow: 0 8px 30px rgba(2,6,23,0.6);
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Segoe UI Mono", monospace;
+      --input-height:44px; /* unified input height for alignment */
     }
     [data-theme="light"]{
       --bg:#f6f7fb;
@@ -90,14 +91,17 @@
       color:var(--text);
       transition:box-shadow .12s, border-color .12s;
       min-width:0;
+      height: var(--input-height); /* unified height */
+      line-height: 1.1;
     }
+    textarea{min-height:84px;resize:vertical;padding-top:10px;padding-bottom:10px;height:auto}
+
     input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.28); }
 
     input:focus, textarea:focus{
       box-shadow:0 6px 18px rgba(96,165,250,0.08);
       border-color:var(--accent);
     }
-    textarea{min-height:84px;resize:vertical}
 
     .row{
       display:flex;
@@ -150,11 +154,11 @@
     .item:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
     .meta{color:var(--text-muted);font-size:13px}
     .name{font-weight:700;color:var(--text)}
-    .date{font-family:var(--mono);font-size:13px;color:var(--accent-2)}
+    .date{font-family:var(--mono);font-size:13px;color:var(--accent-2); align-self:center; }
 
     /* More menu / actions */
     .actions-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .edit-input{ width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:var(--text); }
+    .edit-input{ width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:var(--text); height: var(--input-height); box-sizing: border-box; }
 
     /* Edit layout helpers */
     .edit-row { display:flex; gap:10px; align-items:flex-start; width:100%; }
@@ -162,7 +166,7 @@
     .edit-right { width:160px; display:flex; flex-direction:column; gap:6px; align-items:flex-end; min-width:0; }
 
     /* ensure date input fits on desktop but becomes full width on mobile */
-    .edit-right .edit-input[type="date"] { width:140px; }
+    .edit-right .edit-input[type="date"] { width:140px; height: var(--input-height); }
 
     /* top controls */
     .controls{display:flex;gap:8px;align-items:center}
@@ -199,13 +203,17 @@
       .actions{flex-direction:row;flex-wrap:wrap}
       .actions button{flex:1 1 auto; min-width:0}
 
-      /* CRITICAL: stack edit layout vertically on small screens so notes won't overlap actions */
+      /* stack edit layout vertically on small screens so notes won't overlap actions */
       .edit-row { flex-direction:column; gap:8px; }
       .edit-right { width:100%; align-items:flex-start; }
       .edit-right .edit-input[type="date"] { width:100%; }
       .actions-inline { justify-content:flex-start; gap:8px; }
       .edit-left .edit-input { width:100%; }
     }
+
+    /* Small visual tweak: make display-date vertically centered with inputs */
+    .display-right { display:flex; flex-direction:column; align-items:flex-end; justify-content:center; gap:6px; min-width:120px; }
+    .display-right .date { margin:0; }
   </style>
 </head>
 <body>
@@ -213,7 +221,7 @@
     <header>
       <div>
         <h1>Overtime Scheduler</h1>
-        <p class="lead">View, edit, and delete overtime entries</p>
+        <p class="lead">View, edit, and delete overtime entries — inputs aligned</p>
       </div>
       <div class="controls">
         <input id="search" class="search" placeholder="Search name or notes" />
@@ -282,9 +290,9 @@
     const emptyEl = document.getElementById('empty');
     const searchInput = document.getElementById('search');
     const themeToggle = document.getElementById('themeToggle');
+    const root = document.documentElement;
 
     // Theme init
-    const root = document.documentElement;
     const savedTheme = localStorage.getItem('theme') || 'dark';
     if (savedTheme === 'light') root.setAttribute('data-theme','light');
     function updateThemeButton() {
@@ -323,18 +331,16 @@
         wrapper.dataset.id = row.id;
 
         wrapper.innerHTML = `
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
-              <div style="min-width:0">
-                <div class="name" data-field="name">${escapeHtml(row.name)}</div>
-                <div class="meta" data-field="notes">${escapeHtml(row.notes || '')}</div>
-              </div>
-              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-                <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
-                <div class="actions-inline" aria-hidden="false">
-                  <button class="btn-ghost" data-action="edit">Edit</button>
-                  <button class="btn-ghost" data-action="delete">Delete</button>
-                </div>
+          <div style="flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <div style="min-width:0;flex:1">
+              <div class="name" data-field="name">${escapeHtml(row.name)}</div>
+              <div class="meta" data-field="notes">${escapeHtml(row.notes || '')}</div>
+            </div>
+            <div class="display-right">
+              <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
+              <div class="actions-inline" aria-hidden="false">
+                <button class="btn-ghost" data-action="edit">Edit</button>
+                <button class="btn-ghost" data-action="delete">Delete</button>
               </div>
             </div>
           </div>
@@ -470,18 +476,16 @@
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
       item.innerHTML = `
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;justify-content:space-between;gap:12px;align-items:center">
-            <div style="min-width:0">
-              <div class="name" data-field="name">${escapeHtml(row.name)}</div>
-              <div class="meta" data-field="notes">${escapeHtml(row.notes || '')}</div>
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-              <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
-              <div class="actions-inline" aria-hidden="false">
-                <button class="btn-ghost" data-action="edit">Edit</button>
-                <button class="btn-ghost" data-action="delete">Delete</button>
-              </div>
+        <div style="flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <div style="min-width:0;flex:1">
+            <div class="name" data-field="name">${escapeHtml(row.name)}</div>
+            <div class="meta" data-field="notes">${escapeHtml(row.notes || '')}</div>
+          </div>
+          <div class="display-right">
+            <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
+            <div class="actions-inline" aria-hidden="false">
+              <button class="btn-ghost" data-action="edit">Edit</button>
+              <button class="btn-ghost" data-action="delete">Delete</button>
             </div>
           </div>
         </div>
