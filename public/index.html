@@ -3,40 +3,74 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — BoxTechHub</title>
-  <meta name="description" content="Overtime scheduler that always starts locked on page load; mobile-friendly and search stays available while locked." />
-  <!-- Favicon (place your favicon file at assets/favicon.ico) -->
-  <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+  <title>Overtime Scheduler — BoxTechHub (Header Logo Background)</title>
+  <meta name="description" content="Overtime scheduler with BoxTechHub logo used as a decorative header background in the top corner; mobile-friendly and search stays available while locked." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
       --accent:#60a5fa; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
       --shadow: 0 8px 30px rgba(2,6,23,0.6); --input-h:44px; --gap:12px;
       --action-col:160px; --radius:10px;
+      --header-logo-path: "assets/boxtechhub-logo.svg"; /* change path if needed */
     }
 
     /* Base / mobile-friendly */
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;padding:18px;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
-    input,button,select,textarea{font-family:inherit;font-size:16px} /* prevents iOS zoom */
+    input,button,select,textarea{font-family:inherit;font-size:16px}
 
     /* Layout */
     .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
-    header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
-    header > .title-block{display:flex;flex-direction:column;gap:4px}
+    header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px;position:relative;padding:12px 16px;border-radius:12px}
+    header > .title-block{display:flex;flex-direction:column;gap:4px;z-index:2}
     h1{font-size:20px;margin:0;line-height:1.05}
     p.lead{margin:0;color:var(--muted);font-size:13px}
 
-    /* Brand/logo */
-    .brand-wrap { display:flex; align-items:center; gap:12px; min-width:0; }
-    .brand-logo { display:inline-flex; align-items:center; gap:10px; text-decoration:none; color:inherit; }
-    .brand-logo img { display:block; height:36px; width:auto; max-width:160px; }
+    /* Decorative logo as header background (top-left corner) */
+    header::before{
+      content: "";
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      width: 56px;
+      height: 56px;
+      background-image: url(assets/boxtechhub-logo.svg);
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+      opacity: 0.95;
+      pointer-events: none;
+      z-index: 1;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.45));
+      border-radius: 8px;
+    }
+
+    /* If you prefer a subtle watermark instead, uncomment and adjust:
+    header::after{
+      content: "";
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      width: 120px;
+      height: 40px;
+      background-image: url(assets/boxtechhub-logo.svg);
+      background-repeat: no-repeat;
+      background-position: left center;
+      background-size: contain;
+      opacity: 0.06;
+      pointer-events: none;
+      z-index: 0;
+    }
+    */
+
+    /* Brand area (keeps layout stable when logo is background) */
+    .brand-wrap { display:flex; align-items:center; gap:12px; min-width:0; z-index:2 }
     .brand-word { display:flex; flex-direction:column; line-height:1; }
     .brand-name { font-weight:700; color:var(--text); font-size:16px; letter-spacing:0.2px; }
     .brand-sub { font-size:11px; color:var(--muted); margin-top:2px; }
 
     .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04)}
-    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;z-index:2}
     .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);color:var(--text);height:var(--input-h);min-width:120px;flex:1 1 auto;min-width:0}
     .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
     .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
@@ -57,29 +91,13 @@
       background:transparent;color:var(--text);height:var(--input-h);width:100%;min-width:0;font-size:16px;
     }
 
-    /* Remove default iOS date appearance to reduce overlap */
     input[type="date"] { -webkit-appearance: none; appearance: none; padding-right: 14px; }
 
-    /* Add form row (desktop two-column, mobile stacked) */
     .add-row { display:flex; gap:8px; min-width:0; }
     .add-row > div { flex:1; min-width:0; }
 
-    /* Edit layout: grid for stable columns on wide screens, stack on small screens */
-    .edit-row {
-      display: grid;
-      grid-template-columns: 1fr var(--action-col);
-      gap: var(--gap);
-      align-items: start;
-      width:100%;
-      min-width:0;
-    }
-    .edit-fields {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: var(--gap);
-      align-items: start;
-      min-width:0;
-    }
+    .edit-row { display: grid; grid-template-columns: 1fr var(--action-col); gap: var(--gap); align-items: start; width:100%; min-width:0; }
+    .edit-fields { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); align-items: start; min-width:0; }
     .edit-fields .field-name { grid-column: 1 / -1; }
     .edit-fields .field-date { grid-column: 1 / 2; }
     .edit-fields .field-notes { grid-column: 2 / 3; }
@@ -87,33 +105,20 @@
     .action-col { display:flex; align-items:flex-start; justify-content:flex-end; min-width:0 }
     .action-col .actions-inline { display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
 
-    /* Prevent children from shrinking to zero (common cause of overlap) */
     .item, .display-left, .edit-fields, .edit-row, .action-col, .controls, .add-row { min-width:0 }
     .display-left > * { min-width:0; overflow-wrap:break-word }
 
-    /* Small screens: stack fields and move actions below; increase spacing for touch */
     @media (max-width:760px){
       .container{grid-template-columns:1fr;gap:12px;padding:12px}
-      header{flex-direction:column;align-items:stretch;gap:8px}
-      header > .title-block{align-items:center;text-align:center;width:100%}
-      h1{font-size:18px}
-      p.lead{font-size:12px;opacity:0.95}
-
+      header{flex-direction:column;align-items:stretch;gap:8px;padding:12px}
+      header::before{ top:8px; left:12px; width:48px; height:48px; border-radius:8px; }
+      header > .title-block { text-align:center; align-items:center; z-index:2 }
+      .brand-word { display:none } /* hide wordmark when logo is visible as background on small screens */
       .controls{width:100%;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
       .controls .search{flex:1 1 auto;min-width:0}
-
-      /* Brand: show stacked variant on very small screens */
-      .brand-logo img { height:32px; }
-      .brand-name { font-size:15px; }
-
-      /* Add form stacks on mobile to avoid side-by-side overlap */
       .add-row { flex-direction:column; gap:10px; }
-      .add-row > div { width:100%; }
-
-      /* Edit row stacks on mobile so inputs never overlap actions */
       .edit-row { grid-template-columns: 1fr; }
       .edit-fields { grid-template-columns: 1fr; }
-      .edit-fields .field-name, .edit-fields .field-date, .edit-fields .field-notes { grid-column: auto; }
       .action-col { justify-content:flex-start; margin-top:8px; }
       .action-col .actions-inline { flex-direction:row; gap:8px; flex-wrap:wrap; }
       .btn { padding:10px 12px; font-size:15px; }
@@ -121,7 +126,7 @@
       input[type="text"], input[type="date"], .edit-input { height:48px; font-size:16px; padding:12px; }
     }
 
-    /* Locked state visuals (modal override below) */
+    /* Locked state visuals */
     .locked .btn,
     .locked .btn.ghost,
     .locked input,
@@ -138,7 +143,7 @@
       opacity: 1 !important;
     }
 
-    /* Footer (trademark & copyright) */
+    /* Footer */
     footer.site-footer { grid-column: 1 / -1; margin-top:12px; text-align:center; color:var(--muted); font-size:13px; }
     footer.site-footer .brand { font-weight:700; color:var(--text); margin-bottom:6px; display:block; }
     footer.site-footer .legal { color:var(--muted); font-size:12px; }
@@ -146,17 +151,8 @@
     /* Modal */
     .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
     .modal{background:var(--card);padding:18px;border-radius:12px;min-width:260px;max-width:520px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06);z-index:10000}
+    .locked .modal-backdrop, .locked .modal-backdrop *, .locked .modal, .locked .modal * { pointer-events: auto !important; opacity: 1 !important; }
 
-    /* Keep modal interactive while page is locked */
-    .locked .modal-backdrop,
-    .locked .modal-backdrop *,
-    .locked .modal,
-    .locked .modal * {
-      pointer-events: auto !important;
-      opacity: 1 !important;
-    }
-
-    /* iOS polish */
     @supports (-webkit-touch-callout: none) {
       body { padding-bottom: 22px; }
       .modal { -webkit-overflow-scrolling: touch; }
@@ -166,11 +162,13 @@
 <body>
   <div class="container" id="app">
     <header>
-      <div class="brand-wrap">
-        <!-- Logo image: place your logo file at assets/boxtechhub-logo.svg (or .png). -->
-        <!-- Use a small, accessible img with alt text. -->
-        <a href="#" class="brand-logo" aria-label="BoxTechHub home">
-          <img id="brandLogo" src="assets/boxtechhub-logo.svg" alt="BoxTechHub logo" />
+      <div class="brand-wrap" aria-hidden="true">
+        <a href="#" class="brand-logo" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;z-index:2">
+          <!-- Small inline fallback icon (visible if external file missing) -->
+          <svg width="36" height="36" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="border-radius:6px;background:transparent">
+            <rect x="2" y="6" width="44" height="36" rx="6" fill="#60A5FA" />
+            <path d="M14 30V18h6l6 12h-6l-6-6" fill="#0b1220" />
+          </svg>
           <span class="brand-word" aria-hidden="true">
             <span class="brand-name">BoxTechHub<span style="font-size:11px;vertical-align:super;margin-left:4px">™</span></span>
             <span class="brand-sub">Overtime Scheduler</span>
@@ -180,7 +178,7 @@
 
       <div class="controls" role="group" aria-label="Search and lock controls">
         <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" autocomplete="off" />
-        <div class="lock-indicator" aria-hidden="true" style="display:flex;align-items:center;gap:8px">
+        <div class="lock-indicator" aria-hidden="true" style="display:flex;align-items:center;gap:8px;z-index:2">
           <div id="lockDot" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
           <div id="lockText" style="color:var(--muted);font-size:13px">Checking…</div>
         </div>
@@ -226,14 +224,12 @@
       </form>
     </aside>
 
-    <!-- Footer with trademark and copyright -->
     <footer class="site-footer" role="contentinfo" aria-label="Site copyright and trademark">
       <span class="brand">BoxTechHub™</span>
       <div class="legal">© 2026 BoxTechHub. All rights reserved.</div>
     </footer>
   </div>
 
-  <!-- Password modal (direct child of body so override applies) -->
   <div id="modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document">
       <h3 id="modalTitle">Unlock Actions</h3>
@@ -252,12 +248,10 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    // Replace with your Supabase values
     const SUPABASE_URL = 'https://bisvmgjgyvludhqsvvcn.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // DOM refs
     const rowsEl = document.getElementById('rows');
     const statusEl = document.getElementById('status');
     const form = document.getElementById('addForm');
@@ -273,7 +267,6 @@
     const pwCancel = document.getElementById('pwCancel');
     const pwError = document.getElementById('pwError');
     const emptyEl = document.getElementById('empty');
-    const brandLogo = document.getElementById('brandLogo');
 
     let dataCache = [];
     let locked = true;
@@ -281,12 +274,10 @@
     function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Ensure search element reference exists
     const searchEl = document.getElementById('search');
 
     function setLockedState(val){
       locked = !!val;
-      // Always store state but we still force locked on load
       localStorage.setItem('overtime_locked', locked ? 'true' : 'false');
       if (locked) {
         document.body.classList.add('locked');
@@ -299,8 +290,6 @@
         lockText.textContent = 'Unlocked';
         lockToggle.textContent = 'Lock';
       }
-
-      // Safety: ensure search remains enabled and interactive regardless of locked state
       if (searchEl) {
         searchEl.disabled = false;
         searchEl.setAttribute('aria-disabled', 'false');
@@ -494,7 +483,6 @@
           pwError.textContent = `Server: ${msg} (status ${res.status})`;
           return;
         }
-        // After successful unlock request, check unlocked endpoint and set state
         const check = await fetch('/api/unlocked');
         const checkJson = check.ok ? await check.json().catch(()=>null) : null;
         if (checkJson && checkJson.unlocked) { setLockedState(false); closeModal(); return; }
@@ -512,7 +500,6 @@
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
-    // Keep search usable even if some other code tries to disable it
     if (searchEl) {
       searchEl.disabled = false;
       searchEl.setAttribute('aria-disabled', 'false');
@@ -530,23 +517,9 @@
       renderList(filtered);
     });
 
-    // INIT: always start locked on load/refresh
     window.addEventListener('DOMContentLoaded', async () => {
-      // Force locked state on every load
       setLockedState(true);
-
-      // Load rows after locking UI
       await loadRows();
-
-      // Optional: if you want to show a placeholder logo when the file is missing,
-      // uncomment the following block and adjust the text or SVG fallback as needed.
-      /*
-      if (!brandLogo.complete || brandLogo.naturalWidth === 0) {
-        brandLogo.style.display = 'none';
-        // You could insert a text fallback here if desired:
-        // document.querySelector('.brand-word .brand-name').textContent = 'BoxTechHub™';
-      }
-      */
     });
   </script>
 </body>
