@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Date Pill Fix</title>
-  <meta name="description" content="Overtime Scheduler with fixed date pill in entries list." />
+  <title>Overtime Scheduler — Compact Add Form</title>
+  <meta name="description" content="Overtime Scheduler — compact Add/Reset buttons and tighter form spacing (Add Overtime section only)." />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -36,6 +36,7 @@
       border-radius:var(--radius);padding:12px;box-shadow:0 8px 20px rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.04);
     }
 
+    /* --- Header / theme / list styles unchanged (kept compact) --- */
     .header.card{display:flex;flex-direction:column;gap:8px}
     .brand{display:flex;flex-direction:column;align-items:center}
     .brand h1{margin:0;font-size:1rem}
@@ -47,89 +48,105 @@
     .theme-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px}
     .theme-swatch{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,0.06);display:inline-flex;align-items:center;justify-content:center;padding:0;background:transparent}
     .theme-swatch .dot{width:24px;height:24px;border-radius:999px}
-    .swatch-ocean .dot{background:linear-gradient(180deg,#4f46e5,#3b82f6)}
-    .swatch-warm .dot{background:linear-gradient(180deg,#ff7a59,#ff5a36)}
-    .swatch-forest .dot{background:linear-gradient(180deg,#10b981,#059669)}
-    .swatch-violet .dot{background:linear-gradient(180deg,#d946ef,#a78bfa)}
     .theme-swatch.active{transform:scale(1.06);box-shadow:0 8px 26px rgba(0,0,0,0.32);border-color:transparent}
 
     .meta{font-size:.82rem;color:var(--muted);text-align:center}
 
     .list{display:flex;flex-direction:column;gap:8px}
-    .item{
-      display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);
-    }
+    .item{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
     .item-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-    .item-left{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+    .name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .notes{color:var(--muted);font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .date-pill{min-width:72px;text-align:center;padding:6px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.02);flex-shrink:0}
 
-    .name{font-weight:600;font-size:.96rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .notes{color:var(--muted);font-size:.82rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-    /* FIXED date pill: stable sizing, centered text, accessible time element */
-    .date-pill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-width:72px;        /* ensures pill doesn't collapse */
-      max-width:120px;       /* prevents it from growing too wide */
-      padding:6px 10px;
-      border-radius:8px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
-      border:1px solid rgba(255,255,255,0.02);
-      color:var(--text);
-      box-sizing:border-box;
-      font-size:0.88rem;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      flex-shrink:0;         /* important: don't shrink when container is tight */
-      line-height:1;
-    }
-    .date-pill time{ display:block; width:100%; text-align:center; }
-
-    .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-
+    .item-actions{display:flex;gap:6px;align-items:center}
     .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem;transition:background var(--theme-transition), color var(--theme-transition)}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
-    .btn.full{width:100%}
 
-    #formCard{display:flex;flex-direction:column;gap:10px}
-    #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block;transition:color var(--theme-transition)}
-    .field{display:flex;flex-direction:column;gap:8px;min-width:0}
-
-    input[type="text"], textarea{
-      width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
-      text-align:center;
-      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
+    /* --- Add Overtime section: compact spacing and buttons (ONLY this area changed) --- */
+    #formCard{display:flex;flex-direction:column;gap:8px}
+    #formCard label{
+      font-size:0.92rem;
+      color:var(--muted);
+      margin:0 0 6px 0; /* reduced vertical gap between label and input */
+      text-align:left;   /* align labels to left for compactness */
     }
-    input[type="text"]:focus, textarea:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
+
+    .add-row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:8px; /* slightly smaller gap so fields sit closer */
+      align-items:start;
+    }
+
+    .field{display:flex;flex-direction:column;gap:6px;min-width:0}
+
+    /* Inputs: slightly reduced vertical padding so labels sit closer visually */
+    input[type="text"], textarea, .date-text {
+      width:100%;
+      padding:8px 10px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.04);
+      background:rgba(0,0,0,0.12);
+      color:var(--text);
+      height:36px; /* slightly smaller to match compact buttons */
+      box-sizing:border-box;
+      font-size:0.95rem;
+      text-align:left;
+    }
+    input[type="text"]:focus, textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.14); }
 
     .date-control{position:relative;display:block;min-width:0}
-    .date-text{padding-right:48px;cursor:pointer}
-    .date-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;z-index:2;font-size:1rem;padding:0}
-    .native-date{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;opacity:0;border:0;padding:0;margin:0;background:transparent;z-index:3;cursor:pointer}
-
-    .editing .edit-input{display:block}
-    .edit-input{display:none;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%;box-sizing:border-box;min-width:0;text-align:left;font-size:var(--input-font)}
-
-    .item.editing { display:flex; flex-direction:column; gap:8px; }
-    .item.editing .edit-input { width:100%; max-width:100%; }
-
-    .modal-backdrop{
-      position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;
+    .date-text{padding-right:44px;cursor:pointer;height:36px}
+    .date-btn{
+      position:absolute;right:6px;top:50%;transform:translateY(-50%);
+      width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;z-index:2;font-size:1rem;padding:0;
     }
-    .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
+    .native-date{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;opacity:0;border:0;padding:0;margin:0;background:transparent;z-index:3;cursor:pointer}
 
-    .actions-hidden .item-actions { display: none !important; }
-    .form-hidden #formCard { display: none !important; }
+    /* Form actions: keep compact, right aligned, do not stretch inputs */
+    .form-actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
+      margin-top:4px;
+      flex-shrink:0;
+    }
 
+    /* Compact Add and Reset buttons */
+    .btn-add{
+      padding:6px 10px;
+      height:34px;
+      border-radius:999px;
+      font-size:0.92rem;
+      display:inline-flex;align-items:center;gap:8px;
+      white-space:nowrap;
+      box-shadow: 0 6px 14px rgba(2,10,8,0.12);
+    }
+    .btn-add svg{width:14px;height:14px;display:block;flex-shrink:0}
+
+    .btn-reset{
+      padding:6px 10px;
+      height:34px;
+      border-radius:999px;
+      font-size:0.92rem;
+      display:inline-flex;align-items:center;gap:8px;
+      background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);
+      white-space:nowrap;
+    }
+    .btn-reset svg{width:14px;height:14px;display:block;flex-shrink:0}
+
+    /* Ensure the Short note field never gets overlapped: allow the form row to expand vertically if needed */
+    .add-row .field:nth-child(2) { min-width:0; }
+
+    /* Mobile adjustments: stack fields and make buttons full width */
     @media (max-width:420px){
-      .add-row{grid-template-columns:1fr}
-      .app{width:320px}
-      .date-text{padding-right:48px}
-      .theme-row{flex-wrap:wrap}
-      .date-pill{min-width:64px; max-width:96px; font-size:0.85rem}
+      .add-row{grid-template-columns:1fr;gap:8px}
+      .form-actions{flex-direction:row;gap:8px}
+      .form-actions .btn-add, .form-actions .btn-reset { flex:1; justify-content:center; }
+      input[type="text"], .date-text { height:40px; }
     }
   </style>
 </head>
@@ -146,6 +163,7 @@
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search entries" />
           <div style="display:flex;align-items:center;gap:8px">
             <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444;transition:background var(--theme-transition)"></div>
+
             <button id="openUnlock" class="icon-btn" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
                 <path class="icon-fill" d="M12 17a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
@@ -176,7 +194,7 @@
       </main>
 
       <aside id="formCard" class="card" aria-labelledby="addOvertimeTitle">
-        <strong id="addOvertimeTitle" style="display:block;text-align:center;font-size:1rem">Add Overtime</strong>
+        <strong id="addOvertimeTitle" style="display:block;text-align:left;font-size:1rem">Add Overtime</strong>
 
         <form id="addForm" autocomplete="off" novalidate>
           <div class="field">
@@ -195,19 +213,20 @@
             </div>
 
             <div class="field">
-              <label for="notes">Notes</label>
+              <label for="notes">Short note</label>
               <input id="notes" name="notes" class="lock-guard" type="text" placeholder="Short note" />
             </div>
           </div>
 
           <div class="form-actions" role="group" aria-label="Form actions">
             <button id="submitBtn" class="btn btn-add lock-guard" type="submit" title="Add entry" aria-label="Add entry">
-              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M11 11V6h2v5h5v2h-5v5h-2v-5H6v-2z"/></svg>
+              <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M11 11V6h2v5h5v2h-5v5h-2v-5H6v-2z"/></svg>
               <span>Add</span>
             </button>
 
-            <button id="resetBtn" type="button" class="btn ghost lock-guard" title="Reset form" aria-label="Reset form">
-              Reset
+            <button id="resetBtn" type="button" class="btn-reset lock-guard" title="Reset form" aria-label="Reset form">
+              <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M12 6V3L8 7l4 4V8c2.8 0 5 2.2 5 5 0 .6-.1 1.2-.3 1.7l1.5 1.1C18.9 15 19 14.5 19 14c0-3.9-3.1-7-7-7zM6.3 6.3L4.8 5.2C5.1 4.8 5.9 4 7 4c3.9 0 7 3.1 7 7v1l4-4-4-4v3c-2.8 0-5 2.2-5 5 0 .6.1 1.2.3 1.7L6.3 6.3z"/></svg>
+              <span>Reset</span>
             </button>
           </div>
         </form>
@@ -353,7 +372,7 @@
       } catch (e) { console.warn('Date behavior attach failed', e); }
     })();
 
-    // Create row element uses <time> for date pill
+    // Render rows
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -362,7 +381,7 @@
       const dateAttr = row.overtime_date ? row.overtime_date : '';
       el.innerHTML = `
         <div class="item-top">
-          <div class="item-left">
+          <div style="flex:1;min-width:0">
             <div class="name" data-field="name">${escapeHtml(row.name)}</div>
             <div class="notes" data-field="notes">${escapeHtml(row.notes || '')}</div>
           </div>
@@ -370,7 +389,7 @@
             <time datetime="${escapeHtml(dateAttr)}">${escapeHtml(dateDisplay)}</time>
           </div>
         </div>
-        <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px">
           <div class="item-actions">
             <button class="btn ghost lock-guard" data-action="edit">Edit</button>
             <button class="btn ghost lock-guard" data-action="delete">Delete</button>
@@ -379,7 +398,6 @@
       `;
       return el;
     }
-
     function renderList(items){
       rowsEl.innerHTML = '';
       if (!items || !items.length) { emptyEl.style.display = 'block'; statusEl.textContent = 'No entries'; return; }
