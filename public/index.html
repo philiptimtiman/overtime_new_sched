@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Live Clock Centered</title>
-  <meta name="description" content="Overtime Scheduler with centered live clock in header (yyyymmdd hh:mm:ss)." />
+  <title>Overtime Scheduler — Live Clock Centered (Header then p1 then clock)</title>
+  <meta name="description" content="Overtime Scheduler with centered live clock and header order adjusted: header, p1, clock." />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -36,8 +36,8 @@
       border-radius:var(--radius);padding:12px;box-shadow:0 8px 20px rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.04);
     }
 
-    /* Header: make relative so we can absolutely center the live clock */
-    .header.card{display:flex;flex-direction:column;gap:8px;position:relative;padding-top:18px}
+    /* Header: stacked order (title, p1, clock, controls, theme) */
+    .header.card{display:flex;flex-direction:column;gap:8px;position:relative;padding-top:12px}
     .brand{display:flex;flex-direction:column;align-items:flex-start}
     .brand h1{margin:0;font-size:1rem}
     .brand p{margin:0;color:var(--muted);font-size:.85rem}
@@ -45,16 +45,12 @@
     .controls{display:flex;gap:8px;align-items:center}
     .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--text)}
 
-    /* Live clock centered in header */
+    /* Live clock centered under p1 */
     .live-row{
-      position:absolute;
-      left:50%;
-      top:12px;
-      transform:translateX(-50%);
       display:flex;
       align-items:center;
       justify-content:center;
-      pointer-events:none; /* non-interactive */
+      margin-top:4px;
     }
     .live-clock{
       font-family:monospace;
@@ -66,6 +62,7 @@
       border:1px solid rgba(255,255,255,0.03);
       min-width:170px;
       text-align:center;
+      pointer-events:none;
     }
 
     .theme-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px}
@@ -177,8 +174,6 @@
       .theme-row{flex-wrap:wrap}
       .date-pill{min-width:64px; max-width:96px; font-size:0.85rem}
       .live-clock{min-width:140px;font-size:0.78rem}
-      .header.card{padding-top:28px}
-      .live-row{top:8px}
     }
   </style>
 </head>
@@ -186,16 +181,20 @@
   <div class="canvas">
     <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler">
       <header class="card header" aria-labelledby="appTitle">
-        <div class="brand" style="display:flex;flex-direction:column;align-items:flex-start">
+        <!-- Header title (Hearder muna) -->
+        <div class="brand">
           <h1 id="appTitle" style="margin:0">Overtime Scheduler</h1>
-          <p class="meta" style="margin:0">Locked by default — unlock to add or edit</p>
         </div>
 
-        <!-- Live clock centered in header -->
+        <!-- p1 (bago yong p1) -->
+        <p class="meta" style="margin:0">Locked by default — unlock to add or edit</p>
+
+        <!-- Live clock (sunod yong orasan) -->
         <div class="live-row" aria-hidden="false">
           <div id="liveClock" class="live-clock" role="status" aria-live="polite">—</div>
         </div>
 
+        <!-- Controls (search + lock) -->
         <div class="controls" role="search" style="margin-top:8px;display:flex;gap:8px;align-items:center">
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search entries" />
           <div class="lock-group" style="margin-left:6px;display:flex;align-items:center;gap:8px">
@@ -212,6 +211,7 @@
           </div>
         </div>
 
+        <!-- Theme row -->
         <div class="theme-row" role="toolbar" aria-label="Theme switcher" style="margin-top:10px">
           <button class="theme-swatch swatch-ocean" data-theme="ocean" aria-label="Ocean Indigo" title="Ocean Indigo" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-warm" data-theme="warm" aria-label="Warm Sunset" title="Warm Sunset" type="button"><span class="dot" aria-hidden="true"></span></button>
