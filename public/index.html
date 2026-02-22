@@ -164,7 +164,6 @@
           <div class="form-actions">
             <button id="submitBtn" class="btn lock-guard" type="submit">Add</button>
             <button id="resetBtn" type="button" class="btn ghost lock-guard">Reset</button>
-            <button id="lockToggle" type="button" class="btn ghost" title="Lock or unlock">Unlock</button>
           </div>
         </form>
       </aside>
@@ -203,7 +202,6 @@
     const submitBtn = document.getElementById('submitBtn');
     const resetBtn = document.getElementById('resetBtn');
     const searchInput = document.getElementById('search');
-    const lockToggle = document.getElementById('lockToggle');
     const openUnlock = document.getElementById('openUnlock');
     const lockIndicator = document.getElementById('lockIndicator');
     const lockLabel = document.getElementById('lockLabel');
@@ -242,7 +240,6 @@
       });
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
       lockLabel.textContent = unlocked ? 'Unlocked' : 'Locked';
-      lockToggle.textContent = unlocked ? 'Lock' : 'Unlock';
       openUnlock.textContent = unlocked ? 'Lock' : 'Unlock';
     }
 
@@ -283,27 +280,22 @@
     // When native picker returns a value, copy it to the visible text input in YYYY-MM-DD.
     // This avoids layout issues caused by native date control chrome on iOS.
     function openNativeDatePicker(initialValue){
-      // set native input value if valid ISO
       if (initialValue && /^\d{4}-\d{2}-\d{2}$/.test(initialValue)) dateNative.value = initialValue;
       else dateNative.value = '';
-      // If showPicker API exists, use it (modern browsers)
       if (typeof dateNative.showPicker === 'function') {
         dateNative.showPicker();
       } else {
-        // Fallback: focus + click (may work on many mobile browsers)
         dateNative.focus();
         try { dateNative.click(); } catch(e){}
       }
     }
 
-    // When native date changes, copy to visible text
     dateNative.addEventListener('change', () => {
-      const v = dateNative.value; // ISO YYYY-MM-DD
+      const v = dateNative.value;
       if (v) dateText.value = v;
       else dateText.value = '';
     });
 
-    // Open native picker when user taps visible control
     dateBtn.addEventListener('click', () => {
       openNativeDatePicker(isoDateFromText(dateText.value));
     });
@@ -467,7 +459,6 @@
 
     // Unlock modal handlers
     openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
-    lockToggle.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
