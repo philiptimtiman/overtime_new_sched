@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Mobile Friendly</title>
-  <meta name="description" content="Overtime scheduler with mobile-first responsive layout and fixes for iPhone input overlap." />
+  <title>Overtime Scheduler — Mobile Safe</title>
+  <meta name="description" content="Overtime scheduler with robust mobile layout fixes for iPhone input overlap." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -13,11 +13,12 @@
       --action-col:160px; --radius:10px;
     }
 
-    /* Mobile-friendly baseline */
-    html,body{height:100%;margin:0;padding:18px;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+    /* Base / mobile-friendly */
     *{box-sizing:border-box}
-    input,button,select,textarea{font-family:inherit;font-size:16px} /* prevents iOS zoom and improves touch targets */
+    html,body{height:100%;margin:0;padding:18px;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+    input,button,select,textarea{font-family:inherit;font-size:16px} /* prevents iOS zoom */
 
+    /* Layout */
     .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
     header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
     header > .title-block{display:flex;flex-direction:column;gap:4px}
@@ -25,7 +26,7 @@
     p.lead{margin:0;color:var(--muted);font-size:13px}
 
     .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04)}
-    .controls{display:flex;gap:8px;align-items:center}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.03);color:var(--text);height:var(--input-h);min-width:120px;flex:1 1 auto;min-width:0}
     .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
     .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
@@ -33,7 +34,7 @@
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger);padding:8px 10px;border-radius:8px}
 
     .list{display:flex;flex-direction:column;gap:12px}
-    .item{padding:12px;border-radius:12px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);display:flex;flex-direction:column;gap:10px;min-height:64px}
+    .item{padding:12px;border-radius:12px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);display:flex;flex-direction:column;gap:10px;min-height:64px;min-width:0}
     .display-left{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
     .name{font-weight:700}
     .meta{color:var(--muted);font-size:13px}
@@ -46,6 +47,13 @@
       background:transparent;color:var(--text);height:var(--input-h);width:100%;min-width:0;font-size:16px;
     }
 
+    /* Remove default iOS date appearance to reduce overlap */
+    input[type="date"] { -webkit-appearance: none; appearance: none; padding-right: 14px; }
+
+    /* Add form row (desktop two-column, mobile stacked) */
+    .add-row { display:flex; gap:8px; min-width:0; }
+    .add-row > div { flex:1; min-width:0; }
+
     /* Edit layout: grid for stable columns on wide screens, stack on small screens */
     .edit-row {
       display: grid;
@@ -53,22 +61,24 @@
       gap: var(--gap);
       align-items: start;
       width:100%;
+      min-width:0;
     }
     .edit-fields {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: var(--gap);
       align-items: start;
+      min-width:0;
     }
     .edit-fields .field-name { grid-column: 1 / -1; }
     .edit-fields .field-date { grid-column: 1 / 2; }
     .edit-fields .field-notes { grid-column: 2 / 3; }
 
-    .action-col { display:flex; align-items:flex-start; justify-content:flex-end; }
+    .action-col { display:flex; align-items:flex-start; justify-content:flex-end; min-width:0 }
     .action-col .actions-inline { display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
 
-    /* Prevent flex children from shrinking and causing overlap */
-    .item, .display-left, .edit-fields, .edit-row, .action-col { min-width:0 }
+    /* Prevent children from shrinking to zero (common cause of overlap) */
+    .item, .display-left, .edit-fields, .edit-row, .action-col, .controls, .add-row { min-width:0 }
     .display-left > * { min-width:0; overflow-wrap:break-word }
 
     /* Small screens: stack fields and move actions below; increase spacing for touch */
@@ -82,13 +92,18 @@
       .controls{width:100%;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
       .controls .search{flex:1 1 auto;min-width:0}
 
-      .edit-row{grid-template-columns:1fr}
-      .edit-fields{grid-template-columns:1fr}
-      .edit-fields .field-name,.edit-fields .field-date,.edit-fields .field-notes{grid-column:auto}
-      .action-col{justify-content:flex-start;margin-top:8px}
-      .action-col .actions-inline{flex-direction:row;gap:8px;flex-wrap:wrap}
-      .btn{padding:10px 12px;font-size:15px}
-      .item{padding:14px}
+      /* Add form stacks on mobile to avoid side-by-side overlap */
+      .add-row { flex-direction:column; gap:10px; }
+      .add-row > div { width:100%; }
+
+      /* Edit row stacks on mobile so inputs never overlap actions */
+      .edit-row { grid-template-columns: 1fr; }
+      .edit-fields { grid-template-columns: 1fr; }
+      .edit-fields .field-name, .edit-fields .field-date, .edit-fields .field-notes { grid-column: auto; }
+      .action-col { justify-content:flex-start; margin-top:8px; }
+      .action-col .actions-inline { flex-direction:row; gap:8px; flex-wrap:wrap; }
+      .btn { padding:10px 12px; font-size:15px; }
+      .item { padding:14px; }
       input[type="text"], input[type="date"], .edit-input { height:48px; font-size:16px; padding:12px; }
     }
 
@@ -115,7 +130,7 @@
       opacity: 1 !important;
     }
 
-    /* Small visual polish for iOS: avoid input overlap with Safari UI */
+    /* iOS polish */
     @supports (-webkit-touch-callout: none) {
       body { padding-bottom: 22px; }
       .modal { -webkit-overflow-scrolling: touch; }
@@ -127,7 +142,7 @@
     <header>
       <div class="title-block">
         <h1>Overtime Scheduler</h1>
-        <p class="lead">Responsive edit layout — actions won't overlap inputs on small screens</p>
+        <p class="lead">Responsive edit layout — inputs and buttons won't overlap on phones</p>
       </div>
 
       <div class="controls" role="group" aria-label="Search and lock controls">
@@ -160,18 +175,18 @@
           <input id="name" name="name" type="text" placeholder="Employee name" required autocomplete="name" />
         </div>
 
-        <div style="display:flex;gap:8px;margin-top:8px;min-width:0">
-          <div style="flex:1;min-width:0">
+        <div class="add-row" style="margin-top:8px;min-width:0">
+          <div>
             <label for="overtime_date">Date</label>
             <input id="overtime_date" name="overtime_date" type="date" autocomplete="bday" />
           </div>
-          <div style="flex:1;min-width:0">
+          <div>
             <label for="notes">Notes</label>
             <input id="notes" name="notes" type="text" placeholder="Short note" autocomplete="off" />
           </div>
         </div>
 
-        <div style="margin-top:6px;display:flex;gap:8px">
+        <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap">
           <button id="submitBtn" class="btn" type="submit">Add</button>
           <button type="button" id="resetBtn" class="btn secondary">Reset</button>
         </div>
@@ -187,7 +202,7 @@
       <div style="margin-top:12px">
         <input id="pwInput" type="password" autocomplete="current-password" placeholder="Password" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);width:100%" />
       </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap">
         <button id="pwCancel" class="btn secondary">Cancel</button>
         <button id="pwSubmit" class="btn">Submit</button>
       </div>
