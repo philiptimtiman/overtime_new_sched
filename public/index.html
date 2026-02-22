@@ -148,8 +148,6 @@
             <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444;transition:background var(--theme-transition)"></div>
 
             <button id="openUnlock" class="btn ghost" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">Unlock</button>
-
-            <button id="refreshLock" class="btn ghost" title="Refresh lock state" aria-label="Refresh lock state" type="button">Refresh</button>
           </div>
         </div>
 
@@ -234,7 +232,6 @@
     const searchInput = document.getElementById('search');
     const openUnlock = document.getElementById('openUnlock');
     const lockIndicator = document.getElementById('lockIndicator');
-    const refreshLock = document.getElementById('refreshLock');
 
     const modalBackdrop = document.getElementById('modalBackdrop');
     const pwInput = document.getElementById('pwInput');
@@ -530,16 +527,6 @@
 
     // openUnlock behavior unchanged
     openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
-
-    // refreshLock explicit action (reads persisted state)
-    if (refreshLock) refreshLock.addEventListener('click', () => {
-      try {
-        const stored = safeGetLocal(LOCAL_KEY);
-        const shouldBeUnlocked = stored === 'true';
-        setUnlockedState(shouldBeUnlocked, false);
-        refreshLock.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], { duration: 420, easing: 'ease-out' });
-      } catch (e) { console.warn('refresh failed', e); }
-    });
 
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
     pwCancel.addEventListener('click', () => closeModal());
