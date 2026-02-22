@@ -26,7 +26,7 @@
     /* Reset & base */
     *, *::before, *::after { box-sizing: border-box; }
     html,body{height:100%;margin:0;padding:var(--container-pad);background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased}
-    input,button,select,textarea{font-family:inherit;font-size:16px}
+    input,button,select,textarea{font-family:inherit;font-size:20px}
 
     /* Page grid */
     .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
@@ -265,11 +265,11 @@
       <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
       <div id="empty" class="meta" style="display:none">No entries yet.</div>
 
-      <div class="meta" style="margin-top:12px">Tip: Unlock to enable Add/Edit/Delete.</div>
+      <div class="meta" style="margin-top:12px ;font-size:10px">Please refresh the page. Schedule updates are made 1–2 days before the scheduled overtime date.</div>
     </section>
 
     <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle">
-      <strong id="addOvertimeTitle" style="display:block;margin-bottom:8px">Add Overtime</strong>
+      <strong id="addOvertimeTitle" style="display:block;margin-bottom:8px">ADD Overtime Schedule</strong>
       <form id="addForm" autocomplete="off" novalidate>
         <div style="display:flex;flex-direction:column;gap:6px">
           <label for="name" style="font-size:13px;color:var(--muted);margin:0;text-align:center">Name</label>
