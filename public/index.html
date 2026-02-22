@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overtime Scheduler — Improved Search Contrast</title>
-  <meta name="description" content="Supabase single-file UI with improved search box contrast and placeholder readability" />
+  <title>Overtime Scheduler — Full Patch</title>
+  <meta name="description" content="Single-file UI: list, add, edit, save, cancel, delete; responsive and accessible." />
   <style>
     :root{
       --bg:#0f1724;
@@ -24,8 +24,6 @@
       --search-placeholder: rgba(255,255,255,0.55);
       --search-text: var(--text);
     }
-
-    /* Light theme override */
     [data-theme="light"]{
       --bg:#f6f7fb;
       --card:#ffffff;
@@ -109,19 +107,11 @@
       border-color: var(--accent);
       background: rgba(255,255,255,0.06);
     }
-    /* Placeholder colors for readability */
     .search::placeholder { color: var(--search-placeholder); opacity:1; }
-    /* For older browsers */
     .search::-webkit-input-placeholder { color: var(--search-placeholder); }
     .search:-ms-input-placeholder { color: var(--search-placeholder); }
 
-    /* Ensure high contrast when user prefers it */
-    @media (prefers-contrast: more) {
-      .search { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.06); }
-      .search::placeholder { color: rgba(255,255,255,0.75); }
-    }
-
-    /* Inputs and layout (rest of UI) */
+    /* Inputs */
     form{display:flex;flex-direction:column;gap:10px}
     label{font-size:13px;color:var(--text-muted);display:block}
     input[type="text"], input[type="date"], textarea{
@@ -163,6 +153,10 @@
       border:1px solid rgba(255,255,255,0.04);
       font-weight:600;
     }
+    .btn-ghost{
+      background:transparent;color:var(--text-muted);border:0;padding:6px 8px;border-radius:8px;cursor:pointer;
+    }
+    .btn-danger{ background:transparent;color:var(--danger);border:1px solid rgba(255,0,0,0.08);padding:8px 10px;border-radius:8px; }
 
     /* List */
     .list{ display:flex; flex-direction:column; gap:12px; }
@@ -183,7 +177,13 @@
     .actions-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .edit-input{ width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:var(--text); height: var(--input-height); box-sizing: border-box; }
 
-    /* Responsive */
+    /* EDIT layout: desktop side-by-side, mobile stacked */
+    .edit-row { display:flex; gap:12px; align-items:flex-start; width:100%; }
+    .edit-left { flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:8px; }
+    .edit-right { flex:0 0 140px; display:flex; flex-direction:column; gap:8px; align-items:flex-end; min-width:0; }
+    .edit-right .actions-inline { justify-content:flex-end; }
+
+    /* small-screen behavior: stack inputs then actions */
     @media (max-width:760px){
       body{padding:12px}
       .container{grid-template-columns:1fr; gap:12px}
@@ -193,10 +193,23 @@
       .card{padding:12px}
       .item{padding:10px}
       .date{font-size:12px}
+      .tips{font-size:12px;padding:10px}
       .row{flex-direction:column}
       .actions{flex-direction:row;flex-wrap:wrap}
       .actions button{flex:1 1 auto; min-width:0}
+
+      /* CRITICAL: stack edit layout vertically on small screens so actions sit below inputs */
+      .edit-row { flex-direction:column; gap:10px; }
+      .edit-right { width:100%; align-items:flex-start; order:2; }
+      .edit-right .actions-inline { justify-content:flex-start; gap:8px; flex-wrap:wrap; }
+      .edit-right .actions-inline button { flex:1 1 auto; min-width:0; }
+      .edit-left { order:1; }
+      .edit-left .edit-input { width:100%; }
     }
+
+    /* small visual tweak: display area layout */
+    .display-left { display:flex; flex-direction:column; gap:6px; min-width:0; flex:1; }
+    .display-right { display:flex; flex-direction:column; gap:6px; align-items:flex-end; min-width:120px; }
 
     /* Accessibility: focus outline for keyboard users */
     .search:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible {
@@ -210,7 +223,7 @@
     <header>
       <div>
         <h1>Overtime Scheduler</h1>
-        <p class="lead">Improved search contrast for readability</p>
+        <p class="lead">Manage entries — add, edit, save, cancel, delete (responsive)</p>
       </div>
       <div class="controls">
         <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" />
@@ -228,7 +241,7 @@
       <div id="empty" class="meta" style="display:none">No entries yet.</div>
 
       <div class="tips" id="tips" style="margin-top:12px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);color:var(--text-muted);font-size:13px;line-height:1.35;">
-        Tips: Search box now has higher contrast and a clearer placeholder for both dark and light themes.
+        Tips: Use Edit to modify inline. On phones inputs stack and actions move below them.
       </div>
     </section>
 
@@ -268,7 +281,7 @@
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // DOM
+    // DOM refs
     const rowsEl = document.getElementById('rows');
     const statusEl = document.getElementById('status');
     const form = document.getElementById('addForm');
@@ -298,6 +311,7 @@
     // State
     let dataCache = [];
 
+    // Helpers
     function formatDate(d){
       if(!d) return '—';
       const dt = new Date(d + 'T00:00:00');
@@ -305,24 +319,29 @@
     }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+    // Render list (display mode)
     function renderList(items){
       rowsEl.innerHTML = '';
       if(!items.length){ emptyEl.style.display = 'block'; return; }
       emptyEl.style.display = 'none';
+
       items.forEach(row => {
         const wrapper = document.createElement('div');
         wrapper.className = 'item';
         wrapper.dataset.id = row.id;
+
         wrapper.innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%">
-            <div style="flex:1;min-width:0">
+            <div class="display-left">
               <div class="name" data-field="name">${escapeHtml(row.name)}</div>
               <div class="meta" data-field="notes">${escapeHtml(row.notes || '')}</div>
               <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
             </div>
-            <div style="min-width:120px;display:flex;justify-content:flex-end;gap:8px">
-              <button class="btn-ghost" data-action="edit">Edit</button>
-              <button class="btn-ghost" data-action="delete">Delete</button>
+            <div class="display-right">
+              <div class="actions-inline" aria-hidden="false">
+                <button class="btn-ghost" data-action="edit">Edit</button>
+                <button class="btn-ghost" data-action="delete">Delete</button>
+              </div>
             </div>
           </div>
         `;
@@ -330,6 +349,7 @@
       });
     }
 
+    // Load rows from Supabase
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -348,6 +368,7 @@
       }
     }
 
+    // Add new row
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = form.name.value.trim();
@@ -378,7 +399,120 @@
 
     resetBtn.addEventListener('click', () => form.reset());
 
-    // Simple client-side search (filters cached rows)
+    // Delegated handlers for Edit / Save / Cancel / Delete
+    rowsEl.addEventListener('click', async (e) => {
+      const action = e.target?.dataset?.action;
+      if (!action) return;
+
+      const item = e.target.closest('.item');
+      const id = item?.dataset?.id;
+      if (!id) return;
+
+      if (action === 'delete') {
+        const ok = confirm('Delete this entry? This cannot be undone.');
+        if (!ok) return;
+        try {
+          const { error } = await supabase.from('overtime_data').delete().eq('id', id);
+          if (error) throw error;
+          dataCache = dataCache.filter(r => String(r.id) !== String(id));
+          renderList(dataCache);
+        } catch (err) {
+          console.error(err);
+          alert('Delete failed: ' + (err.message || err));
+        }
+        return;
+      }
+
+      if (action === 'edit') { enterEditMode(item, id); return; }
+      if (action === 'save') { await saveEdit(item, id); return; }
+      if (action === 'cancel') { exitEditMode(item, id); return; }
+    });
+
+    // Enter edit mode
+    function enterEditMode(item, id) {
+      const row = dataCache.find(r => String(r.id) === String(id));
+      if (!row) return;
+
+      const editHtml = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;width:100%">
+          <div class="edit-left">
+            <input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" />
+            <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" />
+            <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" />
+          </div>
+          <div class="edit-right">
+            <div class="actions-inline">
+              <button class="btn-ghost" data-action="save">Save</button>
+              <button class="btn-ghost" data-action="cancel">Cancel</button>
+              <button class="btn-danger" data-action="delete">Delete</button>
+            </div>
+          </div>
+        </div>
+      `;
+      item.innerHTML = editHtml;
+      const nameInput = item.querySelector('[data-edit="name"]');
+      if (nameInput) nameInput.focus();
+    }
+
+    // Exit edit mode without saving
+    function exitEditMode(item, id) {
+      const row = dataCache.find(r => String(r.id) === String(id));
+      if (!row) return;
+      item.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%">
+          <div class="display-left">
+            <div class="name" data-field="name">${escapeHtml(row.name)}</div>
+            <div class="meta" data-field="notes">${escapeHtml(row.notes || '')}</div>
+            <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
+          </div>
+          <div class="display-right">
+            <div class="actions-inline" aria-hidden="false">
+              <button class="btn-ghost" data-action="edit">Edit</button>
+              <button class="btn-ghost" data-action="delete">Delete</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Save edit
+    async function saveEdit(item, id) {
+      const nameInput = item.querySelector('[data-edit="name"]');
+      const notesInput = item.querySelector('[data-edit="notes"]');
+      const dateInput = item.querySelector('[data-edit="overtime_date"]');
+
+      const name = nameInput?.value.trim();
+      const notes = notesInput?.value.trim();
+      const overtime_date = dateInput?.value || null;
+
+      if (!name) { alert('Name is required'); nameInput?.focus(); return; }
+
+      const saveBtn = item.querySelector('[data-action="save"]');
+      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+
+      try {
+        const { data, error } = await supabase
+          .from('overtime_data')
+          .update({ name, notes, overtime_date })
+          .eq('id', id)
+          .select();
+
+        if (error) throw error;
+        if (data && data.length) {
+          const updated = data[0];
+          dataCache = dataCache.map(r => (String(r.id) === String(id) ? updated : r));
+        } else {
+          dataCache = dataCache.map(r => (String(r.id) === String(id) ? { ...r, name, notes, overtime_date } : r));
+        }
+        exitEditMode(item, id);
+      } catch (err) {
+        console.error(err);
+        alert('Update failed: ' + (err.message || err));
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
+      }
+    }
+
+    // Search filter (client-side)
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) return renderList(dataCache);
@@ -390,7 +524,6 @@
       renderList(filtered);
     });
 
-    // Delegated actions (edit/delete/save/cancel) omitted here for brevity — keep your existing handlers
     // Initial load
     window.addEventListener('DOMContentLoaded', loadRows);
   </script>
