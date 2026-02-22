@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Polished Mobile (iOS-safe date fallback)</title>
-  <meta name="description" content="Mobile-first overtime scheduler with robust iOS-safe date handling (text input + native picker fallback), roomy spacing, locked-by-default." />
+  <title>Overtime Scheduler — Fixes for Overlap</title>
+  <meta name="description" content="Mobile-first overtime scheduler with fixes for iOS date overlap and form/button collisions." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -43,12 +43,17 @@
 
     /* Entries list */
     .list{display:flex;flex-direction:column;gap:12px}
-    .item{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:12px;background:var(--glass);border:1px solid rgba(255,255,255,0.04)}
+    .item{
+      display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:12px;background:var(--glass);
+      border:1px solid rgba(255,255,255,0.04);
+      min-width:0; /* allow children to shrink */
+      overflow:visible; /* allow date indicator to sit visually without clipping */
+    }
     .item-top{display:flex;gap:10px;align-items:center;justify-content:space-between}
-    .item-left{flex:1;display:flex;flex-direction:column;gap:8px}
-    .name{font-weight:600;font-size:0.98rem}
-    .notes{color:var(--muted);font-size:.88rem}
-    .date-pill{min-width:96px;text-align:center;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:var(--text)}
+    .item-left{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+    .name{font-weight:600;font-size:0.98rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .notes{color:var(--muted);font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .date-pill{min-width:96px;text-align:center;padding:8px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:var(--text);box-sizing:border-box}
     .item-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 
     /* Buttons */
@@ -60,44 +65,39 @@
     /* Add form */
     #formCard{display:flex;flex-direction:column;gap:12px}
     #formCard label{font-size:.9rem;color:var(--muted);margin:0 0 6px 0;text-align:center;display:block}
-    .field{display:flex;flex-direction:column;gap:6px}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:0}
     input[type="text"], textarea{
-      width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);text-align:center;box-sizing:border-box;
+      width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);text-align:center;box-sizing:border-box;min-width:0;
     }
 
-    /* We replace visible date input with text + calendar button to avoid native overlap */
+    /* Date control: visible text + calendar button (avoids native chrome overlap) */
     .date-control{position:relative;display:flex;align-items:center;gap:8px}
-    .date-text{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);text-align:center;box-sizing:border-box}
+    .date-text{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);text-align:center;box-sizing:border-box;min-width:0}
     .date-btn{width:44px;height:44px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center}
 
-    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .form-actions{display:flex;gap:10px;flex-direction:column}
+    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
+    .form-actions{display:flex;gap:10px;flex-direction:column;margin-top:8px;z-index:1}
     .form-actions .btn{width:100%}
 
     /* Hidden native date input used only to trigger native picker when available */
     .native-date{position:absolute;left:-9999px;top:-9999px;opacity:0;height:0;width:0;border:0;padding:0;margin:0}
 
-    /* Inline edit styles */
+    /* Inline edit styles (stacked, full width) */
     .editing .edit-input{display:block}
-    .edit-input{display:none;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%;box-sizing:border-box}
+    .edit-input{display:none;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%;box-sizing:border-box;min-width:0}
 
-    /* Empty state */
-    .empty{padding:18px;border-radius:10px;background:rgba(255,255,255,0.01);text-align:center;color:var(--muted)}
+    /* When editing, ensure inputs are stacked and won't overflow */
+    .item.editing { display:flex; flex-direction:column; gap:10px; }
+    .item.editing .edit-input { width:100%; max-width:100%; }
 
-    /* Modal */
-    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;padding:20px;z-index:9999}
-    .modal{background:var(--card);padding:16px;border-radius:12px;max-width:420px;width:100%;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06)}
+    /* Defensive: ensure children can shrink on small screens */
+    .item, .field, .add-row, .date-control, .date-text { min-width:0; -webkit-flex-shrink:1; flex-shrink:1; }
 
-    /* Disabled visual */
-    .lock-guard[disabled]{opacity:0.45;pointer-events:none}
-
-    /* Defensive shrinkability for grid parents */
-    .add-row, .field, .item { min-width:0; -webkit-flex-shrink:1; flex-shrink:1; }
-
-    /* Responsive tweaks */
+    /* Small-screen tweaks */
     @media (max-width:340px){
       .add-row{grid-template-columns:1fr}
       .app{width:320px}
+      .date-text{padding-right:12px}
     }
   </style>
 </head>
@@ -146,12 +146,10 @@
           <div class="add-row">
             <div class="field">
               <label for="overtime_date_text">Date</label>
-              <!-- Visible text input + calendar button -->
               <div class="date-control">
                 <input id="overtime_date_text" name="overtime_date_text" class="date-text lock-guard" type="text" placeholder="YYYY-MM-DD" aria-label="Overtime date" readonly />
                 <button type="button" id="datePickerBtn" class="date-btn" aria-label="Open date picker">📅</button>
               </div>
-              <!-- Hidden native date input used only to trigger native picker when available -->
               <input id="overtime_date_native" class="native-date" type="date" />
             </div>
 
@@ -176,7 +174,7 @@
   </div>
 
   <!-- Unlock modal -->
-  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" style="display:none">
     <div class="modal" role="document" aria-labelledby="modalTitle">
       <h3 id="modalTitle" style="margin:0 0 8px 0">Unlock Actions</h3>
       <p style="margin:0 0 10px;color:var(--muted)">Enter password to enable Add / Edit / Delete</p>
@@ -212,7 +210,6 @@
     const pwCancel = document.getElementById('pwCancel');
     const pwError = document.getElementById('pwError');
 
-    // Date controls
     const dateText = document.getElementById('overtime_date_text');
     const dateNative = document.getElementById('overtime_date_native');
     const dateBtn = document.getElementById('datePickerBtn');
@@ -224,20 +221,11 @@
     function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
     function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
     function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
-    function isoDateFromText(s){ // expects YYYY-MM-DD
-      if(!s) return null;
-      const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-      return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
-    }
+    function isoDateFromText(s){ if(!s) return null; const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[1]}-${m[2]}-${m[3]}` : null; }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Update lock-guarded elements
     function updateGuardedControls(){
-      const guarded = document.querySelectorAll('.lock-guard');
-      guarded.forEach(el => {
-        if (unlocked) el.removeAttribute('disabled');
-        else el.setAttribute('disabled','true');
-      });
+      document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
       lockLabel.textContent = unlocked ? 'Unlocked' : 'Locked';
       openUnlock.textContent = unlocked ? 'Lock' : 'Unlock';
@@ -249,7 +237,6 @@
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
-    // Modal controls
     function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
     function closeModal(){ modalBackdrop.style.display = 'none'; modalBackdrop.setAttribute('aria-hidden','true'); pwError.style.display='none'; }
 
@@ -274,34 +261,16 @@
       }
     }
 
-    // Date picker strategy:
-    // Visible input is text (dateText). When user taps calendar button or the text input,
-    // we open a hidden native <input type="date"> (dateNative) to trigger the native picker.
-    // When native picker returns a value, copy it to the visible text input in YYYY-MM-DD.
-    // This avoids layout issues caused by native date control chrome on iOS.
+    // Native date picker trigger (visible text + hidden native input)
     function openNativeDatePicker(initialValue){
       if (initialValue && /^\d{4}-\d{2}-\d{2}$/.test(initialValue)) dateNative.value = initialValue;
       else dateNative.value = '';
-      if (typeof dateNative.showPicker === 'function') {
-        dateNative.showPicker();
-      } else {
-        dateNative.focus();
-        try { dateNative.click(); } catch(e){}
-      }
+      if (typeof dateNative.showPicker === 'function') dateNative.showPicker();
+      else { dateNative.focus(); try { dateNative.click(); } catch(e){} }
     }
-
-    dateNative.addEventListener('change', () => {
-      const v = dateNative.value;
-      if (v) dateText.value = v;
-      else dateText.value = '';
-    });
-
-    dateBtn.addEventListener('click', () => {
-      openNativeDatePicker(isoDateFromText(dateText.value));
-    });
-    dateText.addEventListener('click', () => {
-      openNativeDatePicker(isoDateFromText(dateText.value));
-    });
+    dateNative.addEventListener('change', () => { const v = dateNative.value; dateText.value = v || ''; });
+    dateBtn.addEventListener('click', () => openNativeDatePicker(isoDateFromText(dateText.value)));
+    dateText.addEventListener('click', () => openNativeDatePicker(isoDateFromText(dateText.value)));
 
     // Render list
     function createRowElement(row){
@@ -336,7 +305,7 @@
       statusEl.textContent = `Loaded ${items.length} entries`;
     }
 
-    // Load rows (Supabase)
+    // Load rows
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -376,7 +345,7 @@
 
     resetBtn.addEventListener('click', () => { form.reset(); dateText.value = ''; });
 
-    // Row actions (edit/delete/save/cancel)
+    // Row actions
     rowsEl.addEventListener('click', async (ev) => {
       const action = ev.target?.dataset?.action;
       if (!action) return;
@@ -401,14 +370,16 @@
 
       if (action === 'edit') {
         if (!unlocked) { alert('Actions are locked. Unlock to edit.'); return; }
-        // Replace item content with inline edit form
         const row = dataCache.find(r => String(r.id) === String(id));
         if (!row) return;
         item.classList.add('editing');
+        // Use stacked inputs (text + native date trigger) to avoid overlap on iOS
         item.innerHTML = `
           <div style="display:flex;flex-direction:column;gap:10px">
             <input class="edit-input" data-edit="name" type="text" value="${escapeHtml(row.name)}" />
-            <div class="date-wrap"><input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" /></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" style="flex:1;max-width:100%;box-sizing:border-box" />
+            </div>
             <input class="edit-input" data-edit="notes" type="text" value="${escapeHtml(row.notes || '')}" />
             <div style="display:flex;gap:8px">
               <button class="btn ghost" data-action="save">Save</button>
@@ -463,7 +434,7 @@
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
-    // On load: force locked on every page load
+    // Init
     window.addEventListener('DOMContentLoaded', async () => {
       setUnlockedState(false, true);
       await loadRows();
