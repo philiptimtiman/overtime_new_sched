@@ -9,7 +9,6 @@
     :root{
       --bg:#0f1724;
       --card:#0b1220;
-      --card-contrast:#0e1622;
       --text:#e6eef8;
       --muted:#9fb0c6;
       --accent:#60a5fa;
@@ -47,7 +46,7 @@
       min-height:84px;
     }
 
-    /* Decorative background logo in top-left corner of the header card */
+    /* watermark background (uses /assets/logo.jpeg) */
     .header-card::before{
       content: "";
       position: absolute;
@@ -55,7 +54,7 @@
       left: 12px;
       width: 84px;
       height: 84px;
-      background-image: url("assets/logo.jpeg");
+      background-image: url("/assets/logo.jpeg");
       background-repeat: no-repeat;
       background-position: center;
       background-size: cover;
@@ -64,6 +63,20 @@
       z-index: 0;
       border-radius: 10px;
       filter: blur(0.2px);
+    }
+
+    /* Inline fallback image (absolute positioned) */
+    .header-logo {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      width: 84px;
+      height: 84px;
+      object-fit: cover;
+      border-radius: 10px;
+      z-index: 1; /* sits above ::before watermark */
+      pointer-events: none;
+      display: block;
     }
 
     /* Title block sits above the decorative background */
@@ -130,6 +143,7 @@
       .container { grid-template-columns:1fr; gap:12px; padding:12px }
       .header-card { flex-direction:column; align-items:stretch; gap:12px; padding:14px }
       .header-card::before { top:10px; left:10px; width:64px; height:64px; opacity:0.12 }
+      .header-logo { top:10px; left:10px; width:64px; height:64px }
       .controls { width:100%; justify-content:space-between; gap:8px; flex-wrap:wrap }
       .controls .search { flex:1 1 auto; min-width:0 }
       .edit-row { grid-template-columns:1fr }
@@ -146,11 +160,12 @@
     <!-- Header card: logo used as decorative background in top-left corner -->
     <header class="header-card" role="banner" aria-label="Application header">
       <div class="title-block" aria-hidden="true">
-        <!-- Title text kept minimal and visually aligned; you asked to remove the BoxTechHub wordmark,
-             so this block contains only the app title and subtitle (can be hidden if you prefer). -->
         <h1>Overtime Scheduler</h1>
         <p class="lead">Always locked on load — search stays available while locked</p>
       </div>
+
+      <!-- Inline fallback image (absolute positioned). Uses absolute path; onerror hides it if missing. -->
+      <img class="header-logo" src="/assets/logo.jpeg" alt="BoxTechHub logo" onerror="this.style.display='none'" />
 
       <div class="controls" role="group" aria-label="Search and lock controls">
         <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" autocomplete="off" />
