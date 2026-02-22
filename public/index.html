@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Live Clock Centered (Header then p1 then clock)</title>
-  <meta name="description" content="Overtime Scheduler with centered live clock and header order adjusted: header, p1, clock." />
+  <title>Overtime Scheduler — Live Clock Centered (Header centered)</title>
+  <meta name="description" content="Overtime Scheduler with centered header title and centered live clock (yyyymmdd hh:mm:ss)." />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -38,7 +38,8 @@
 
     /* Header: stacked order (title, p1, clock, controls, theme) */
     .header.card{display:flex;flex-direction:column;gap:8px;position:relative;padding-top:12px}
-    .brand{display:flex;flex-direction:column;align-items:flex-start}
+    /* Center the brand/title and p1 */
+    .brand{display:flex;flex-direction:column;align-items:center;text-align:center}
     .brand h1{margin:0;font-size:1rem}
     .brand p{margin:0;color:var(--muted);font-size:.85rem}
 
@@ -181,15 +182,13 @@
   <div class="canvas">
     <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler">
       <header class="card header" aria-labelledby="appTitle">
-        <!-- Header title (Hearder muna) -->
+        <!-- Header title centered -->
         <div class="brand">
           <h1 id="appTitle" style="margin:0">Overtime Scheduler</h1>
+          <p class="meta" style="margin-top:6px">Locked by default — unlock to add or edit</p>
         </div>
 
-        <!-- p1 (bago yong p1) -->
-        <p class="meta" style="margin:0">Locked by default — unlock to add or edit</p>
-
-        <!-- Live clock (sunod yong orasan) -->
+        <!-- Live clock centered under the header/p1 -->
         <div class="live-row" aria-hidden="false">
           <div id="liveClock" class="live-clock" role="status" aria-live="polite">—</div>
         </div>
