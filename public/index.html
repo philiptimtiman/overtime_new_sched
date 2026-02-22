@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Fix Add Form Overlap</title>
-  <meta name="description" content="Overtime scheduler — fixed Add Overtime form overlap and row edit layout." />
+  <title>Overtime Scheduler — Add Form Fix</title>
+  <meta name="description" content="Overtime scheduler — fixed Add Overtime date/notes overlap on iPhone and responsive rows." />
   <style>
     :root{
       --bg:#0f1724;
@@ -57,7 +57,7 @@
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger);padding:8px 10px;border-radius:8px}
 
     /* Cards and list */
-    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04)}
+    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
     .list{display:flex;flex-direction:column;gap:12px}
 
     /* Rows layout */
@@ -139,12 +139,13 @@
       box-sizing:border-box;
       text-align:center;
       min-width:0;
+      display:block;
     }
 
     /* Add-row: explicit grid, prevent overlap by forcing min-width:0 and box-sizing */
     .add-row {
       display:grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0,1fr) minmax(0,1fr);
       gap:8px;
       align-items:start;
       min-width:0;
@@ -153,35 +154,31 @@
     .add-row > div { min-width:0; display:flex; flex-direction:column; gap:6px; }
     .add-row label { font-size:13px; color:var(--muted); margin:0 0 4px 0; text-align:center; }
 
-    /* Specific fix: ensure date input doesn't overflow its grid cell in all browsers */
+    /* Specific fix: ensure date input doesn't overflow its grid cell in all browsers (iOS Safari) */
     .add-row input[type="date"] {
       max-width:100%;
       width:100%;
       min-width:0;
       box-sizing:border-box;
+      -webkit-appearance: none;
+      appearance: none;
+      background-clip: padding-box;
+    }
+
+    /* iOS: keep calendar indicator visible but avoid layout shift */
+    .add-row input[type="date"]::-webkit-calendar-picker-indicator {
+      position: relative;
+      right: 0;
+      opacity: 0.9;
+      cursor: pointer;
     }
 
     /* Prevent shrinking/overflow */
     .item, .field, .controls, .actions, #formCard { min-width:0 }
     .field > * { min-width:0; overflow-wrap:break-word }
 
-    /* Footer */
-    footer.site-footer { grid-column:1/-1; margin-top:12px; text-align:center; color:var(--muted); font-size:13px }
-    footer.site-footer .brand { font-weight:700; color:var(--text); margin-bottom:6px; display:block }
-    footer.site-footer .legal { color:var(--muted); font-size:12px }
-
-    /* Modal */
-    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:9999; padding:20px }
-    .modal { background:var(--card); padding:18px; border-radius:12px; min-width:260px; max-width:520px; box-shadow:var(--shadow); border:1px solid rgba(255,255,255,0.06); z-index:10000 }
-    .locked .modal-backdrop, .locked .modal-backdrop *, .locked .modal, .locked .modal * { pointer-events:auto !important; opacity:1 !important }
-
-    /* Locked visuals */
-    .locked .btn, .locked .btn.ghost, .locked input, .locked button { opacity:0.45; pointer-events:none }
-    .locked #lockToggle { opacity:1; pointer-events:auto }
-    .locked .search, .locked .search * { pointer-events:auto !important; opacity:1 !important }
-
     /* Responsive: stack fields and move actions below on small screens.
-       Important: inputs remain hidden unless .editing is present to avoid duplicate visible inputs/values.
+       Inputs remain hidden unless .editing is present to avoid duplicate visible inputs/values.
     */
     @media (max-width:760px){
       :root { --container-pad:12px; }
@@ -256,9 +253,9 @@
       <div class="meta" style="margin-top:12px">Tip: Unlock to enable Add/Edit/Delete.</div>
     </section>
 
-    <aside class="card" id="formCard">
-      <strong style="display:block;margin-bottom:8px">Add Overtime</strong>
-      <form id="addForm" autocomplete="off">
+    <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle">
+      <strong id="addOvertimeTitle" style="display:block;margin-bottom:8px">Add Overtime</strong>
+      <form id="addForm" autocomplete="off" novalidate>
         <div style="display:flex;flex-direction:column;gap:6px">
           <label for="name" style="font-size:13px;color:var(--muted);margin:0;text-align:center">Name</label>
           <input id="name" name="name" type="text" placeholder="Employee name" required autocomplete="name" />
