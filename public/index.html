@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Search Always Available</title>
-  <meta name="description" content="Overtime scheduler with mobile fixes and search available while locked." />
+  <title>Overtime Scheduler — Always Locked on Load</title>
+  <meta name="description" content="Overtime scheduler that always starts locked on page load; mobile-friendly and search stays available while locked." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -149,7 +149,7 @@
     <header>
       <div class="title-block">
         <h1>Overtime Scheduler</h1>
-        <p class="lead">Responsive edit layout — search stays available while locked</p>
+        <p class="lead">Always locked on load — search stays available while locked</p>
       </div>
 
       <div class="controls" role="group" aria-label="Search and lock controls">
@@ -270,7 +270,6 @@
       if (searchEl) {
         searchEl.disabled = false;
         searchEl.setAttribute('aria-disabled', 'false');
-        // keep focusable on mobile/keyboard
         searchEl.tabIndex = 0;
       }
     }
@@ -461,6 +460,7 @@
           pwError.textContent = `Server: ${msg} (status ${res.status})`;
           return;
         }
+        // After successful unlock request, check unlocked endpoint and set state
         const check = await fetch('/api/unlocked');
         const checkJson = check.ok ? await check.json().catch(()=>null) : null;
         if (checkJson && checkJson.unlocked) { setLockedState(false); closeModal(); return; }
@@ -477,14 +477,6 @@
     });
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
-
-    async function checkUnlockedOnLoad() {
-      try {
-        const r = await fetch('/api/unlocked');
-        if (r.ok) { const j = await r.json(); setLockedState(!j.unlocked); }
-        else setLockedState(localStorage.getItem('overtime_locked') === 'true');
-      } catch (e) { setLockedState(localStorage.getItem('overtime_locked') === 'true'); }
-    }
 
     // Keep search usable even if some other code tries to disable it
     if (searchEl) {
@@ -504,8 +496,12 @@
       renderList(filtered);
     });
 
+    // INIT: always start locked on load/refresh
     window.addEventListener('DOMContentLoaded', async () => {
-      await checkUnlockedOnLoad();
+      // Force locked state on every load
+      setLockedState(true);
+
+      // Load rows after locking UI
       await loadRows();
     });
   </script>
