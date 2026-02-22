@@ -31,11 +31,14 @@
 
     /* Header */
     .header{display:flex;flex-direction:column;gap:10px}
-    .brand{display:flex;justify-content:space-between;align-items:center;gap:8px}
-    .brand h1{font-size:1.05rem;margin:0}
-    .brand p{margin:0;color:var(--muted);font-size:.9rem}
+    .brand{display:flex;flex-direction:column;align-items:center;gap:6px} /* center title & subtitle */
+    .brand h1{font-size:1.05rem;margin:0;text-align:center}
+    .brand p{margin:0;color:var(--muted);font-size:.9rem;text-align:center}
     .controls{display:flex;gap:10px;align-items:center}
     .search{flex:1;border-radius:10px;padding:10px 12px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);min-width:0}
+
+    /* Hide the textual lock label per request (keep dot only) */
+    .lock-label-hidden { display: none !important; }
 
     /* Status / small text */
     .meta{font-size:.88rem;color:var(--muted);text-align:center}
@@ -116,18 +119,17 @@
     <div class="app" role="application" aria-label="Overtime Scheduler — Mobile">
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
-          <div>
-            <h1 id="appTitle">Overtime Scheduler</h1>
-            <p class="meta">Locked by default — unlock to add or edit</p>
-          </div>
-          <div style="display:flex;gap:8px;align-items:center">
-            <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
-            <div id="lockLabel" class="meta" style="font-size:.9rem">Locked</div>
-          </div>
+          <h1 id="appTitle">Overtime Scheduler</h1>
+          <p class="meta">Locked by default — unlock to add or edit</p>
         </div>
 
-        <div class="controls" role="search">
+        <div class="controls" role="search" style="margin-top:6px;display:flex;gap:10px;align-items:center">
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search entries" />
+          <!-- keep only the dot indicator visible; textual label removed per request -->
+          <div style="display:flex;align-items:center;gap:8px">
+            <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
+            <div class="lock-label-hidden" id="lockLabel">Locked</div>
+          </div>
           <button id="openUnlock" class="btn ghost" title="Unlock actions">Unlock</button>
         </div>
       </header>
@@ -212,7 +214,6 @@
     const searchInput = document.getElementById('search');
     const openUnlock = document.getElementById('openUnlock');
     const lockIndicator = document.getElementById('lockIndicator');
-    const lockLabel = document.getElementById('lockLabel');
 
     const modalBackdrop = document.getElementById('modalBackdrop');
     const pwInput = document.getElementById('pwInput');
@@ -237,7 +238,6 @@
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
-      lockLabel.textContent = unlocked ? 'Unlocked' : 'Locked';
       openUnlock.textContent = unlocked ? 'Lock' : 'Unlock';
     }
 
