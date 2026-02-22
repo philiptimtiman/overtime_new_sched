@@ -3,22 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Rows Aligned to Form</title>
-  <meta name="description" content="Overtime scheduler — table rows styled to match Add Overtime form layout; responsive and non-overlapping." />
+  <title>Overtime Scheduler — Fixed Edit Layout</title>
+  <meta name="description" content="Overtime scheduler with corrected row positioning during edit actions (no overlapping Name/Date/Notes)." />
   <style>
     :root{
-      --bg:#0f1724;
-      --card:#0b1220;
-      --text:#e6eef8;
-      --muted:#9fb0c6;
-      --accent:#60a5fa;
-      --danger:#ef4444;
-      --glass: rgba(255,255,255,0.03);
-      --shadow: 0 8px 30px rgba(2,6,23,0.6);
-      --input-h:44px;
-      --gap:12px;
-      --action-col:160px;
-      --radius:12px;
+      --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
+      --accent:#60a5fa; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
+      --shadow: 0 8px 30px rgba(2,6,23,0.6); --input-h:44px; --gap:12px;
+      --action-col:140px; --date-col:160px; --radius:12px;
     }
 
     /* Reset & base */
@@ -30,19 +22,7 @@
     .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
 
     /* Header card */
-    .header-card {
-      grid-column: 1 / -1;
-      border-radius: var(--radius);
-      padding: 18px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border: 1px solid rgba(255,255,255,0.04);
-      box-shadow: var(--shadow);
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      min-height:84px;
-    }
+    .header-card{grid-column:1/-1;border-radius:var(--radius);padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:84px}
     .title-block{display:flex;flex-direction:column;gap:4px}
     h1{font-size:20px;margin:0}
     p.lead{margin:0;color:var(--muted);font-size:13px}
@@ -59,9 +39,9 @@
     .list{display:flex;flex-direction:column;gap:12px}
 
     /*
-      ROWS: match Add Overtime form layout.
-      Desktop: three columns (Name | Date | Notes) + action column.
-      Mobile: stack fields vertically and place actions below.
+      ROWS: desktop layout uses 4 columns:
+      [Name] [Date] [Notes] [Actions]
+      Each column is a grid cell so inputs and values align exactly like the Add form.
     */
     .item {
       padding:12px;
@@ -69,45 +49,69 @@
       background:var(--glass);
       border:1px solid rgba(255,255,255,0.04);
       display:grid;
-      grid-template-columns: 1fr 220px 1fr var(--action-col);
+      grid-template-columns: 1fr var(--date-col) 1fr var(--action-col);
       gap:12px;
       align-items:center;
       min-width:0;
     }
 
-    /* Column labels (visually hidden but useful for screen readers if needed) */
-    .col-label { display:none; font-size:12px; color:var(--muted); }
-
-    /* Field blocks styled like Add Overtime form */
-    .field-block { display:flex; flex-direction:column; gap:6px; min-width:0; }
-    .field-block label { font-size:13px; color:var(--muted); margin:0; }
-    .field-block .value, .field-block input {
-      padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04);
-      background:transparent; color:var(--text); height:var(--input-h); width:100%; font-size:16px; box-sizing:border-box;
+    /* Field block (value + hidden input) */
+    .field {
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:0;
     }
-    .field-block .value { display:block; line-height:1.2; min-height:var(--input-h); display:flex; align-items:center; }
+    .field label { font-size:12px; color:var(--muted); display:none; } /* hidden visual label; kept for semantics */
+    .value {
+      padding:10px 12px;
+      border-radius:10px;
+      min-height:var(--input-h);
+      display:flex;
+      align-items:center;
+      color:var(--text);
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.02);
+      box-sizing:border-box;
+      word-break:break-word;
+    }
+    .field input {
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.04);
+      background:transparent;
+      color:var(--text);
+      height:var(--input-h);
+      width:100%;
+      box-sizing:border-box;
+      display:none; /* inputs hidden until editing */
+      min-width:0;
+    }
 
-    /* Action column */
-    .row-actions { display:flex; flex-direction:column; gap:8px; align-items:flex-end; justify-self:end; min-width:0; }
-    .row-actions .btn { padding:8px 10px; font-size:14px; white-space:nowrap; }
+    /* Actions column */
+    .actions {
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:flex-end;
+      justify-self:end;
+      min-width:0;
+    }
+    .actions .btn { padding:8px 10px; font-size:14px; white-space:nowrap; }
 
-    /* Editing state: inputs replace values and actions become Save/Cancel/Delete */
-    .item.editing { grid-template-columns: 1fr 220px 1fr var(--action-col); }
-    .item.editing .field-block input { display:block; }
-    .item.editing .field-block .value { display:none; }
+    /* Editing state: reveal inputs and show Save/Cancel/Delete */
+    .item.editing .value { display:none; }
+    .item.editing .field input { display:block; }
 
-    /* Non-edit state: hide inputs if present */
-    .item:not(.editing) .field-block input { display:none; }
-
-    /* Make Add Overtime form match row field styles (unchanged layout) */
+    /* Keep Add Overtime form styles consistent */
     #formCard input[type="text"], #formCard input[type="date"], #formCard textarea {
       padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04);
       background:transparent; color:var(--text); height:var(--input-h); width:100%; font-size:16px; box-sizing:border-box;
     }
 
     /* Prevent shrinking/overflow */
-    .item, .field-block, .controls, .row-actions, #formCard { min-width:0 }
-    .field-block > * { min-width:0; overflow-wrap:break-word }
+    .item, .field, .controls, .actions, #formCard { min-width:0 }
+    .field > * { min-width:0; overflow-wrap:break-word }
 
     /* Footer */
     footer.site-footer { grid-column:1/-1; margin-top:12px; text-align:center; color:var(--muted); font-size:13px }
@@ -140,29 +144,25 @@
         align-items:stretch;
       }
 
-      .item .field-block { width:100%; }
-      .item .row-actions {
+      .field label { display:block; } /* show labels on mobile for clarity */
+      .value { display:block; }
+      .field input { display:block; }
+
+      .actions {
         flex-direction:row;
         justify-content:flex-end;
         gap:8px;
         width:100%;
       }
 
-      /* When editing on mobile, actions appear below fields inline */
-      .item.editing .row-actions { order: 2; }
-      .item.editing .row-edit-actions { order: 2; }
-
-      /* Ensure inputs fill container */
-      .field-block input, #formCard input[type="text"], #formCard input[type="date"], #formCard textarea {
-        width:100%; max-width:100%; box-sizing:border-box; height:44px; padding:10px 12px;
-      }
-
-      /* Buttons: avoid fixed widths */
-      .btn, .btn.ghost, .btn.secondary, .btn.danger { min-width:0; }
+      /* When editing on mobile, actions appear below fields */
+      .item.editing .actions { order: 2; }
+      .item .field { width:100%; }
+      .field input, .value { width:100%; }
     }
 
-    /* Small polish: ensure action buttons wrap and don't overflow */
-    .row-actions button { white-space:nowrap; }
+    /* Small polish */
+    .actions button { white-space:nowrap; }
   </style>
 </head>
 <body>
@@ -290,40 +290,42 @@
       }
     }
 
+    function createRowElement(row){
+      const wrapper = document.createElement('div');
+      wrapper.className = 'item';
+      wrapper.dataset.id = row.id;
+      wrapper.innerHTML = `
+        <div class="field">
+          <label>Name</label>
+          <div class="value" data-field="name">${escapeHtml(row.name)}</div>
+          <input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" />
+        </div>
+
+        <div class="field">
+          <label>Date</label>
+          <div class="value" data-field="overtime_date">${row.overtime_date ? formatDate(row.overtime_date) : '—'}</div>
+          <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" />
+        </div>
+
+        <div class="field">
+          <label>Notes</label>
+          <div class="value" data-field="notes">${escapeHtml(row.notes || '')}</div>
+          <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" />
+        </div>
+
+        <div class="actions" role="group" aria-label="Row actions">
+          <button class="btn ghost" data-action="edit">Edit</button>
+          <button class="btn ghost" data-action="delete">Delete</button>
+        </div>
+      `;
+      return wrapper;
+    }
+
     function renderList(items){
       rowsEl.innerHTML = '';
       if(!items.length){ emptyEl.style.display = 'block'; return; }
       emptyEl.style.display = 'none';
-      items.forEach(row => {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'item';
-        wrapper.dataset.id = row.id;
-        wrapper.innerHTML = `
-          <div class="field-block">
-            <label class="col-label">Name</label>
-            <div class="value" data-field="name">${escapeHtml(row.name)}</div>
-            <input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" />
-          </div>
-
-          <div class="field-block">
-            <label class="col-label">Date</label>
-            <div class="value" data-field="overtime_date">${row.overtime_date ? formatDate(row.overtime_date) : '—'}</div>
-            <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" />
-          </div>
-
-          <div class="field-block">
-            <label class="col-label">Notes</label>
-            <div class="value" data-field="notes">${escapeHtml(row.notes || '')}</div>
-            <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" />
-          </div>
-
-          <div class="row-actions">
-            <button class="btn ghost" data-action="edit">Edit</button>
-            <button class="btn ghost" data-action="delete">Delete</button>
-          </div>
-        `;
-        rowsEl.appendChild(wrapper);
-      });
+      items.forEach(row => rowsEl.appendChild(createRowElement(row)));
     }
 
     async function loadRows(){
@@ -404,23 +406,27 @@
       }
     });
 
-    function enterEditMode(item, id) {
+    function enterEditMode(item, id){
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
       item.classList.add('editing');
 
-      // Show inputs (they already exist in DOM); reveal action buttons (Save/Cancel/Delete)
-      const nameInput = item.querySelector('[data-edit="name"]');
-      const dateInput = item.querySelector('[data-edit="overtime_date"]');
-      const notesInput = item.querySelector('[data-edit="notes"]');
-
       // Replace actions with Save/Cancel/Delete
-      const actions = item.querySelector('.row-actions');
+      const actions = item.querySelector('.actions');
       actions.innerHTML = `
         <button class="btn ghost" data-action="save">Save</button>
         <button class="btn ghost" data-action="cancel">Cancel</button>
         <button class="btn danger" data-action="delete">Delete</button>
       `;
+
+      // Ensure inputs are visible and populated (they already exist)
+      const nameInput = item.querySelector('[data-edit="name"]');
+      const dateInput = item.querySelector('[data-edit="overtime_date"]');
+      const notesInput = item.querySelector('[data-edit="notes"]');
+
+      if (nameInput) nameInput.value = row.name || '';
+      if (dateInput) dateInput.value = row.overtime_date || '';
+      if (notesInput) notesInput.value = row.notes || '';
 
       // Focus first input and scroll into view on mobile
       if (nameInput) {
@@ -429,24 +435,29 @@
       }
     }
 
-    function exitEditMode(item, id) {
+    function exitEditMode(item, id){
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
       item.classList.remove('editing');
 
-      // Restore displayed values and actions
-      item.querySelector('[data-field="name"]').textContent = row.name || '';
-      item.querySelector('[data-field="notes"]').textContent = row.notes || '';
-      item.querySelector('[data-field="overtime_date"]').textContent = row.overtime_date ? formatDate(row.overtime_date) : '—';
+      // Restore displayed values
+      const nameVal = item.querySelector('[data-field="name"]');
+      const dateVal = item.querySelector('[data-field="overtime_date"]');
+      const notesVal = item.querySelector('[data-field="notes"]');
 
-      const actions = item.querySelector('.row-actions');
+      if (nameVal) nameVal.textContent = row.name || '';
+      if (dateVal) dateVal.textContent = row.overtime_date ? formatDate(row.overtime_date) : '—';
+      if (notesVal) notesVal.textContent = row.notes || '';
+
+      // Restore actions
+      const actions = item.querySelector('.actions');
       actions.innerHTML = `
         <button class="btn ghost" data-action="edit">Edit</button>
         <button class="btn ghost" data-action="delete">Delete</button>
       `;
     }
 
-    async function saveEdit(item, id) {
+    async function saveEdit(item, id){
       const nameInput = item.querySelector('[data-edit="name"]');
       const notesInput = item.querySelector('[data-edit="notes"]');
       const dateInput = item.querySelector('[data-edit="overtime_date"]');
@@ -522,7 +533,6 @@
       renderList(filtered);
     });
 
-    // Always start locked on load
     window.addEventListener('DOMContentLoaded', async () => {
       setLockedState(true);
       await loadRows();
