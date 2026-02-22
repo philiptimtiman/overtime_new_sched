@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Live Clock (yyyymmdd hh:mm:ss)</title>
-  <meta name="description" content="Overtime Scheduler with active live clock showing yyyymmdd hh:mm:ss." />
+  <title>Overtime Scheduler — Live Clock Centered</title>
+  <meta name="description" content="Overtime Scheduler with centered live clock in header (yyyymmdd hh:mm:ss)." />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -36,15 +36,26 @@
       border-radius:var(--radius);padding:12px;box-shadow:0 8px 20px rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.04);
     }
 
-    .header.card{display:flex;flex-direction:column;gap:8px}
-    .brand{display:flex;flex-direction:column;align-items:center}
+    /* Header: make relative so we can absolutely center the live clock */
+    .header.card{display:flex;flex-direction:column;gap:8px;position:relative;padding-top:18px}
+    .brand{display:flex;flex-direction:column;align-items:flex-start}
     .brand h1{margin:0;font-size:1rem}
     .brand p{margin:0;color:var(--muted);font-size:.85rem}
 
     .controls{display:flex;gap:8px;align-items:center}
     .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--text)}
 
-    .live-row{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+    /* Live clock centered in header */
+    .live-row{
+      position:absolute;
+      left:50%;
+      top:12px;
+      transform:translateX(-50%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      pointer-events:none; /* non-interactive */
+    }
     .live-clock{
       font-family:monospace;
       font-size:0.86rem;
@@ -78,7 +89,6 @@
     .name{font-weight:600;font-size:.96rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .notes{color:var(--muted);font-size:.82rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-    /* FIXED date pill: stable sizing, centered text, accessible time element */
     .date-pill{
       display:inline-flex;
       align-items:center;
@@ -108,7 +118,6 @@
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
     .btn.full{width:100%}
 
-    /* Icon button style for lock/unlock (keeps existing .btn/.ghost intact) */
     .icon-btn{
       display:inline-flex;
       align-items:center;
@@ -168,6 +177,8 @@
       .theme-row{flex-wrap:wrap}
       .date-pill{min-width:64px; max-width:96px; font-size:0.85rem}
       .live-clock{min-width:140px;font-size:0.78rem}
+      .header.card{padding-top:28px}
+      .live-row{top:8px}
     }
   </style>
 </head>
@@ -175,16 +186,14 @@
   <div class="canvas">
     <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler">
       <header class="card header" aria-labelledby="appTitle">
-        <div class="brand" style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;width:100%">
-          <div style="display:flex;flex-direction:column;align-items:flex-start">
-            <h1 id="appTitle" style="margin:0">Overtime Scheduler</h1>
-            <p class="meta" style="margin:0">Locked by default — unlock to add or edit</p>
-          </div>
+        <div class="brand" style="display:flex;flex-direction:column;align-items:flex-start">
+          <h1 id="appTitle" style="margin:0">Overtime Scheduler</h1>
+          <p class="meta" style="margin:0">Locked by default — unlock to add or edit</p>
+        </div>
 
-          <!-- Live clock placed at top-right -->
-          <div class="live-row" aria-hidden="false">
-            <div id="liveClock" class="live-clock" role="status" aria-live="polite">—</div>
-          </div>
+        <!-- Live clock centered in header -->
+        <div class="live-row" aria-hidden="false">
+          <div id="liveClock" class="live-clock" role="status" aria-live="polite">—</div>
         </div>
 
         <div class="controls" role="search" style="margin-top:8px;display:flex;gap:8px;align-items:center">
@@ -234,7 +243,6 @@
             <div class="field">
               <label for="overtime_datetime">Date & Time</label>
               <div class="date-control">
-                <!-- Active datetime-local input -->
                 <input id="overtime_datetime" name="overtime_datetime" class="date-text lock-guard" type="datetime-local" aria-label="Overtime date and time" />
                 <button type="button" id="datePickerBtn" class="date-btn lock-guard" aria-label="Open date/time picker">📅</button>
               </div>
@@ -567,7 +575,6 @@
         const row = dataCache.find(r => String(r.id) === String(id));
         if (!row) return;
         item.classList.add('editing');
-        // Use datetime-local for edit
         item.innerHTML = `
           <div style="display:flex;flex-direction:column;gap:8px">
             <input class="edit-input" data-edit="name" type="text" value="${escapeHtml(row.name)}" />
@@ -632,11 +639,9 @@
 
     // Start live clock and app
     window.addEventListener('DOMContentLoaded', async () => {
-      // initialize clock immediately and update every second
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
 
-      // start locked by default
       setUnlockedState(false, true);
       await loadRows();
     });
