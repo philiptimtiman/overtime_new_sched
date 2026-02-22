@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Edit Layout Fixes</title>
-  <meta name="description" content="Overtime scheduler with responsive edit layout — prevents overlap of inputs and action buttons on small screens." />
+  <title>Overtime Scheduler — Edit Layout</title>
+  <meta name="description" content="Overtime scheduler with improved edit layout to avoid overlapping inputs and action buttons on small screens." />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -18,8 +18,10 @@
     html,body{height:100%;margin:0;padding:18px;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased}
     input,button,select,textarea{font-family:inherit;font-size:16px}
 
-    /* Layout */
+    /* Page grid */
     .container{max-width:980px;margin:0 auto;display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start}
+
+    /* Header card */
     .header-card{grid-column:1/-1;border-radius:var(--radius);padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);box-shadow:var(--shadow);display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:84px}
     .title-block{display:flex;flex-direction:column;gap:4px}
     h1{font-size:20px;margin:0}
@@ -32,9 +34,15 @@
     .btn.ghost{background:transparent;border:0;color:var(--muted);padding:8px 10px;border-radius:8px;cursor:pointer}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger);padding:8px 10px;border-radius:8px}
 
+    /* Cards and list */
     .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04)}
     .list{display:flex;flex-direction:column;gap:12px}
-    .item{padding:12px;border-radius:12px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);display:grid;grid-template-columns:1fr var(--action-col);gap:12px;align-items:center;min-width:0;min-height:64px}
+
+    /* Row layout uses grid for consistent alignment */
+    .item{
+      padding:12px;border-radius:12px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);
+      display:grid;grid-template-columns:1fr var(--action-col);gap:12px;align-items:start;min-width:0;min-height:64px;
+    }
     .display-left{display:flex;flex-direction:column;gap:6px;min-width:0}
     .name{font-weight:700;word-break:break-word}
     .meta{color:var(--muted);font-size:13px;word-break:break-word}
@@ -51,14 +59,21 @@
     /* Edit layout (inline editing) */
     .edit-row{display:grid;grid-template-columns:1fr var(--action-col);gap:12px;align-items:start;width:100%;min-width:0}
     .edit-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;min-width:0}
+    .edit-fields > *{min-width:0}
     .edit-fields .field-name{grid-column:1 / -1}
     .edit-fields .field-date{grid-column:1 / 2}
     .edit-fields .field-notes{grid-column:2 / 3}
     .action-col{display:flex;align-items:flex-start;justify-content:flex-end;min-width:0}
-    .actions-inline{display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex-wrap:wrap}
+    .actions-inline{display:flex;flex-direction:column;gap:8px;align-items:stretch;flex-wrap:wrap}
+
+    /* Make action buttons full width in stacked (desktop) mode so they don't overlap inputs */
+    .actions-inline button{display:block;width:100%;box-sizing:border-box}
 
     /* Inputs */
-    input[type="text"], input[type="date"], .edit-input, textarea{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);width:100%;min-width:0;font-size:16px;box-sizing:border-box}
+    input[type="text"], input[type="date"], .edit-input, textarea{
+      padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);
+      background:transparent;color:var(--text);height:var(--input-h);width:100%;min-width:0;font-size:16px;box-sizing:border-box;
+    }
     input[type="date"]{-webkit-appearance:none;appearance:none;padding-right:14px}
 
     /* Prevent shrinking */
@@ -94,10 +109,11 @@
       .row-actions{flex-direction:row;justify-content:flex-end;gap:8px;width:100%;order:2}
       .row-actions .btn{flex:0 1 auto}
 
-      /* Inline edit: stack fields and move actions below */
+      /* Inline edit: stack fields and move actions below; make action buttons inline */
       .edit-row{grid-template-columns:1fr !important;gap:12px !important}
       .action-col{justify-content:flex-start}
       .actions-inline{flex-direction:row;gap:8px;flex-wrap:wrap;justify-content:flex-end;width:100%}
+      .actions-inline button{display:inline-block;width:auto}
 
       /* Add form stacks */
       .add-row{grid-template-columns:1fr !important}
@@ -116,8 +132,8 @@
 </head>
 <body>
   <div class="container" id="app">
-    <header class="header-card">
-      <div class="title-block">
+    <header class="header-card" role="banner" aria-label="Application header">
+      <div class="title-block" aria-hidden="true">
         <h1>Overtime Scheduler</h1>
         <p class="lead">Always locked on load — search stays available while locked</p>
       </div>
@@ -169,7 +185,7 @@
       </form>
     </aside>
 
-    <footer class="site-footer">
+    <footer class="site-footer" role="contentinfo" aria-label="Site copyright and trademark">
       <span class="brand">BoxTechHub™</span>
       <div class="legal">© 2026 BoxTechHub. All rights reserved.</div>
     </footer>
@@ -358,11 +374,9 @@
           </div>
         </div>
       `;
-      // Focus first input and ensure layout recalculation
       const nameInput = item.querySelector('[data-edit="name"]');
       if (nameInput) {
         nameInput.focus();
-        // small timeout to ensure mobile keyboards don't cause layout overlap
         setTimeout(()=> nameInput.scrollIntoView({behavior:'smooth', block:'center'}), 120);
       }
     }
