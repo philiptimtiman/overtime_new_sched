@@ -3,8 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler</title>
+  <title>Overtime Scheduler — BoxTechHub</title>
   <meta name="description" content="Overtime scheduler that always starts locked on page load; mobile-friendly and search stays available while locked." />
+  <!-- Favicon (place your favicon file at assets/favicon.ico) -->
+  <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
   <style>
     :root{
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
@@ -24,6 +26,14 @@
     header > .title-block{display:flex;flex-direction:column;gap:4px}
     h1{font-size:20px;margin:0;line-height:1.05}
     p.lead{margin:0;color:var(--muted);font-size:13px}
+
+    /* Brand/logo */
+    .brand-wrap { display:flex; align-items:center; gap:12px; min-width:0; }
+    .brand-logo { display:inline-flex; align-items:center; gap:10px; text-decoration:none; color:inherit; }
+    .brand-logo img { display:block; height:36px; width:auto; max-width:160px; }
+    .brand-word { display:flex; flex-direction:column; line-height:1; }
+    .brand-name { font-weight:700; color:var(--text); font-size:16px; letter-spacing:0.2px; }
+    .brand-sub { font-size:11px; color:var(--muted); margin-top:2px; }
 
     .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04)}
     .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -92,6 +102,10 @@
       .controls{width:100%;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
       .controls .search{flex:1 1 auto;min-width:0}
 
+      /* Brand: show stacked variant on very small screens */
+      .brand-logo img { height:32px; }
+      .brand-name { font-size:15px; }
+
       /* Add form stacks on mobile to avoid side-by-side overlap */
       .add-row { flex-direction:column; gap:10px; }
       .add-row > div { width:100%; }
@@ -152,9 +166,16 @@
 <body>
   <div class="container" id="app">
     <header>
-      <div class="title-block">
-        <h1>Foreign TE Overtime Schedule</h1>
-        <p class="lead">Please refresh the page. Schedule updates 1~2 days before the actual Date of overtime.</p>
+      <div class="brand-wrap">
+        <!-- Logo image: place your logo file at assets/boxtechhub-logo.svg (or .png). -->
+        <!-- Use a small, accessible img with alt text. -->
+        <a href="#" class="brand-logo" aria-label="BoxTechHub home">
+          <img id="brandLogo" src="assets/boxtechhub-logo.svg" alt="BoxTechHub logo" />
+          <span class="brand-word" aria-hidden="true">
+            <span class="brand-name">BoxTechHub<span style="font-size:11px;vertical-align:super;margin-left:4px">™</span></span>
+            <span class="brand-sub">Overtime Scheduler</span>
+          </span>
+        </a>
       </div>
 
       <div class="controls" role="group" aria-label="Search and lock controls">
@@ -252,6 +273,7 @@
     const pwCancel = document.getElementById('pwCancel');
     const pwError = document.getElementById('pwError');
     const emptyEl = document.getElementById('empty');
+    const brandLogo = document.getElementById('brandLogo');
 
     let dataCache = [];
     let locked = true;
@@ -515,6 +537,16 @@
 
       // Load rows after locking UI
       await loadRows();
+
+      // Optional: if you want to show a placeholder logo when the file is missing,
+      // uncomment the following block and adjust the text or SVG fallback as needed.
+      /*
+      if (!brandLogo.complete || brandLogo.naturalWidth === 0) {
+        brandLogo.style.display = 'none';
+        // You could insert a text fallback here if desired:
+        // document.querySelector('.brand-word .brand-name').textContent = 'BoxTechHub™';
+      }
+      */
     });
   </script>
 </body>
