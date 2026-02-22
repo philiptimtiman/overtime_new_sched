@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Overtime Scheduler — Edit & Delete (Aligned Inputs)</title>
-  <meta name="description" content="Supabase single-file UI with edit, save, cancel, delete per row — inputs aligned" />
+  <title>Overtime Scheduler — Date aligned with Name & Notes</title>
+  <meta name="description" content="Supabase single-file UI with edit/delete and aligned date" />
   <style>
     /* Core variables */
     :root{
@@ -19,7 +19,7 @@
       --glass: rgba(255,255,255,0.03);
       --shadow: 0 8px 30px rgba(2,6,23,0.6);
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", "Segoe UI Mono", monospace;
-      --input-height:44px; /* unified input height for alignment */
+      --input-height:44px;
     }
     [data-theme="light"]{
       --bg:#f6f7fb;
@@ -91,8 +91,9 @@
       color:var(--text);
       transition:box-shadow .12s, border-color .12s;
       min-width:0;
-      height: var(--input-height); /* unified height */
-      line-height: 1.1;
+      height: var(--input-height);
+      line-height:1.1;
+      box-sizing:border-box;
     }
     textarea{min-height:84px;resize:vertical;padding-top:10px;padding-bottom:10px;height:auto}
 
@@ -154,19 +155,18 @@
     .item:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
     .meta{color:var(--text-muted);font-size:13px}
     .name{font-weight:700;color:var(--text)}
-    .date{font-family:var(--mono);font-size:13px;color:var(--accent-2); align-self:center; }
+    .date{font-family:var(--mono);font-size:13px;color:var(--accent-2); margin-top:6px; }
 
     /* More menu / actions */
     .actions-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .edit-input{ width:100%; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:var(--text); height: var(--input-height); box-sizing: border-box; }
 
-    /* Edit layout helpers */
+    /* Edit layout helpers: date moved into left column to align with name/notes */
     .edit-row { display:flex; gap:10px; align-items:flex-start; width:100%; }
     .edit-left { flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:6px; }
-    .edit-right { width:160px; display:flex; flex-direction:column; gap:6px; align-items:flex-end; min-width:0; }
+    .edit-right { width:120px; display:flex; flex-direction:column; gap:6px; align-items:flex-end; min-width:0; }
 
-    /* ensure date input fits on desktop but becomes full width on mobile */
-    .edit-right .edit-input[type="date"] { width:140px; height: var(--input-height); }
+    .edit-right .actions-inline { justify-content:flex-end; }
 
     /* top controls */
     .controls{display:flex;gap:8px;align-items:center}
@@ -211,9 +211,9 @@
       .edit-left .edit-input { width:100%; }
     }
 
-    /* Small visual tweak: make display-date vertically centered with inputs */
-    .display-right { display:flex; flex-direction:column; align-items:flex-end; justify-content:center; gap:6px; min-width:120px; }
-    .display-right .date { margin:0; }
+    /* ensure consistent vertical alignment between display and edit states */
+    .display-left { display:flex; flex-direction:column; gap:6px; min-width:0; flex:1; }
+    .display-right { display:flex; flex-direction:column; gap:6px; align-items:flex-end; min-width:120px; }
   </style>
 </head>
 <body>
@@ -221,7 +221,7 @@
     <header>
       <div>
         <h1>Overtime Scheduler</h1>
-        <p class="lead">View, edit, and delete overtime entries — inputs aligned</p>
+        <p class="lead">Date aligned with Name & Notes — mobile friendly</p>
       </div>
       <div class="controls">
         <input id="search" class="search" placeholder="Search name or notes" />
@@ -240,7 +240,7 @@
       <div id="empty" class="meta" style="display:none">No entries yet.</div>
 
       <div class="tips" id="tips">
-        Tips: Use the More menu to Edit or Delete rows. Edits are saved to Supabase.
+        Tips: Date is now aligned under Name and Notes for consistent layout.
       </div>
     </section>
 
@@ -319,7 +319,7 @@
     }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Render list with inline More actions (Edit/Delete)
+    // Render list with date aligned under name/notes (left column) and actions on right
     function renderList(items){
       rowsEl.innerHTML = '';
       if(!items.length){ emptyEl.style.display = 'block'; return; }
@@ -331,13 +331,13 @@
         wrapper.dataset.id = row.id;
 
         wrapper.innerHTML = `
-          <div style="flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:12px">
-            <div style="min-width:0;flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%">
+            <div class="display-left">
               <div class="name" data-field="name">${escapeHtml(row.name)}</div>
               <div class="meta" data-field="notes">${escapeHtml(row.notes || '')}</div>
+              <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
             </div>
             <div class="display-right">
-              <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
               <div class="actions-inline" aria-hidden="false">
                 <button class="btn-ghost" data-action="edit">Edit</button>
                 <button class="btn-ghost" data-action="delete">Delete</button>
@@ -443,25 +443,23 @@
       }
     });
 
-    // Enter edit mode
+    // Enter edit mode: date moved into left column under notes for alignment
     function enterEditMode(item, id) {
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
 
       const editHtml = `
-        <div style="flex:1;min-width:0">
-          <div class="edit-row">
-            <div class="edit-left">
-              <input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" />
-              <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" />
-            </div>
-            <div class="edit-right">
-              <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" />
-              <div class="actions-inline">
-                <button class="btn-ghost" data-action="save">Save</button>
-                <button class="btn-ghost" data-action="cancel">Cancel</button>
-                <button class="btn-danger" data-action="delete">Delete</button>
-              </div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;width:100%">
+          <div class="edit-left">
+            <input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" />
+            <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" />
+            <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" />
+          </div>
+          <div class="edit-right">
+            <div class="actions-inline">
+              <button class="btn-ghost" data-action="save">Save</button>
+              <button class="btn-ghost" data-action="cancel">Cancel</button>
+              <button class="btn-danger" data-action="delete">Delete</button>
             </div>
           </div>
         </div>
@@ -476,13 +474,13 @@
       const row = dataCache.find(r => String(r.id) === String(id));
       if (!row) return;
       item.innerHTML = `
-        <div style="flex:1;min-width:0;display:flex;justify-content:space-between;align-items:center;gap:12px">
-          <div style="min-width:0;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%">
+          <div class="display-left">
             <div class="name" data-field="name">${escapeHtml(row.name)}</div>
             <div class="meta" data-field="notes">${escapeHtml(row.notes || '')}</div>
+            <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
           </div>
           <div class="display-right">
-            <div class="date" data-field="overtime_date">${formatDate(row.overtime_date)}</div>
             <div class="actions-inline" aria-hidden="false">
               <button class="btn-ghost" data-action="edit">Edit</button>
               <button class="btn-ghost" data-action="delete">Delete</button>
