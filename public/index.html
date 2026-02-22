@@ -3,269 +3,202 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — iOS Date Overlap Fix</title>
-  <meta name="description" content="Single-file overtime scheduler with robust iOS-safe date input (no overlap), centered layout, locked-by-default behavior." />
+  <title>Overtime Scheduler — Mobile First</title>
+  <meta name="description" content="Mobile-first overtime scheduler: fixed mobile layout, inputs disabled when locked, iOS-safe date input, centered." />
   <style>
     :root{
-      --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
-      --accent:#60a5fa; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
-      --shadow: 0 8px 30px rgba(2,6,23,0.6); --input-h:44px; --gap:14px;
-      --right-col:260px; --page-max:980px; --pad:18px; --radius:12px;
+      --bg:#0f1724;
+      --card:#0b1220;
+      --text:#e6eef8;
+      --muted:#9fb0c6;
+      --accent:#60a5fa;
+      --danger:#ef4444;
+      --glass: rgba(255,255,255,0.03);
+      --shadow: 0 8px 30px rgba(2,6,23,0.6);
+      --input-h:44px;
+      --radius:12px;
+      /* Mobile-first fixed sizes */
+      --mobile-width:360px;   /* target mobile width */
+      --gutter:12px;
+      --fs:16px;
     }
 
     /* Reset */
     *,*::before,*::after{box-sizing:border-box}
-    html,body{height:100%;margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased}
-    input,button,select,textarea{font-family:inherit;font-size:16px}
+    html,body{height:100%;margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--fs)}
+    input,button,select,textarea{font-family:inherit;font-size:1rem}
     a{color:inherit}
 
-    /* Page wrapper */
-    .page{
+    /* Page wrapper: force a centered mobile canvas */
+    .mobile-canvas{
       width:100%;
-      max-width:var(--page-max);
-      margin:0 auto;
-      padding:var(--pad);
       min-height:100vh;
       display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:18px;
+      background:var(--bg);
+    }
+
+    /* Fixed mobile container */
+    .app {
+      width:var(--mobile-width);
+      max-width:100%;
+      background:transparent;
+      display:flex;
       flex-direction:column;
-      gap:18px;
+      gap:14px;
       align-items:stretch;
     }
-
-    /* 3-column centering grid */
-    .container {
-      width:100%;
-      display:grid;
-      grid-template-columns: 1fr minmax(0, 720px) 1fr;
-      gap:20px;
-      align-items:start;
-      justify-items:stretch;
-    }
-
-    .header-wrap { grid-column:2; width:100%; }
-    .main { grid-column:2; display:grid; grid-template-columns: 1fr; gap:16px; }
-    .sidebar { grid-column:3; width:100%; max-width:var(--right-col); justify-self:center; }
 
     /* Header */
     .header-card{
       border-radius:var(--radius);
-      padding:14px;
+      padding:12px;
       background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));
       border:1px solid rgba(255,255,255,0.04);
       box-shadow:var(--shadow);
       display:flex;
-      justify-content:space-between;
+      gap:8px;
       align-items:center;
-      gap:12px;
-      min-height:72px;
+      justify-content:space-between;
     }
-    .title-block{display:flex;flex-direction:column;gap:4px}
-    .title-block h1{font-size:18px;margin:0}
-    .title-block p{margin:0;color:var(--muted);font-size:13px}
+    .title-block{display:flex;flex-direction:column;gap:2px}
+    .title-block h1{font-size:1rem;margin:0}
+    .title-block p{margin:0;color:var(--muted);font-size:.85rem}
 
-    .controls{display:flex;gap:8px;align-items:center;min-width:0}
-    .search{padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:var(--text);height:var(--input-h);flex:1 1 auto;min-width:0}
-    .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
+    .controls{display:flex;gap:8px;align-items:center;width:100%}
+    .search{flex:1;border-radius:10px;padding:8px 10px;height:40px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);min-width:0}
+
+    .btn{background:linear-gradient(180deg,var(--accent),#1e40af);color:#fff;border:0;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:600}
     .btn.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-    .btn.ghost{background:transparent;border:0;color:var(--muted);padding:8px 10px;border-radius:8px;cursor:pointer}
-    .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger);padding:8px 10px;border-radius:8px}
+    .btn.ghost{background:transparent;border:0;color:var(--muted);padding:6px 8px;border-radius:8px;cursor:pointer}
+    .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger);padding:6px 8px;border-radius:8px}
 
-    /* Cards */
-    .card{background:var(--card);border-radius:12px;padding:14px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
-    .list{display:flex;flex-direction:column;gap:12px}
+    /* Card */
+    .card{background:var(--card);border-radius:12px;padding:12px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
 
-    /* Rows */
+    /* Entries list */
+    .list{display:flex;flex-direction:column;gap:10px}
     .item{
-      padding:10px;border-radius:12px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);
-      display:grid;grid-template-columns:1fr 140px 1fr 120px;gap:10px;align-items:center;min-width:0;
+      padding:10px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.04);
+      display:grid;grid-template-columns:1fr 100px;gap:8px;align-items:center;
     }
-    .field{display:flex;flex-direction:column;gap:6px;min-width:0}
-    .value{padding:8px 10px;border-radius:10px;min-height:var(--input-h);display:flex;align-items:center;justify-content:center;color:var(--text);background:transparent;border:1px solid rgba(255,255,255,0.02);box-sizing:border-box;word-break:break-word;text-align:center}
-    .field input{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);width:100%;box-sizing:border-box;display:none;text-align:center;min-width:0}
-    .actions{display:flex;flex-direction:column;gap:8px;align-items:flex-end;justify-self:end;min-width:0}
-    .actions .btn{padding:8px 10px;font-size:14px;white-space:nowrap}
-    .item.editing .value{display:none}
-    .item.editing .field input{display:block}
+    .item .left{display:flex;flex-direction:column;gap:6px}
+    .item .right{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+    .value{padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.02);text-align:center;color:var(--text);min-height:36px;display:flex;align-items:center;justify-content:center}
+    .edit-input{display:none;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:36px}
 
-    /* Sidebar Add form */
+    .item.editing .value{display:none}
+    .item.editing .edit-input{display:block}
+
+    /* Sidebar / Add form (stacked under header for mobile) */
     #formCard{width:100%}
     #formCard .card{padding:12px}
-    #formCard strong{ text-align:center; display:block; margin:0 0 8px 0; }
-    #formCard label{font-size:13px;color:var(--muted);margin:0 0 6px 0;text-align:center;display:block}
-    #formCard input[type="text"], #formCard input[type="date"], #formCard textarea{
-      padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);width:100%;font-size:15px;box-sizing:border-box;text-align:center;min-width:0;display:block;
-    }
-    #formCard input::placeholder, #formCard textarea::placeholder { text-align:center; color:rgba(255,255,255,0.45); }
-
-    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start;min-width:0;width:100%}
-    .add-row>div{min-width:0;display:flex;flex-direction:column;gap:6px}
-    .form-actions { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
-    .form-actions .btn[disabled]{opacity:0.45;pointer-events:none}
-
-    /* --- KEY FIX: date input wrapper to avoid overlap on iOS --- */
-    /* Wrap the date input so we can reserve space for the native calendar icon */
-    .date-wrap{ position:relative; display:block; width:100%; }
-    .date-wrap input[type="date"]{
-      width:100%;
-      min-width:0;
-      box-sizing:border-box;
-      padding:10px 44px 10px 12px; /* extra right padding to avoid calendar icon overlap */
-      height:var(--input-h);
-      border-radius:10px;
-      border:1px solid rgba(255,255,255,0.04);
-      background:transparent;
-      color:var(--text);
-      font-size:15px;
-      text-align:center;
-      -webkit-appearance: textfield; /* reduce iOS internal padding */
-      appearance: textfield;
-      overflow:visible;
+    #formCard strong{display:block;text-align:center;margin:0 0 8px 0;font-size:1rem}
+    label{font-size:.9rem;color:var(--muted);margin:0 0 6px 0;text-align:center;display:block}
+    input[type="text"], input[type="date"], textarea{
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--text); height:var(--input-h); text-align:center; box-sizing:border-box;
     }
 
-    /* Position the calendar indicator visually inside the input without pushing content */
-    /* Note: browsers vary — this is defensive and works well on modern iOS Safari */
-    .date-wrap input[type="date"]::-webkit-calendar-picker-indicator{
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      width:28px;
-      height:28px;
-      opacity:0.95;
-      cursor:pointer;
-      padding:4px;
-    }
+    .add-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .form-actions{display:flex;gap:8px;justify-content:center;margin-top:10px}
 
-    /* Remove internal edit padding that iOS sometimes adds */
-    .date-wrap input[type="date"]::-webkit-datetime-edit,
-    .date-wrap input[type="date"]::-webkit-datetime-edit-fields-wrapper,
-    .date-wrap input[type="date"]::-webkit-datetime-edit-text,
-    .date-wrap input[type="date"]::-webkit-datetime-edit-month-field,
-    .date-wrap input[type="date"]::-webkit-datetime-edit-day-field,
-    .date-wrap input[type="date"]::-webkit-datetime-edit-year-field {
-      padding:0;
-      margin:0;
-      line-height:1.1;
-    }
+    /* Date wrapper to avoid iOS overlap */
+    .date-wrap{position:relative;width:100%}
+    .date-wrap input[type="date"]{padding:10px 44px 10px 12px;-webkit-appearance:textfield;appearance:textfield}
+    .date-wrap input[type="date"]::-webkit-calendar-picker-indicator{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:28px;height:28px;opacity:0.95;cursor:pointer;padding:4px}
+    .date-wrap input[type="date"]::-webkit-datetime-edit, .date-wrap input[type="date"]::-webkit-datetime-edit-fields-wrapper, .date-wrap input[type="date"]::-webkit-datetime-edit-text { padding:0; margin:0; line-height:1.1; }
 
-    /* Defensive */
-    .item, .field, .add-row, .container, #formCard { min-width:0; }
-
-    /* Responsive: collapse to single column and keep centered */
-    @media (max-width:980px){
-      .container { grid-template-columns: 1fr; }
-      .header-wrap { grid-column:1; }
-      .main { grid-column:1; }
-      .sidebar { grid-column:1; justify-self:stretch; max-width:none; }
-      .header-card{padding:12px}
-      .item{grid-template-columns:1fr;gap:10px;align-items:stretch}
-      .add-row{grid-template-columns:1fr}
-      .add-row>div+div{margin-top:8px}
-      .actions{flex-direction:row;justify-content:center;width:100%}
-      .item.editing .actions{order:2}
-      .page{padding:12px}
-    }
-
-    @media (max-width:420px){
-      .header-card{padding-left:10px;padding-right:10px}
-      .page{padding-left:10px;padding-right:10px}
-      /* On very narrow screens, remove native appearance to avoid extra chrome */
-      .date-wrap input[type="date"]{-webkit-appearance:none;appearance:none;padding-right:12px}
-      .date-wrap input[type="date"]::-webkit-calendar-picker-indicator{display:none}
-    }
-
-    /* Visual disabled style for lock-guard elements */
+    /* Make inputs visibly disabled when locked */
     .lock-guard[disabled]{opacity:0.45;pointer-events:none}
+
+    /* Scale down slightly on very small phones */
+    @media (max-width:360px){
+      :root{ --mobile-width:320px; }
+      .app{ width:var(--mobile-width); }
+      .add-row{ grid-template-columns:1fr; }
+    }
+
+    /* Desktop: keep the mobile canvas centered and same width (no auto-responsive expansion) */
+    @media (min-width:720px){
+      .mobile-canvas{ align-items:flex-start; padding-top:28px; }
+      .app{ box-shadow: 0 10px 40px rgba(0,0,0,0.5); border-radius:14px; }
+    }
   </style>
 </head>
 <body>
-  <div class="page">
-    <div class="container" id="layoutRoot">
-      <!-- Header centered in middle column -->
-      <div class="header-wrap">
-        <header class="header-card" role="banner" aria-label="Application header">
-          <div class="title-block" aria-hidden="true">
-            <h1>Overtime Scheduler</h1>
-            <p class="lead">Unlock to enable Add / Edit / Delete. Default: Locked on load.</p>
-          </div>
-
-          <div class="controls" role="group" aria-label="Search and lock controls">
-            <input id="search" class="search" placeholder="Search name or notes" aria-label="Search name or notes" autocomplete="off" />
-            <div style="display:flex;align-items:center;gap:8px">
-              <div id="lockDot" style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>
-              <div id="lockText" style="color:var(--muted);font-size:13px">Locked</div>
-            </div>
-            <button id="lockToggle" class="btn secondary" title="Lock or unlock actions">Unlock</button>
-          </div>
-        </header>
-      </div>
-
-      <!-- Main column (center) -->
-      <main class="main" id="mainColumn" aria-live="polite">
-        <section class="card list">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <strong>Entries</strong>
-            <span id="status">Idle</span>
-          </div>
-
-          <div id="rows" style="display:flex;flex-direction:column;gap:12px;margin-top:8px"></div>
-          <div id="empty" class="meta" style="display:none;text-align:center">No entries yet.</div>
-          <div class="meta" style="margin-top:12px;text-align:center">Tip: Click Unlock to enter password and enable actions.</div>
-        </section>
-      </main>
-
-      <!-- Sidebar (right) -->
-      <aside class="sidebar" id="sidebarColumn">
-        <div id="formCard" class="card" aria-labelledby="addOvertimeTitle">
-          <strong id="addOvertimeTitle">Add Overtime</strong>
-          <form id="addForm" autocomplete="off" novalidate>
-            <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
-              <label for="name">Name</label>
-              <input id="name" name="name" class="lock-guard" type="text" placeholder="Employee name" required autocomplete="name" />
-            </div>
-
-            <div class="add-row" style="margin-top:8px;">
-              <div>
-                <label for="overtime_date">Date</label>
-                <!-- date-wrap prevents native calendar icon from overlapping the text -->
-                <div class="date-wrap">
-                  <input id="overtime_date" name="overtime_date" class="lock-guard" type="date" autocomplete="bday" />
-                </div>
-              </div>
-              <div>
-                <label for="notes">Notes</label>
-                <input id="notes" name="notes" class="lock-guard" type="text" placeholder="Short note" autocomplete="off" />
-              </div>
-            </div>
-
-            <div class="form-actions">
-              <button id="submitBtn" class="btn lock-guard" type="submit">Add</button>
-              <button type="button" id="resetBtn" class="btn secondary lock-guard">Reset</button>
-            </div>
-          </form>
+  <div class="mobile-canvas">
+    <div class="app" role="application" aria-label="Overtime Scheduler mobile">
+      <header class="header-card" role="banner" aria-label="Header">
+        <div class="title-block" aria-hidden="true">
+          <h1>Overtime Scheduler</h1>
+          <p>Locked by default — unlock to add or edit</p>
         </div>
-      </aside>
-    </div>
 
-    <footer class="site-footer" role="contentinfo" aria-label="Site copyright and trademark" style="margin-top:12px;text-align:center;color:var(--muted);font-size:13px">
-      <span class="brand" style="font-weight:700;color:var(--text)">BoxTechHub™</span>
-      <div class="legal">© 2026 BoxTechHub. All rights reserved.</div>
-    </footer>
+        <div style="display:flex;align-items:center;gap:8px;width:46%;">
+          <input id="search" class="search" placeholder="Search name or notes" aria-label="Search" />
+        </div>
+      </header>
+
+      <section class="card list" aria-live="polite">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <strong>Entries</strong>
+          <span id="status" style="font-size:.9rem;color:var(--muted)">Idle</span>
+        </div>
+
+        <div id="rows" style="display:flex;flex-direction:column;gap:10px"></div>
+        <div id="empty" style="display:none;text-align:center;color:var(--muted);padding:12px">No entries yet.</div>
+      </section>
+
+      <aside id="formCard" class="card" aria-labelledby="addOvertimeTitle">
+        <strong id="addOvertimeTitle">Add Overtime</strong>
+
+        <form id="addForm" autocomplete="off" novalidate>
+          <div style="margin-top:8px">
+            <label for="name">Name</label>
+            <input id="name" name="name" class="lock-guard" type="text" placeholder="Employee name" required />
+          </div>
+
+          <div class="add-row" style="margin-top:10px">
+            <div>
+              <label for="overtime_date">Date</label>
+              <div class="date-wrap">
+                <input id="overtime_date" name="overtime_date" class="lock-guard" type="date" />
+              </div>
+            </div>
+
+            <div>
+              <label for="notes">Notes</label>
+              <input id="notes" name="notes" class="lock-guard" type="text" placeholder="Short note" />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button id="submitBtn" class="btn lock-guard" type="submit">Add</button>
+            <button id="resetBtn" type="button" class="btn secondary lock-guard">Reset</button>
+            <button id="lockToggle" type="button" class="btn ghost" title="Lock or unlock">Unlock</button>
+          </div>
+      </form>
+      </aside>
+
+      <footer style="text-align:center;color:var(--muted);font-size:.85rem;padding:6px 0">
+        <div>BoxTechHub™</div>
+        <div style="font-size:.8rem;margin-top:4px">© 2026 BoxTechHub</div>
+      </footer>
+    </div>
   </div>
 
-  <!-- Unlock modal -->
-  <div id="modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:9999;padding:20px">
-    <div class="modal" role="document" style="background:var(--card);padding:18px;border-radius:12px;min-width:260px;max-width:520px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06);z-index:10000">
-      <h3 id="modalTitle">Unlock Actions</h3>
-      <p id="modalDesc" style="color:var(--muted);margin-top:6px">Enter password to unlock editing, deleting, and adding.</p>
-      <div style="margin-top:12px">
-        <input id="pwInput" type="password" autocomplete="current-password" placeholder="Password" style="padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);width:100%" />
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap">
+  <div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;z-index:9999;padding:18px">
+    <div style="background:var(--card);padding:14px;border-radius:12px;max-width:360px;width:100%;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.06)">
+      <h3 style="margin:0 0 8px 0">Unlock</h3>
+      <p style="margin:0 0 10px;color:var(--muted)">Enter password to enable Add/Edit/Delete</p>
+      <input id="pwInput" type="password" placeholder="Password" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);margin-bottom:10px" />
+      <div style="display:flex;gap:8px;justify-content:flex-end">
         <button id="pwCancel" class="btn secondary">Cancel</button>
         <button id="pwSubmit" class="btn">Submit</button>
       </div>
-      <div id="pwError" style="color:var(--danger);margin-top:8px;display:none;font-size:13px"></div>
+      <div id="pwError" style="color:var(--danger);margin-top:8px;display:none"></div>
     </div>
   </div>
 
@@ -300,12 +233,14 @@
     function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+    // Ensure lock-guarded elements (including add form inputs) are disabled when locked
     function updateGuardedControls(){
       const guarded = document.querySelectorAll('.lock-guard');
       guarded.forEach(el => {
         if (unlocked) el.removeAttribute('disabled');
         else el.setAttribute('disabled','true');
       });
+      // row action buttons (if any)
       const rowActionButtons = rowsEl.querySelectorAll('[data-action]');
       rowActionButtons.forEach(btn => {
         const action = btn.dataset.action;
@@ -317,24 +252,19 @@
 
     function setUnlockedState(isUnlocked, persist = true){
       unlocked = !!isUnlocked;
+      // visual lock indicator (header has no dot here, but keep text)
+      const lockBtn = document.getElementById('lockToggle');
       if (unlocked) {
-        document.body.classList.remove('locked');
-        lockDot.style.background = '#60a5fa';
-        lockText.textContent = 'Unlocked';
-        lockToggle.textContent = 'Lock';
+        lockBtn.textContent = 'Lock';
       } else {
-        document.body.classList.add('locked');
-        lockDot.style.background = '#ef4444';
-        lockText.textContent = 'Locked';
-        lockToggle.textContent = 'Unlock';
+        lockBtn.textContent = 'Unlock';
       }
-      if (searchInput) { searchInput.disabled = false; searchInput.setAttribute('aria-disabled','false'); searchInput.tabIndex = 0; }
       updateGuardedControls();
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
-    function openModal(){ modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
-    function closeModal(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); }
+    function openModal(){ modal.style.display='flex'; pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
+    function closeModal(){ modal.style.display='none'; pwError.style.display='none'; }
 
     async function submitPassword(password){
       try {
@@ -357,29 +287,22 @@
       }
     }
 
+    // Render row
     function createRowElement(row){
       const wrapper = document.createElement('div');
       wrapper.className = 'item';
       wrapper.dataset.id = row.id;
       wrapper.innerHTML = `
-        <div class="field">
+        <div class="left">
           <div class="value" data-field="name">${escapeHtml(row.name)}</div>
-          <input class="edit-input" data-edit="name" value="${escapeHtml(row.name)}" />
+          <div style="margin-top:6px;font-size:.85rem;color:var(--muted);text-align:center">${row.notes ? escapeHtml(row.notes) : ''}</div>
         </div>
-
-        <div class="field">
+        <div class="right">
           <div class="value" data-field="overtime_date">${row.overtime_date ? formatDate(row.overtime_date) : '—'}</div>
-          <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" />
-        </div>
-
-        <div class="field">
-          <div class="value" data-field="notes">${escapeHtml(row.notes || '')}</div>
-          <input class="edit-input" data-edit="notes" value="${escapeHtml(row.notes || '')}" />
-        </div>
-
-        <div class="actions" role="group" aria-label="Row actions">
-          <button class="btn ghost lock-guard" data-action="edit">Edit</button>
-          <button class="btn ghost lock-guard" data-action="delete">Delete</button>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button class="btn ghost lock-guard" data-action="edit">Edit</button>
+            <button class="btn ghost lock-guard" data-action="delete">Delete</button>
+          </div>
         </div>
       `;
       return wrapper;
@@ -393,6 +316,7 @@
       updateGuardedControls();
     }
 
+    // Load rows from Supabase (placeholder)
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -407,6 +331,7 @@
       }
     }
 
+    // Add form submit
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!unlocked) { alert('Actions are locked. Unlock to add entries.'); return; }
@@ -431,6 +356,7 @@
 
     resetBtn.addEventListener('click', () => form.reset());
 
+    // Row actions (edit/delete) — simple handlers (edit toggles inline editing)
     rowsEl.addEventListener('click', async (e) => {
       const action = e.target?.dataset?.action;
       if (!action) return;
@@ -440,7 +366,7 @@
 
       if (action === 'delete') {
         if (!unlocked) { alert('Actions are locked. Unlock to delete.'); return; }
-        if (!confirm('Delete this entry? This cannot be undone.')) return;
+        if (!confirm('Delete this entry?')) return;
         try {
           const { error } = await supabase.from('overtime_data').delete().eq('id', id);
           if (error) throw error;
@@ -455,85 +381,68 @@
 
       if (action === 'edit') {
         if (!unlocked) { alert('Actions are locked. Unlock to edit.'); return; }
-        enterEditMode(item, id);
+        // Simple inline edit: replace values with inputs
+        const nameEl = item.querySelector('[data-field="name"]');
+        const dateEl = item.querySelector('[data-field="overtime_date"]');
+        const currentName = nameEl.textContent || '';
+        const currentDate = dateEl.textContent && dateEl.textContent !== '—' ? new Date(dateEl.textContent).toISOString().slice(0,10) : '';
+        item.classList.add('editing');
+        nameEl.style.display = 'none';
+        dateEl.style.display = 'none';
+
+        const nameInput = document.createElement('input');
+        nameInput.value = currentName;
+        nameInput.className = 'edit-input';
+        nameInput.style.display = 'block';
+        nameInput.style.width = '100%';
+        nameInput.style.marginBottom = '6px';
+
+        const dateInput = document.createElement('input');
+        dateInput.type = 'date';
+        dateInput.value = currentDate;
+        dateInput.className = 'edit-input';
+        dateInput.style.display = 'block';
+        dateInput.style.width = '100%';
+
+        const left = item.querySelector('.left');
+        left.insertBefore(nameInput, left.firstChild);
+        left.insertBefore(dateInput, left.children[1]);
+
+        const actions = item.querySelector('.right > div:last-child');
+        actions.innerHTML = `
+          <button class="btn ghost" data-action="save">Save</button>
+          <button class="btn ghost" data-action="cancel">Cancel</button>
+        `;
+        updateGuardedControls();
         return;
       }
 
       if (action === 'save') {
         if (!unlocked) { alert('Actions are locked. Unlock to save.'); return; }
-        await saveEdit(item, id);
+        const left = item.querySelector('.left');
+        const nameInput = left.querySelector('input[type="text"]');
+        const dateInput = left.querySelector('input[type="date"]');
+        const name = nameInput?.value.trim();
+        const overtime_date = dateInput?.value || null;
+        if (!name) { alert('Name required'); return; }
+        try {
+          const { data, error } = await supabase.from('overtime_data').update({ name, overtime_date }).eq('id', item.dataset.id).select();
+          if (error) throw error;
+          // update cache
+          dataCache = dataCache.map(r => String(r.id) === String(item.dataset.id) ? (data && data[0]) || { ...r, name, overtime_date } : r);
+          renderList(dataCache);
+        } catch (err) {
+          console.error(err);
+          alert('Update failed: ' + (err.message || err));
+        }
         return;
       }
 
       if (action === 'cancel') {
-        exitEditMode(item, id);
+        renderList(dataCache);
         return;
       }
     });
-
-    function enterEditMode(item, id){
-      const row = dataCache.find(r => String(r.id) === String(id));
-      if (!row) return;
-      item.classList.add('editing');
-      const actions = item.querySelector('.actions');
-      actions.innerHTML = `
-        <button class="btn ghost" data-action="save">Save</button>
-        <button class="btn ghost" data-action="cancel">Cancel</button>
-        <button class="btn danger lock-guard" data-action="delete">Delete</button>
-      `;
-      const nameInput = item.querySelector('[data-edit="name"]');
-      const dateInput = item.querySelector('[data-edit="overtime_date"]');
-      const notesInput = item.querySelector('[data-edit="notes"]');
-      if (nameInput) nameInput.value = row.name || '';
-      if (dateInput) dateInput.value = row.overtime_date || '';
-      if (notesInput) notesInput.value = row.notes || '';
-      if (nameInput) { nameInput.focus(); setTimeout(()=> nameInput.scrollIntoView({behavior:'smooth', block:'center'}), 120); }
-      updateGuardedControls();
-    }
-
-    function exitEditMode(item, id){
-      const row = dataCache.find(r => String(r.id) === String(id));
-      if (!row) return;
-      item.classList.remove('editing');
-      const nameVal = item.querySelector('[data-field="name"]');
-      const dateVal = item.querySelector('[data-field="overtime_date"]');
-      const notesVal = item.querySelector('[data-field="notes"]');
-      if (nameVal) nameVal.textContent = row.name || '';
-      if (dateVal) dateVal.textContent = row.overtime_date ? formatDate(row.overtime_date) : '—';
-      if (notesVal) notesVal.textContent = row.notes || '';
-      const actions = item.querySelector('.actions');
-      actions.innerHTML = `
-        <button class="btn ghost lock-guard" data-action="edit">Edit</button>
-        <button class="btn ghost lock-guard" data-action="delete">Delete</button>
-      `;
-      updateGuardedControls();
-    }
-
-    async function saveEdit(item, id){
-      const nameInput = item.querySelector('[data-edit="name"]');
-      const notesInput = item.querySelector('[data-edit="notes"]');
-      const dateInput = item.querySelector('[data-edit="overtime_date"]');
-      const name = nameInput?.value.trim();
-      const notes = notesInput?.value.trim();
-      const overtime_date = dateInput?.value || null;
-      if (!name) { alert('Name is required'); nameInput?.focus(); return; }
-      const saveBtn = item.querySelector('[data-action="save"]');
-      if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
-      try {
-        const { data, error } = await supabase.from('overtime_data').update({ name, notes, overtime_date }).eq('id', id).select();
-        if (error) throw error;
-        if (data && data.length) {
-          dataCache = dataCache.map(r => String(r.id) === String(id) ? data[0] : r);
-        } else {
-          dataCache = dataCache.map(r => String(r.id) === String(id) ? { ...r, name, notes, overtime_date } : r);
-        }
-        renderList(dataCache);
-      } catch (err) {
-        console.error(err);
-        alert('Update failed: ' + (err.message || err));
-        if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
-      }
-    }
 
     // Search filter
     searchInput.addEventListener('input', () => {
@@ -552,13 +461,13 @@
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
-    // Lock toggle
+    // Lock toggle (opens modal to unlock)
     lockToggle.addEventListener('click', () => {
       if (!unlocked) openModal();
       else { if (!confirm('Locking will disable Add/Edit/Delete. Continue?')) return; setUnlockedState(false, true); }
     });
 
-    // On load: force locked on every page load
+    // On load: force locked on every page load (mobile-first)
     window.addEventListener('DOMContentLoaded', async () => {
       setUnlockedState(false, true);
       await loadRows();
