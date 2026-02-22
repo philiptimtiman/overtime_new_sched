@@ -3,46 +3,38 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Compact + Readable</title>
-  <meta name="description" content="Compact mode with improved readability and stronger action color; buttons and functions unchanged." />
+  <title>Overtime Scheduler — Compact + Readable (Hide actions when locked)</title>
+  <meta name="description" content="Compact mode with improved readability and stronger action color; Edit/Delete hidden when locked." />
   <style>
     :root{
-      /* Accent changed to teal for stronger call-to-action */
-      --accent:#14b8a6; 
-      --accent-2:#0ea5a4;
+      --accent:#14b8a6; --accent-2:#0ea5a4;
       --bg:#0f1724; --card:#0b1220; --text:#e6eef8; --muted:#9fb0c6;
       --danger:#ef4444;
       --glass: rgba(255,255,255,0.03);
       --shadow: 0 10px 28px rgba(2,6,23,0.55);
 
-      /* Compact mode base sizes */
-      --input-h:40px;    
+      --input-h:40px;
       --radius:10px;
       --mobile-width:360px;
       --gap:10px;
 
-      /* Readability tweaks: slightly larger label and input fonts */
       --base-font:15px;
-      --label-font:0.95rem;   /* labels slightly larger */
-      --input-font:0.98rem;   /* inputs slightly larger */
+      --label-font:0.95rem;
+      --input-font:0.98rem;
       --pill-font:0.9rem;
     }
 
-    /* Reset & base */
     *,*::before,*::after{box-sizing:border-box}
     html,body{height:100%;margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--base-font)}
     input,button,select,textarea{font-family:inherit}
     a{color:inherit;text-decoration:none}
     button{cursor:pointer}
 
-    /* Canvas */
     .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:var(--bg)}
     .app{width:var(--mobile-width);max-width:100%;display:flex;flex-direction:column;gap:12px;align-items:stretch}
 
-    /* Card (reduced padding) */
     .card{background:var(--card);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,0.04);overflow:visible}
 
-    /* Header: centered title & subtitle */
     .header{display:flex;flex-direction:column;gap:8px}
     .brand{display:flex;flex-direction:column;align-items:center;gap:4px}
     .brand h1{font-size:1rem;margin:0;text-align:center}
@@ -51,13 +43,10 @@
     .controls{display:flex;gap:8px;align-items:center}
     .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);min-width:0;font-size:var(--input-font)}
 
-    /* Hide textual lock label (dot remains) */
     .lock-label-hidden { display: none !important; }
 
-    /* Status / small text */
     .meta{font-size:.82rem;color:var(--muted);text-align:center}
 
-    /* Entries list (tighter spacing) */
     .list{display:flex;flex-direction:column;gap:8px}
     .item{
       display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:var(--glass);
@@ -67,39 +56,32 @@
     .item-top{display:flex;gap:8px;align-items:center;justify-content:space-between}
     .item-left{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
 
-    /* Contextual alignment: names/notes left for readability */
     .name{font-weight:600;font-size:.96rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .notes{color:var(--muted);font-size:.82rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-    /* Dates centered to keep visual axis */
     .date-pill{min-width:84px;text-align:center;padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);background:transparent;color:var(--text);box-sizing:border-box;font-size:var(--pill-font)}
 
     .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 
-    /* Buttons: color updated to new accent; padding slightly reduced to keep compact look */
     .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
     .btn.full{width:100%}
 
-    /* Add form (compact) */
     #formCard{display:flex;flex-direction:column;gap:10px}
     #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block}
     .field{display:flex;flex-direction:column;gap:8px;min-width:0}
 
-    /* Compact spacing tweaks for Add form */
     #formCard > form > .field:first-of-type { margin-bottom: 10px; }
     #formCard .add-row { gap: 10px; }
     #formCard .form-actions { margin-top: 12px; }
 
-    /* Inputs: placeholders centered, but editable text left-aligned for typing clarity */
     input[type="text"], textarea{
       width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
       text-align:center;
     }
     input[type="text"]:focus, textarea:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(20,184,166,0.08); border-color: rgba(20,184,166,0.18); }
 
-    /* Date control: visible text + calendar button */
     .date-control{position:relative;display:flex;align-items:center;gap:8px}
     .date-text{flex:1;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;text-align:center;font-size:var(--input-font)}
     .date-text:focus { text-align:left; }
@@ -109,7 +91,6 @@
     .form-actions{display:flex;gap:8px;flex-direction:column;margin-top:8px;z-index:2}
     .form-actions .btn{width:100%}
 
-    /* Native date overlay (compact) */
     .date-control .native-date{
       position:absolute;
       right:6px;
@@ -126,14 +107,12 @@
       cursor:pointer;
     }
 
-    /* Inline edit styles (stacked, full width) */
     .editing .edit-input{display:block}
     .edit-input{display:none;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%;box-sizing:border-box;min-width:0;text-align:left;font-size:var(--input-font)}
 
     .item.editing { display:flex; flex-direction:column; gap:8px; }
     .item.editing .edit-input { width:100%; max-width:100%; }
 
-    /* Modal stacking fix: always on top */
     .modal-backdrop{
       position:fixed;
       inset:0;
@@ -145,10 +124,11 @@
     }
     .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px}
 
-    /* Defensive: ensure children can shrink on small screens */
+    /* NEW: helper class to hide action buttons when locked (keeps layout stable) */
+    .actions-hidden .item-actions { display: none !important; }
+
     .item, .field, .add-row, .date-control, .date-text { min-width:0; -webkit-flex-shrink:1; flex-shrink:1; }
 
-    /* Small-screen tweaks */
     @media (max-width:340px){
       .add-row{grid-template-columns:1fr}
       .app{width:320px}
@@ -158,7 +138,7 @@
 </head>
 <body>
   <div class="canvas">
-    <div class="app" role="application" aria-label="Overtime Scheduler — Compact">
+    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler — Compact">
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle">Overtime Scheduler</h1>
@@ -226,7 +206,6 @@
     </div>
   </div>
 
-  <!-- Unlock modal -->
   <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document" aria-labelledby="modalTitle">
       <h3 id="modalTitle" style="margin:0 0 8px 0">Unlock Actions</h3>
@@ -246,6 +225,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    const appRoot = document.getElementById('appRoot');
     const rowsEl = document.getElementById('rows');
     const statusEl = document.getElementById('status');
     const emptyEl = document.getElementById('empty');
@@ -276,10 +256,19 @@
     function isoDateFromText(s){ if(!s) return null; const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[1]}-${m[2]}-${m[3]}` : null; }
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
+    // Update controls: enable/disable inputs and show/hide action buttons when locked/unlocked
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
       openUnlock.textContent = unlocked ? 'Lock' : 'Unlock';
+
+      // Hide or show Edit/Delete action buttons across the list without changing layout of other elements.
+      // We toggle a class on the root app container so CSS can hide .item-actions cleanly.
+      if (!unlocked) {
+        appRoot.classList.add('actions-hidden');
+      } else {
+        appRoot.classList.remove('actions-hidden');
+      }
     }
 
     function setUnlockedState(state, persist = true){
@@ -312,7 +301,7 @@
       }
     }
 
-    // Date picker overlay strategy (compact)
+    // Date picker overlay strategy
     (function attachNativeOverlay() {
       try {
         const dateControl = document.querySelector('.date-control');
@@ -493,7 +482,9 @@
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
     window.addEventListener('DOMContentLoaded', async () => {
-      setUnlockedState(false, true);
+      // restore persisted lock state if available
+      const saved = safeGetLocal(LOCAL_KEY);
+      setUnlockedState(saved === 'true');
       await loadRows();
     });
   </script>
