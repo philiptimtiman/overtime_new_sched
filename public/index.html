@@ -755,10 +755,53 @@ function updateGuardedControls(){
       updateGuardedControls();
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
+// Optional: load inert polyfill once (uncomment if needed)
+// import 'https://unpkg.com/wicg-inert/dist/inert.min.js';
 
-    function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
-    function closeModal(){ modalBackdrop.style.display = 'none'; modalBackdrop.setAttribute('aria-hidden','true'); pwError.style.display='none'; }
+function openModal(){
+  // Make modal visible and accessible
+  modalBackdrop.style.display = 'flex';
+  modalBackdrop.setAttribute('aria-hidden','false');
 
+  // Mark background app as inert (prevents focus and interaction)
+  try {
+    if (appRoot) {
+      // native inert if supported
+      appRoot.inert = true;
+      appRoot.setAttribute('aria-hidden', 'true');
+    }
+  } catch (e) {
+    // fallback: add a class that visually dims background (still allow aria-hidden)
+    if (appRoot) appRoot.setAttribute('aria-hidden', 'true');
+  }
+
+  // Clear any previous error, then focus the password input
+  pwError.style.display = 'none';
+  // small timeout to ensure element is visible before focusing
+  setTimeout(() => {
+    try { pwInput.focus(); } catch (e) { /* ignore */ }
+  }, 10);
+}
+
+function closeModal(){
+  // Remove modal from view and mark hidden
+  modalBackdrop.style.display = 'none';
+  modalBackdrop.setAttribute('aria-hidden','true');
+
+  // Remove inert / aria-hidden from background app
+  try {
+    if (appRoot) {
+      appRoot.inert = false;
+      appRoot.removeAttribute('aria-hidden');
+    }
+  } catch (e) {
+    if (appRoot) appRoot.removeAttribute('aria-hidden');
+  }
+
+  // Clear error and return focus to the unlock button for keyboard users
+  pwError.style.display = 'none';
+  try { openUnlock.focus(); } catch (e) { /* ignore */ }
+}
     async function submitPassword(password){
       try {
         pwError.style.display = 'block';
