@@ -109,7 +109,9 @@
     .modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;}
     .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
 
-    .actions-hidden .item-actions { display: none !important; }
+    /* hide only guarded controls inside the actions area when locked */
+.actions-hidden .item-actions .lock-guard { display: none !important; }
+
     .form-hidden #formCard { display: none !important; }
 
     .item.upcoming { box-shadow: 0 8px 20px rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.12); }
