@@ -111,10 +111,6 @@
     .actions-hidden .item-actions { display: none !important; }
     .form-hidden #formCard { display: none !important; }
 
-    /* NEW: hide entries list when locked */
-    .app.entries-hidden #rows { display: none !important; }
-    .app.entries-hidden #empty { display: block !important; }
-
     @media (max-width:420px){
       .add-row{grid-template-columns:1fr}
       .app{width:320px}
@@ -124,6 +120,7 @@
       .live-clock{min-width:140px;font-size:0.78rem}
     }
 
+    /* Upcoming card layout: label left, numeric count right (no text) */
     .upcoming-card{margin-top:10px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:space-between;gap:12px}
     .upcoming-card strong{font-size:0.95rem;display:block;color:var(--text)}
     .upcoming-count{font-weight:800;font-size:1.4rem;color:var(--text);min-width:36px;text-align:right}
@@ -351,17 +348,11 @@
       }
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
-
-      // NEW: hide entries list when locked; show when unlocked
-      if (!unlocked) appRoot.classList.add('entries-hidden'); else appRoot.classList.remove('entries-hidden');
-
-      // keep counts in sync
+      renderEntriesAccordingToLock();
       updateUpcomingCountFromRendered();
     }
     function setUnlockedState(state, persist = true){
-      unlocked = !!state;
-      updateGuardedControls();
-      if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
+      unlocked = !!state; updateGuardedControls(); if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
     function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
@@ -418,8 +409,8 @@
         </div>
         <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
           <div class="item-actions">
-            <button class="btn ghost lock-guard" data-action="edit" type="button">Edit</button>
-            <button class="btn ghost lock-guard" data-action="delete" type="button">Delete</button>
+            <button class="btn ghost lock-guard" data-action="edit">Edit</button>
+            <button class="btn ghost lock-guard" data-action="delete">Delete</button>
           </div>
         </div>
       `;
@@ -466,6 +457,7 @@
 
     function updateUpcomingCountFromRendered() {
       const count = getRenderedEntriesCount();
+      // show only the numeric count on the right side (no label)
       upcomingCountEl.textContent = String(count);
     }
 
@@ -535,10 +527,9 @@
     resetBtn.addEventListener('click', () => { form.reset(); if (dateInput) dateInput.value = ''; });
 
     rowsEl.addEventListener('click', async (ev) => {
-      const btn = ev.target.closest('[data-action]');
-      if (!btn) return;
-      const action = btn.dataset.action;
-      const item = btn.closest('.item');
+      const action = ev.target?.dataset?.action;
+      if (!action) return;
+      const item = ev.target.closest('.item');
       const id = item?.dataset?.id;
       if (!id) return;
 
@@ -571,8 +562,8 @@
             </div>
             <input class="edit-input" data-edit="notes" type="text" value="${escapeHtml(row.notes || '')}" />
             <div style="display:flex;gap:8px">
-              <button class="btn ghost" data-action="save" type="button">Save</button>
-              <button class="btn ghost" data-action="cancel" type="button">Cancel</button>
+              <button class="btn ghost" data-action="save">Save</button>
+              <button class="btn ghost" data-action="cancel">Cancel</button>
             </div>
           </div>
         `;
@@ -681,12 +672,8 @@
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
 
-      // FORCE auto-lock on refresh: clear persisted unlocked flag and start locked
-      try { localStorage.removeItem(LOCAL_KEY); } catch (e) { /* ignore */ }
-      setUnlockedState(false, false);
-
-      // ensure UI reflects locked state synchronously
-      updateGuardedControls();
+      const saved = safeGetLocal(LOCAL_KEY);
+      setUnlockedState(saved === 'true');
 
       await loadRows();
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
