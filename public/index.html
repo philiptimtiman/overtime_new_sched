@@ -247,6 +247,12 @@
         </div>
       </header>
 
+      <!-- NEW Upcoming Section (moved above Entries) -->
+      <div class="upcoming-card" id="upcomingSection" aria-live="polite">
+        <strong>Upcoming within 24h</strong>
+        <div id="upcoming" style="color:var(--muted)">No upcoming leaves/OT within 24h</div>
+      </div>
+
       <main class="card" aria-live="polite" style="display:flex;flex-direction:column;gap:10px">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <strong>Entries</strong>
@@ -256,12 +262,6 @@
         <div id="rows" class="list" aria-live="polite"></div>
         <div id="empty" class="empty" style="display:none;color:var(--muted);padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);text-align:center">Walang entries. I-unlock at magdagdag ng bagong overtime o leave.</div>
       </main>
-
-      <!-- NEW Upcoming Section -->
-      <div class="upcoming-card" id="upcomingSection" aria-live="polite">
-        <strong>Upcoming within 24h</strong>
-        <div id="upcoming" style="color:var(--muted)">No upcoming leaves/OT within 24h</div>
-      </div>
 
       <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle" style="display:flex;flex-direction:column;gap:8px">
         <strong id="addOvertimeTitle" style="display:block;text-align:center">Add Entries</strong>
@@ -276,6 +276,7 @@
             <div class="field">
               <label for="overtime_date">Date</label>
               <div class="date-control">
+                <!-- switched back to date input (yyyy-mm-dd native) -->
                 <input id="overtime_date" name="overtime_date" class="date-text lock-guard" type="date" aria-label="Overtime date" />
                 <button type="button" id="datePickerBtn" class="date-btn lock-guard" aria-label="Open date picker">📅</button>
               </div>
