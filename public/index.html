@@ -14,8 +14,8 @@
       --card-bg-bottom: rgba(6,30,26,0.03);
       --input-h:40px; --radius:10px; --mobile-width:360px;
       --base-font:15px; --theme-transition:220ms ease;
-      --ongoing-color: #3b82f6; /* blue */
-      --upcoming-color: #10b981; /* green */
+      --ongoing-color: #3b82f6;
+      --upcoming-color: #10b981;
     }
 
     *,*::before,*::after{box-sizing:border-box}
@@ -110,7 +110,7 @@
     .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
 
     /* Minimal change: hide only guarded controls inside actions when locked.
-       This preserves visibility and clickability of Edit buttons (which do not have lock-guard). */
+       This preserves visibility and clickability of Edit buttons (if present). */
     .actions-hidden .item-actions .lock-guard { display: none !important; }
 
     .form-hidden #formCard { display: none !important; }
@@ -130,7 +130,6 @@
       .live-clock{min-width:140px;font-size:0.78rem}
     }
 
-    /* compact aligned pills centered */
     .counts-card{display:flex;align-items:center;justify-content:center;gap:12px;padding:8px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
     .counts-row{display:flex;gap:10px;align-items:center}
     .count-pill{min-width:64px;padding:8px 10px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
@@ -140,7 +139,6 @@
     .count-pill.upcoming { background: linear-gradient(180deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04)); border-color: rgba(16,185,129,0.14); color: #eafff5; }
     .count-pill.ongoing  { background: linear-gradient(180deg, rgba(59,130,246,0.10), rgba(59,130,246,0.04)); border-color: rgba(59,130,246,0.14); color: #eaf4ff; }
 
-    /* ensure pills align vertically and labels are stacked */
     .counts-row .count-pill { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:72px }
   </style>
 </head>
@@ -239,7 +237,7 @@
   <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="modal" role="document" aria-labelledby="modalTitle">
       <h3 id="modalTitle" style="margin:0 0 8px 0">Unlock Actions</h3>
-      <p style="margin:0 0 8px;color:var(--muted);font-size:.9rem">Enter password to enable Add / Edit / Delete</p>
+      <p style="margin:0 0 8px;color:var(--muted);font-size:.9rem">Enter password to enable Add / Delete</p>
       <input id="pwInput" type="password" placeholder="Password" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);margin-bottom:8px;height:40px" />
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button id="pwCancel" class="btn ghost">Cancel</button>
@@ -283,7 +281,6 @@
     const upcomingCountEl = document.getElementById('upcomingCount');
     const ongoingCountEl = document.getElementById('ongoingCount');
 
-    // expose dataCache globally for debugging helpers used earlier
     window.dataCache = [];
     let unlocked = false;
 
@@ -454,7 +451,7 @@
       }
     }
 
-    // createRowElement: ensure Edit button does NOT have lock-guard so it remains visible/clickable
+    // createRowElement: Edit button removed; only Delete remains
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -473,9 +470,7 @@
         </div>
         <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
           <div class="item-actions">
-            <!-- Edit remains visible and clickable (no lock-guard) -->
-            <button class="btn ghost" data-action="edit" type="button">Edit</button>
-            <!-- Delete remains guarded -->
+            <!-- Only Delete button remains and is guarded -->
             <button class="btn ghost lock-guard" data-action="delete" type="button">Delete</button>
           </div>
         </div>
@@ -613,6 +608,7 @@
 
     resetBtn.addEventListener('click', () => { form.reset(); if (dateInput) dateInput.value = ''; });
 
+    // Delegated click handler: only handles Delete action now
     rowsEl.addEventListener('click', async (ev) => {
       const btn = ev.target.closest('[data-action]');
       if (!btn) return;
@@ -634,56 +630,6 @@
           console.error(err);
           alert('Delete failed: ' + (err.message || err));
         }
-        return;
-      }
-
-      if (action === 'edit') {
-        // Edit button is visible and clickable even when locked; still require unlocked to actually edit/save
-        if (!unlocked) { alert('Actions are locked. Unlock to edit.'); return; }
-        const row = window.dataCache.find(r => String(r.id) === String(id));
-        if (!row) return;
-        item.classList.add('editing');
-        item.innerHTML = `
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <input class="edit-input" data-edit="name" type="text" value="${escapeHtml(row.name)}" />
-            <div style="display:flex;gap:8px;align-items:center">
-              <input class="edit-input" data-edit="overtime_date" type="date" value="${toDateInputValue(row.overtime_date)}" style="flex:1;max-width:100%;box-sizing:border-box" />
-            </div>
-            <input class="edit-input" data-edit="notes" type="text" value="${escapeHtml(row.notes || '')}" />
-            <div style="display:flex;gap:8px">
-              <button class="btn ghost" data-action="save" type="button">Save</button>
-              <button class="btn ghost" data-action="cancel" type="button">Cancel</button>
-            </div>
-          </div>
-        `;
-        updateGuardedControls();
-        return;
-      }
-
-      if (action === 'save') {
-        if (!unlocked) { alert('Actions are locked. Unlock to save.'); return; }
-        const inputs = item.querySelectorAll('.edit-input');
-        const name = inputs[0]?.value.trim();
-        const dateLocal = inputs[1]?.value || null;
-        const overtime_date = toIsoDateFromInput(dateLocal);
-        const notes = inputs[2]?.value.trim();
-        if (!name) { alert('Name required'); return; }
-        try {
-          const { data, error } = await supabase.from('overtime_data').update({ name, notes, overtime_date }).eq('id', id).select();
-          if (error) throw error;
-          const updatedRow = (data && data[0]) ? { ...data[0], overtime_date: normalizeStoredDate(data[0].overtime_date) } : null;
-          window.dataCache = window.dataCache.map(r => String(r.id) === String(id) ? (updatedRow || { ...r, name, notes, overtime_date }) : r);
-          renderEntriesAccordingToLock();
-          updateCounts();
-        } catch (err) {
-          console.error(err);
-          alert('Update failed: ' + (err.message || err));
-        }
-        return;
-      }
-
-      if (action === 'cancel') {
-        renderEntriesAccordingToLock();
         return;
       }
     });
@@ -720,14 +666,12 @@
       updateCounts();
     });
 
-    // updateGuardedControls: disable only form controls; keep Edit buttons visible/clickable
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => {
         const tag = (el.tagName || '').toUpperCase();
         if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
           if (!unlocked) el.setAttribute('disabled','true'); else el.removeAttribute('disabled');
         } else {
-          // For non-form elements (buttons), keep interactive but mark aria-disabled for screen readers
           if (!unlocked) {
             el.setAttribute('aria-disabled','true');
             el.classList.add('visually-guarded');
@@ -760,7 +704,6 @@
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
-    // Modal open/close with inert handling to avoid aria-hidden focus conflict
     function openModal(){
       modalBackdrop.style.display = 'flex';
       modalBackdrop.setAttribute('aria-hidden','false');
