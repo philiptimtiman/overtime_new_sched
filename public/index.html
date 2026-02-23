@@ -7,12 +7,13 @@
   <meta name="description" content="Overtime Schedule for SLT Foreign TE" />
 
   <!-- Changelog (this file)
-       - Lock behavior preserved.
-       - When LOCKED: entries list shows ONLY items whose overtime day STARTS within 24 hours.
-       - When UNLOCKED: show full list.
-       - Expiry rule: overtime_date expires at local midnight + 7 hours 20 minutes (grace period).
-       - Auto-delete uses the expiry rule; upcoming count is based on "start within 24h".
-       - Visual cue: .upcoming class for items starting within 24h.
+       - Fix: When LOCKED, show entries that are either:
+         a) starting within the next 24 hours (upcoming), OR
+         b) already on their overtime day (start <= now) but still within the grace window (expiry = midnight + 7h20).
+       - Expiry rule: overtime_date expires at local midnight + 7 hours 20 minutes.
+       - Auto-delete removes only after expiry < now.
+       - Visual cue: .upcoming class for items that are upcoming or currently active (within grace).
+       - Minimal, non-invasive changes; preserved lock UX and persistence behavior.
   -->
 
   <style>
@@ -121,7 +122,7 @@
     .actions-hidden .item-actions { display: none !important; }
     .form-hidden #formCard { display: none !important; }
 
-    /* subtle highlight for upcoming entries */
+    /* subtle highlight for upcoming or active entries */
     .item.upcoming { box-shadow: 0 8px 20px rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.12); }
     .item.upcoming .date-pill { border-color: rgba(16,185,129,0.18); background: linear-gradient(180deg, rgba(16,185,129,0.04), rgba(16,185,129,0.02)); }
 
@@ -408,7 +409,7 @@
       } catch (e) { console.warn('Date behavior attach failed', e); }
     })();
 
-    // Parse a date-only string (YYYY-MM-DD) into a Date at local midnight
+    // Compute expiry for an overtime_date: midnight + 7 hours 20 minutes (grace)
     function parseDateOnlyToLocalMidnight(dateOnly) {
       if (!dateOnly) return NaN;
       const m = String(dateOnly).match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -418,17 +419,17 @@
       const d = new Date(dateOnly);
       return isNaN(d) ? NaN : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
     }
-
-    // Compute expiry for an overtime_date: midnight + 7 hours 20 minutes (grace)
     function computeExpiryForOvertimeDate(dateOnly) {
       const startMidnight = parseDateOnlyToLocalMidnight(dateOnly);
       if (isNaN(startMidnight)) return NaN;
-      // 7 hours 20 minutes = 7*60 + 20 = 440 minutes
+      // 7 hours 20 minutes = 440 minutes
       const expiryMs = startMidnight.getTime() + (440 * 60 * 1000);
       return new Date(expiryMs);
     }
 
-    // Upcoming entries: those whose overtime day STARTS within next 24 hours
+    // Upcoming entries: include
+    // - items whose start midnight is within next 24 hours (future upcoming), OR
+    // - items whose start midnight is <= now but expiry (midnight + 7:20) is still in the future (active today within grace)
     function getUpcomingEntries(){
       if (!Array.isArray(dataCache)) dataCache = [];
       const now = Date.now();
@@ -437,11 +438,18 @@
         if (!r || !r.overtime_date) return false;
         const start = parseDateOnlyToLocalMidnight(r.overtime_date);
         if (isNaN(start)) return false;
-        return start.getTime() > now && start.getTime() <= in24h;
+        const expiry = computeExpiryForOvertimeDate(r.overtime_date);
+        if (isNaN(expiry)) return false;
+        // future upcoming: start within next 24h
+        const startMs = start.getTime();
+        if (startMs > now && startMs <= in24h) return true;
+        // active today within grace: start <= now < expiry
+        if (startMs <= now && expiry.getTime() > now) return true;
+        return false;
       }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
     }
 
-    // Compute and update upcoming count (based on start within 24h)
+    // Compute and update upcoming count (based on start within 24h or active within grace)
     function updateUpcomingCountFromDataCache(){
       try {
         const upcoming = getUpcomingEntries();
@@ -478,14 +486,17 @@
         </div>
       `;
 
-      // mark upcoming within 24h (based on start midnight)
+      // mark upcoming or active within grace
       try {
         if (row && row.overtime_date) {
           const now = Date.now();
           const start = parseDateOnlyToLocalMidnight(row.overtime_date).getTime();
-          if (!isNaN(start)) {
-            const hours = (start - now) / (1000 * 60 * 60);
-            if (hours > 0 && hours <= 24) el.classList.add('upcoming');
+          const expiry = computeExpiryForOvertimeDate(row.overtime_date).getTime();
+          if (!isNaN(start) && !isNaN(expiry)) {
+            const hoursUntilStart = (start - now) / (1000 * 60 * 60);
+            const isFutureUpcoming = hoursUntilStart > 0 && hoursUntilStart <= 24;
+            const isActiveWithinGrace = start <= now && expiry > now;
+            if (isFutureUpcoming || isActiveWithinGrace) el.classList.add('upcoming');
           }
         }
       } catch (e) { /* ignore */ }
@@ -509,7 +520,7 @@
 
     // Render according to lock state:
     // - unlocked: show full list
-    // - locked: show only upcoming (start within 24h). If none, show empty placeholder.
+    // - locked: show only upcoming (start within 24h OR active within grace)
     function renderEntriesAccordingToLock(){
       if (!Array.isArray(dataCache)) dataCache = [];
       if (unlocked) {
@@ -527,7 +538,7 @@
         return;
       }
 
-      // locked: show only upcoming
+      // locked: show only upcoming or active-within-grace
       const upcoming = getUpcomingEntries();
       rowsEl.innerHTML = '';
       if (!upcoming.length) {
@@ -547,7 +558,6 @@
     }
 
     function updateUpcomingCountFromRendered() {
-      // compatibility helper (not primary)
       const count = getRenderedEntriesCount();
       if (upcomingCountEl) upcomingCountEl.textContent = String(count);
     }
@@ -708,15 +718,19 @@
         (r.notes||'').toLowerCase().includes(q) ||
         (r.overtime_date||'').includes(q)
       );
-      // When locked: filter then keep only upcoming results
+      // When locked: filter then keep only upcoming/active-within-grace results
       if (!unlocked) {
         const upcomingFiltered = filtered.filter(r => {
           if (!r.overtime_date) return false;
           const start = parseDateOnlyToLocalMidnight(r.overtime_date);
-          if (isNaN(start)) return false;
+          const expiry = computeExpiryForOvertimeDate(r.overtime_date);
+          if (isNaN(start) || isNaN(expiry)) return false;
           const now = Date.now();
-          const hours = (start.getTime() - now) / (1000*60*60);
-          return hours > 0 && hours <= 24;
+          const startMs = start.getTime();
+          const in24h = now + (24 * 60 * 60 * 1000);
+          const futureUpcoming = startMs > now && startMs <= in24h;
+          const activeWithinGrace = startMs <= now && expiry.getTime() > now;
+          return futureUpcoming || activeWithinGrace;
         });
         renderList(upcomingFiltered);
       } else {
