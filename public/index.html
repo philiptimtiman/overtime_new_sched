@@ -294,9 +294,11 @@
     window.dataCache = [];
     let unlocked = false;
 
-    // Grace period: 7 hours 20 minutes -> 7*60 + 20 = 440 minutes
-    const GRACE_MINUTES = 440;
-    const GRACE_MS = GRACE_MINUTES * 60 * 1000;
+    // Deletion expiry: 31h20m (original behavior)
+    const ORIGINAL_EXPIRY_MINUTES = 1880; // 31 hours 20 minutes
+    const EXPIRING_WINDOW_MINUTES = 440;  // 7 hours 20 minutes (expiring window)
+    const ORIGINAL_EXPIRY_MS = ORIGINAL_EXPIRY_MINUTES * 60 * 1000;
+    const EXPIRING_WINDOW_MS = EXPIRING_WINDOW_MINUTES * 60 * 1000;
 
     function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
     function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
@@ -408,12 +410,19 @@
       return isNaN(d) ? NaN : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
     }
 
-    // compute expiry using GRACE_MS (7h20m)
+    // compute expiry used for deletion and for determining ongoing (original 31h20m)
     function computeExpiryForOvertimeDate(dateOnly) {
       const startMidnight = parseDateOnlyToLocalMidnight(dateOnly);
       if (isNaN(startMidnight)) return NaN;
-      const expiryMs = startMidnight.getTime() + GRACE_MS;
-      return new Date(expiryMs);
+      return new Date(startMidnight.getTime() + ORIGINAL_EXPIRY_MS);
+    }
+
+    // helper: whether an entry will expire within the next EXPIRING_WINDOW_MS
+    function isExpiringSoon(dateOnly) {
+      const expiry = computeExpiryForOvertimeDate(dateOnly);
+      if (!expiry || isNaN(expiry)) return false;
+      const now = Date.now();
+      return expiry.getTime() > now && expiry.getTime() <= (now + EXPIRING_WINDOW_MS);
     }
 
     function getUpcomingEntries(){
@@ -425,6 +434,7 @@
         const start = parseDateOnlyToLocalMidnight(r.overtime_date);
         if (isNaN(start)) return false;
         const startMs = start.getTime();
+        // upcoming = starts within next 24 hours
         return startMs > now && startMs <= in24h;
       }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
     }
@@ -437,20 +447,20 @@
         const start = parseDateOnlyToLocalMidnight(r.overtime_date);
         const expiry = computeExpiryForOvertimeDate(r.overtime_date);
         if (isNaN(start) || isNaN(expiry)) return false;
+        // ongoing = start <= now < deletion expiry (original 31h20m)
         return start.getTime() <= now && expiry.getTime() > now;
       }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
     }
 
-    // New: entries whose expiry is within the next GRACE_MS window (will be deleted soon)
     function getExpiringEntries(){
       if (!Array.isArray(window.dataCache)) window.dataCache = [];
       const now = Date.now();
-      const soonThreshold = now + GRACE_MS;
+      const soonThreshold = now + EXPIRING_WINDOW_MS;
       return window.dataCache.filter(r => {
         if (!r || !r.overtime_date) return false;
         const expiry = computeExpiryForOvertimeDate(r.overtime_date);
         if (!expiry || isNaN(expiry)) return false;
-        // expiry in future but within the next GRACE_MS window
+        // expiring = expiry is in future but within the next 7h20m window
         return expiry.getTime() > now && expiry.getTime() <= soonThreshold;
       }).sort((a,b) => computeExpiryForOvertimeDate(a.overtime_date) - computeExpiryForOvertimeDate(b.overtime_date));
     }
@@ -463,20 +473,14 @@
         if (upcomingCountEl) {
           const valEl = upcomingCountEl.querySelector('.count-value');
           if (valEl) valEl.textContent = String(upcoming.length);
-          upcomingCountEl.classList.add('upcoming');
-          upcomingCountEl.classList.remove('ongoing','expiring');
         }
         if (ongoingCountEl) {
           const valEl = ongoingCountEl.querySelector('.count-value');
           if (valEl) valEl.textContent = String(ongoing.length);
-          ongoingCountEl.classList.add('ongoing');
-          ongoingCountEl.classList.remove('upcoming','expiring');
         }
         if (expiringCountEl) {
           const valEl = expiringCountEl.querySelector('.count-value');
           if (valEl) valEl.textContent = String(expiring.length);
-          expiringCountEl.classList.add('expiring');
-          expiringCountEl.classList.remove('upcoming','ongoing');
         }
         return { upcoming, ongoing, expiring };
       } catch (e) {
@@ -519,8 +523,8 @@
           const expiry = computeExpiryForOvertimeDate(row.overtime_date).getTime();
           if (!isNaN(start) && !isNaN(expiry)) {
             const isFutureUpcoming = start > now && start <= (now + 24*60*60*1000);
-            const isActiveWithinGrace = start <= now && expiry > now;
-            const willExpireSoon = expiry > now && expiry <= (now + GRACE_MS);
+            const isActiveWithinGrace = start <= now && expiry > now; // ongoing uses deletion expiry
+            const willExpireSoon = expiry > now && expiry <= (now + EXPIRING_WINDOW_MS);
             if (isFutureUpcoming) el.classList.add('upcoming');
             if (isActiveWithinGrace) el.classList.add('ongoing');
             if (willExpireSoon) el.classList.add('expiring');
@@ -773,7 +777,7 @@
       }
 
       pwError.style.display = 'none';
-      try { openUnlock.focus(); } catch(e){}
+      try { openUnlock.focus(); } catch (e) {}
     }
 
     async function submitPassword(password){
