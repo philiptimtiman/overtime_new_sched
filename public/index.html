@@ -714,20 +714,41 @@
       updateCounts();
     });
 
-    function updateGuardedControls(){
-      document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
-      lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
-      if (openUnlock) {
-        openUnlock.setAttribute('aria-pressed', unlocked ? 'true' : 'false');
-        openUnlock.title = unlocked ? 'Lock actions' : 'Unlock actions';
-        openUnlock.setAttribute('aria-label', unlocked ? 'Lock actions' : 'Unlock actions');
-        openUnlock.classList.toggle('active', unlocked);
+function updateGuardedControls(){
+  // Disable only real form controls that should be non-interactive when locked
+  document.querySelectorAll('.lock-guard').forEach(el => {
+    const tag = (el.tagName || '').toUpperCase();
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+      if (!unlocked) el.setAttribute('disabled','true'); else el.removeAttribute('disabled');
+    } else {
+      // For non-form elements (buttons, icons) keep them interactive but mark aria-disabled for screen readers
+      if (!unlocked) {
+        el.setAttribute('aria-disabled','true');
+        el.classList.add('visually-guarded');
+      } else {
+        el.removeAttribute('aria-disabled');
+        el.classList.remove('visually-guarded');
       }
-      if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
-      if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
-      renderEntriesAccordingToLock();
-      updateCounts();
     }
+  });
+
+  // visual lock indicator + unlock button state
+  lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
+  if (openUnlock) {
+    openUnlock.setAttribute('aria-pressed', unlocked ? 'true' : 'false');
+    openUnlock.title = unlocked ? 'Lock actions' : 'Unlock actions';
+    openUnlock.setAttribute('aria-label', unlocked ? 'Lock actions' : 'Unlock actions');
+    openUnlock.classList.toggle('active', unlocked);
+  }
+
+  // hide form and actions visually when locked (existing behavior)
+  if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
+  if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
+
+  // re-render list and counts (keeps current behavior)
+  renderEntriesAccordingToLock();
+  updateCounts();
+}
 
     function setUnlockedState(state, persist = true){
       unlocked = !!state;
