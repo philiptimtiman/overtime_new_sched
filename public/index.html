@@ -128,16 +128,15 @@
       .live-clock{min-width:140px;font-size:0.78rem}
     }
 
-    .counts-card{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
-    .counts-left{display:flex;flex-direction:column;gap:4px}
-    .counts-row{display:flex;gap:8px;align-items:center}
-    .count-pill{min-width:56px;padding:8px 12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));border:1px solid rgba(255,255,255,0.03);color:var(--text);font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    /* compact aligned pills */
+    .counts-card{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
+    .counts-row{display:flex;gap:10px;align-items:center;margin-left:auto}
+    .count-pill{min-width:64px;padding:8px 10px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
     .count-label{font-size:0.68rem;color:var(--muted);font-weight:600}
-    .count-value{font-size:1.1rem;font-weight:800}
+    .count-value{font-size:1.05rem;font-weight:800}
 
-    /* specific color variants */
-    .count-pill.upcoming { background: linear-gradient(180deg, rgba(16,185,129,0.12), rgba(16,185,129,0.06)); border-color: rgba(16,185,129,0.18); color: #eafff5; }
-    .count-pill.ongoing  { background: linear-gradient(180deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06)); border-color: rgba(59,130,246,0.18); color: #eaf4ff; }
+    .count-pill.upcoming { background: linear-gradient(180deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04)); border-color: rgba(16,185,129,0.14); color: #eafff5; }
+    .count-pill.ongoing  { background: linear-gradient(180deg, rgba(59,130,246,0.10), rgba(59,130,246,0.04)); border-color: rgba(59,130,246,0.14); color: #eaf4ff; }
 
     /* ensure pills align vertically and labels are stacked */
     .counts-row .count-pill { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:72px }
@@ -150,7 +149,6 @@
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
           <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482</p>
-          <p class="meta" style="margin-top:6px">BxTHPTver202602230600.32</p>
         </div>
 
         <div class="live-row" aria-hidden="false">
@@ -180,12 +178,12 @@
         </div>
       </header>
 
-      <!-- Single container showing both counts aligned -->
+      <!-- Compact section: only label + aligned count pills -->
       <div class="counts-card card" aria-live="polite" style="margin-top:8px">
-        <div class="counts-left">
-          <strong style="display:block">Upcoming / On going</strong>
-          <div class="meta" style="font-size:0.85rem">Upcoming = starts within 24h · On going = active within grace</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <!-- left can be empty or show a small title; user requested only label + pill, so keep minimal -->
         </div>
+
         <div class="counts-row" aria-hidden="false" style="margin-left:auto">
           <div id="upcomingCount" class="count-pill upcoming" title="Upcoming within 24h">
             <div class="count-value">0</div>
@@ -446,22 +444,16 @@
         // update upcoming pill
         if (upcomingCountEl) {
           const valEl = upcomingCountEl.querySelector('.count-value');
-          const labelEl = upcomingCountEl.querySelector('.count-label');
           if (valEl) valEl.textContent = String(upcoming.length);
-          if (labelEl) labelEl.textContent = 'Upcoming';
           upcomingCountEl.classList.add('upcoming');
           upcomingCountEl.classList.remove('ongoing');
-          upcomingCountEl.style.display = upcoming.length ? 'flex' : 'flex';
         }
         // update ongoing pill
         if (ongoingCountEl) {
           const valEl = ongoingCountEl.querySelector('.count-value');
-          const labelEl = ongoingCountEl.querySelector('.count-label');
           if (valEl) valEl.textContent = String(ongoing.length);
-          if (labelEl) labelEl.textContent = 'On going';
           ongoingCountEl.classList.add('ongoing');
           ongoingCountEl.classList.remove('upcoming');
-          ongoingCountEl.style.display = ongoing.length ? 'flex' : 'flex';
         }
         return { upcoming, ongoing };
       } catch (e) {
@@ -530,7 +522,7 @@
 
     // Render according to lock state:
     // - unlocked: show full list
-    // - locked: show only upcoming + ongoing (both), combined with ongoing first
+    // - locked: show only ongoing + upcoming (both), combined with ongoing first
     function renderEntriesAccordingToLock(){
       if (!Array.isArray(dataCache)) dataCache = [];
       if (unlocked) {
