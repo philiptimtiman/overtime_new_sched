@@ -6,16 +6,6 @@
   <title>Overtime Scheduler</title>
   <meta name="description" content="Overtime Schedule for SLT Foreign TE" />
 
-  <!-- Changelog (this file)
-       - Fix: When LOCKED, show entries that are either:
-         a) starting within the next 24 hours (upcoming), OR
-         b) already on their overtime day (start <= now) but still within the grace window (expiry = midnight + 7h20).
-       - Expiry rule: overtime_date expires at local midnight + 7 hours 20 minutes.
-       - Auto-delete removes only after expiry < now.
-       - Visual cue: .upcoming class for items that are upcoming or currently active (within grace).
-       - Minimal, non-invasive changes; preserved lock UX and persistence behavior.
-  -->
-
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -122,7 +112,6 @@
     .actions-hidden .item-actions { display: none !important; }
     .form-hidden #formCard { display: none !important; }
 
-    /* subtle highlight for upcoming or active entries */
     .item.upcoming { box-shadow: 0 8px 20px rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.12); }
     .item.upcoming .date-pill { border-color: rgba(16,185,129,0.18); background: linear-gradient(180deg, rgba(16,185,129,0.04), rgba(16,185,129,0.02)); }
 
@@ -350,6 +339,36 @@
       btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
+    // Normalize stored date values to YYYY-MM-DD (local date)
+    function normalizeStoredDate(val) {
+      if (!val) return null;
+      const m = String(val).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+      const d = new Date(val);
+      if (isNaN(d)) return null;
+      const pad = n => String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    }
+
+    // Parse a date-only string (YYYY-MM-DD) into a Date at local midnight
+    function parseDateOnlyToLocalMidnight(dateOnly) {
+      if (!dateOnly) return NaN;
+      const m = String(dateOnly).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (m) {
+        return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 0, 0, 0, 0);
+      }
+      const d = new Date(dateOnly);
+      return isNaN(d) ? NaN : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+    }
+
+    // Compute expiry for an overtime_date: midnight + 7 hours 20 minutes (grace)
+    function computeExpiryForOvertimeDate(dateOnly) {
+      const startMidnight = parseDateOnlyToLocalMidnight(dateOnly);
+      if (isNaN(startMidnight)) return NaN;
+      const expiryMs = startMidnight.getTime() + (440 * 60 * 1000); // 7h20m
+      return new Date(expiryMs);
+    }
+
     // Update guarded controls: hide/disable actions and form when locked; keep entries visibility controlled by renderEntriesAccordingToLock
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
@@ -362,7 +381,6 @@
       }
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
-      // rendering will decide which entries to show
       renderEntriesAccordingToLock();
       updateUpcomingCountFromDataCache();
     }
@@ -409,24 +427,6 @@
       } catch (e) { console.warn('Date behavior attach failed', e); }
     })();
 
-    // Compute expiry for an overtime_date: midnight + 7 hours 20 minutes (grace)
-    function parseDateOnlyToLocalMidnight(dateOnly) {
-      if (!dateOnly) return NaN;
-      const m = String(dateOnly).match(/^(\d{4})-(\d{2})-(\d{2})$/);
-      if (m) {
-        return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 0, 0, 0, 0);
-      }
-      const d = new Date(dateOnly);
-      return isNaN(d) ? NaN : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
-    }
-    function computeExpiryForOvertimeDate(dateOnly) {
-      const startMidnight = parseDateOnlyToLocalMidnight(dateOnly);
-      if (isNaN(startMidnight)) return NaN;
-      // 7 hours 20 minutes = 440 minutes
-      const expiryMs = startMidnight.getTime() + (440 * 60 * 1000);
-      return new Date(expiryMs);
-    }
-
     // Upcoming entries: include
     // - items whose start midnight is within next 24 hours (future upcoming), OR
     // - items whose start midnight is <= now but expiry (midnight + 7:20) is still in the future (active today within grace)
@@ -440,8 +440,8 @@
         if (isNaN(start)) return false;
         const expiry = computeExpiryForOvertimeDate(r.overtime_date);
         if (isNaN(expiry)) return false;
-        // future upcoming: start within next 24h
         const startMs = start.getTime();
+        // future upcoming: start within next 24h
         if (startMs > now && startMs <= in24h) return true;
         // active today within grace: start <= now < expiry
         if (startMs <= now && expiry.getTime() > now) return true;
@@ -597,7 +597,11 @@
       try {
         const { data, error } = await supabase.from('overtime_data').select('id,name,notes,overtime_date').order('overtime_date',{ascending:true});
         if (error) throw error;
-        dataCache = (data || []);
+        // Normalize overtime_date to date-only strings (local)
+        dataCache = (data || []).map(r => ({
+          ...r,
+          overtime_date: normalizeStoredDate(r.overtime_date)
+        }));
         renderEntriesAccordingToLock();
         updateUpcomingCountFromDataCache();
       } catch (err) {
@@ -618,7 +622,9 @@
       try {
         const { data, error } = await supabase.from('overtime_data').insert([{ name, notes, overtime_date }]).select();
         if (error) throw error;
-        dataCache = [...dataCache, ...(data||[])];
+        // Normalize returned rows before adding to cache
+        const inserted = (data || []).map(r => ({ ...r, overtime_date: normalizeStoredDate(r.overtime_date) }));
+        dataCache = [...dataCache, ...inserted];
         renderEntriesAccordingToLock();
         updateUpcomingCountFromDataCache();
         form.reset();
@@ -690,7 +696,9 @@
         try {
           const { data, error } = await supabase.from('overtime_data').update({ name, notes, overtime_date }).eq('id', id).select();
           if (error) throw error;
-          dataCache = dataCache.map(r => String(r.id) === String(id) ? (data && data[0]) || { ...r, name, notes, overtime_date } : r);
+          // Normalize returned updated row if present
+          const updatedRow = (data && data[0]) ? { ...data[0], overtime_date: normalizeStoredDate(data[0].overtime_date) } : null;
+          dataCache = dataCache.map(r => String(r.id) === String(id) ? (updatedRow || { ...r, name, notes, overtime_date }) : r);
           renderEntriesAccordingToLock();
           updateUpcomingCountFromDataCache();
         } catch (err) {
@@ -718,7 +726,6 @@
         (r.notes||'').toLowerCase().includes(q) ||
         (r.overtime_date||'').includes(q)
       );
-      // When locked: filter then keep only upcoming/active-within-grace results
       if (!unlocked) {
         const upcomingFiltered = filtered.filter(r => {
           if (!r.overtime_date) return false;
@@ -804,6 +811,7 @@
         console.log('lock-guard disabled count:', Array.from(document.querySelectorAll('.lock-guard')).filter(el=>el.disabled).length);
         console.log('rows children:', document.getElementById('rows')?.children.length);
         console.log('upcoming elements:', document.querySelectorAll('#rows .item.upcoming').length);
+        console.log('dataCache sample:', dataCache.slice(0,10));
       } catch(e){ console.warn('diag error', e); }
     };
   </script>
