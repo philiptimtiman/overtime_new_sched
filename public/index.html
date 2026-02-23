@@ -136,7 +136,7 @@
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
           <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482</p>
-          <p class="meta" style="margin-top:6px">BxTHPTver202602230600</p>
+          <p class="meta" style="margin-top:6px">BxTHPTver202602230600.25</p>
         </div>
 
         <div class="live-row" aria-hidden="false">
@@ -361,11 +361,13 @@
       return isNaN(d) ? NaN : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
     }
 
-    // Compute expiry for an overtime_date: midnight + 7 hours 20 minutes (grace)
+    // Compute expiry for an overtime_date: end of that calendar day + 7 hours 20 minutes
+    // That is: startMidnight + 24h + 7h20m = startMidnight + 31h20m
     function computeExpiryForOvertimeDate(dateOnly) {
       const startMidnight = parseDateOnlyToLocalMidnight(dateOnly);
       if (isNaN(startMidnight)) return NaN;
-      const expiryMs = startMidnight.getTime() + (440 * 60 * 1000); // 7h20m
+      // 31 hours 20 minutes = 31*60 + 20 = 1880 minutes
+      const expiryMs = startMidnight.getTime() + (1880 * 60 * 1000);
       return new Date(expiryMs);
     }
 
@@ -429,7 +431,7 @@
 
     // Upcoming entries: include
     // - items whose start midnight is within next 24 hours (future upcoming), OR
-    // - items whose start midnight is <= now but expiry (midnight + 7:20) is still in the future (active today within grace)
+    // - items whose start midnight is <= now but expiry (end-of-day + 7:20) is still in the future (active today within grace)
     function getUpcomingEntries(){
       if (!Array.isArray(dataCache)) dataCache = [];
       const now = Date.now();
@@ -562,7 +564,7 @@
       if (upcomingCountEl) upcomingCountEl.textContent = String(count);
     }
 
-    // Auto-delete expired entries using expiry = midnight + 7:20
+    // Auto-delete expired entries using expiry = end-of-day + 7:20 (startMidnight + 31h20m)
     async function autoDeleteExpired(){
       if (!Array.isArray(dataCache)) dataCache = [];
       const now = Date.now();
