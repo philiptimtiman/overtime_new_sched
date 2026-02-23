@@ -5,43 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Overtime Scheduler</title>
   <meta name="description" content="Overtime Schedule for SLT Foreign TE" />
-
-  <!-- PREPATCH: run first to block reads/writes for the unlock key and enforce locked UI early -->
-  <script>
-  (function(){
-    try {
-      const KEY = 'overtime_unlocked_v2';
-      // Block writes and reads for this key early in the page lifecycle
-      const _set = Storage.prototype.setItem;
-      const _get = Storage.prototype.getItem;
-      const _remove = Storage.prototype.removeItem;
-      Storage.prototype.setItem = function(k,v){
-        if (String(k) === KEY) { console.warn('prepatch blocked setItem', KEY, v); return; }
-        return _set.apply(this, arguments);
-      };
-      Storage.prototype.getItem = function(k){
-        if (String(k) === KEY) return null;
-        return _get.apply(this, arguments);
-      };
-      Storage.prototype.removeItem = function(k){
-        if (String(k) === KEY) return;
-        return _remove.apply(this, arguments);
-      };
-      try { localStorage.removeItem(KEY); } catch(e){}
-      // enforce locked UI quickly if DOM already present
-      function enforce(){
-        const app = document.getElementById('appRoot');
-        if (app) app.classList.add('actions-hidden','form-hidden','entries-hidden');
-        Array.from(document.querySelectorAll('.lock-guard')).forEach(el=>{ try{ el.setAttribute('disabled','true'); }catch(e){} });
-        const li = document.getElementById('lockIndicator'); if (li) li.style.background = '#ef4444';
-      }
-      enforce();
-      document.addEventListener('DOMContentLoaded', enforce, { once:true });
-      console.log('Overtime prepatch installed: blocked reads/writes for', KEY);
-    } catch(e){ console.warn('prepatch failed', e); }
-  })();
-  </script>
-
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -73,7 +36,9 @@
       border-radius:var(--radius);padding:12px;box-shadow:0 8px 20px rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.04);
     }
 
+    /* Header: stacked order (title, p1, clock, controls, theme) */
     .header.card{display:flex;flex-direction:column;gap:8px;position:relative;padding-top:12px}
+    /* Center the brand/title and p1 */
     .brand{display:flex;flex-direction:column;align-items:center;text-align:center}
     .brand h1{margin:0;font-size:1rem}
     .brand p{margin:0;color:var(--muted);font-size:.85rem}
@@ -81,8 +46,25 @@
     .controls{display:flex;gap:8px;align-items:center}
     .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--text)}
 
-    .live-row{display:flex;align-items:center;justify-content:center;margin-top:4px}
-    .live-clock{font-family:monospace;font-size:0.86rem;color:var(--muted);background:rgba(255,255,255,0.02);padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);min-width:170px;text-align:center;pointer-events:none}
+    /* Live clock centered under p1 */
+    .live-row{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-top:4px;
+    }
+    .live-clock{
+      font-family:monospace;
+      font-size:0.86rem;
+      color:var(--muted);
+      background:rgba(255,255,255,0.02);
+      padding:6px 10px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.03);
+      min-width:170px;
+      text-align:center;
+      pointer-events:none;
+    }
 
     .theme-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px}
     .theme-swatch{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,0.06);display:inline-flex;align-items:center;justify-content:center;padding:0;background:transparent}
@@ -113,24 +95,80 @@
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
     .btn.full{width:100%}
 
-    .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border-radius:10px;background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;}
+    .icon-btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:40px;
+      height:40px;
+      padding:0;
+      border-radius:10px;
+      background:transparent;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,0.04);
+      transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;
+    }
     .icon-btn svg{ display:block; width:18px; height:18px; }
-    .icon-btn.active{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent;box-shadow:0 8px 20px rgba(0,0,0,0.25);}
+    .icon-btn.active{
+      background:linear-gradient(180deg,var(--accent),var(--accent-2));
+      color:#fff;
+      border-color:transparent;
+      box-shadow:0 8px 20px rgba(0,0,0,0.25);
+    }
     .icon-btn:focus{ outline:2px solid rgba(255,255,255,0.06); outline-offset:2px; }
 
     #formCard{display:flex;flex-direction:column;gap:10px}
     #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block;transition:color var(--theme-transition)}
     .field{display:flex;flex-direction:column;gap:8px;min-width:0}
 
+    /* --- PATCH: prevent date input overlap --- */
     .add-row{display:grid;grid-template-columns:1fr;gap:8px;align-items:start}
     @media(min-width:520px){ .add-row{grid-template-columns:1fr 1fr} }
 
-    .date-control{display:flex;align-items:center;gap:8px;min-width:0;}
-    .date-control input[type="date"],.date-control input[type="text"],.date-control input[type="datetime-local"]{flex:1;min-width:0;height:var(--input-h);padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);text-align:center;box-sizing:border-box;}
-    .date-btn{flex:0 0 auto;width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;}
-    @media(max-width:320px){ .date-control{flex-direction:column;align-items:stretch} .date-btn{width:100%} }
+    .date-control{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      min-width:0;
+    }
+    .date-control input[type="date"],
+    .date-control input[type="text"],
+    .date-control input[type="datetime-local"]{
+      flex:1;
+      min-width:0;
+      height:var(--input-h);
+      padding:8px 10px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.04);
+      background:rgba(0,0,0,0.12);
+      color:var(--text);
+      text-align:center;
+      box-sizing:border-box;
+    }
+    .date-btn{
+      flex:0 0 auto;
+      width:40px;
+      height:40px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.04);
+      background:transparent;
+      color:var(--muted);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+    }
+    @media(max-width:320px){
+      .date-control{flex-direction:column;align-items:stretch}
+      .date-btn{width:100%}
+    }
+    /* --- end patch --- */
 
-    input[type="text"], textarea, input[type="date"]{width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);text-align:center;transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);}
+    input[type="text"], textarea, input[type="date"]{
+      width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
+      text-align:center;
+      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
+    }
     input[type="text"]:focus, textarea:focus, input[type="date"]:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
 
     .date-text{padding-right:48px;cursor:pointer}
@@ -142,15 +180,13 @@
     .item.editing { display:flex; flex-direction:column; gap:8px; }
     .item.editing .edit-input { width:100%; max-width:100%; }
 
-    .modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;}
+    .modal-backdrop{
+      position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;
+    }
     .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
 
     .actions-hidden .item-actions { display: none !important; }
     .form-hidden #formCard { display: none !important; }
-
-    /* NEW: hide entries list when locked */
-    .app.entries-hidden #rows { display: none !important; }
-    .app.entries-hidden #empty { display: block !important; }
 
     @media (max-width:420px){
       .add-row{grid-template-columns:1fr}
@@ -160,31 +196,31 @@
       .date-pill{min-width:64px; max-width:96px; font-size:0.85rem}
       .live-clock{min-width:140px;font-size:0.78rem}
     }
-
-    .upcoming-card{margin-top:10px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .upcoming-card strong{font-size:0.95rem;display:block;color:var(--text)}
-    .upcoming-count{font-weight:800;font-size:1.4rem;color:var(--text);min-width:36px;text-align:right}
   </style>
 </head>
 <body>
   <div class="canvas">
     <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler">
       <header class="card header" aria-labelledby="appTitle">
+        <!-- Header title centered -->
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
           <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482</p>
-          <p class="meta" style="margin-top:6px">BxTHPTver202602230600</p>
+		  <p class="meta" style="margin-top:6px">BxTHPTver202602230600</p>
         </div>
 
+        <!-- Live clock centered under the header/p1 -->
         <div class="live-row" aria-hidden="false">
           <div id="liveClock" class="live-clock" role="status" aria-live="polite">—</div>
         </div>
 
+        <!-- Controls (search + lock) -->
         <div class="controls" role="search" style="margin-top:8px;display:flex;gap:8px;align-items:center">
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search entries" />
           <div class="lock-group" style="margin-left:6px;display:flex;align-items:center;gap:8px">
             <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444;transition:background var(--theme-transition)"></div>
 
+            <!-- Lock icon button (id preserved) -->
             <button id="openUnlock" class="btn ghost icon-btn" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
                 <rect x="3" y="11" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.4" />
@@ -195,6 +231,7 @@
           </div>
         </div>
 
+        <!-- Theme row -->
         <div class="theme-row" role="toolbar" aria-label="Theme switcher" style="margin-top:10px">
           <button class="theme-swatch swatch-ocean" data-theme="ocean" aria-label="Ocean Indigo" title="Ocean Indigo" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-warm" data-theme="warm" aria-label="Warm Sunset" title="Warm Sunset" type="button"><span class="dot" aria-hidden="true"></span></button>
@@ -202,11 +239,6 @@
           <button class="theme-swatch swatch-violet" data-theme="violet" aria-label="Violet Glow" title="Violet Glow" type="button"><span class="dot" aria-hidden="true"></span></button>
         </div>
       </header>
-
-      <div class="upcoming-card" id="upcomingSection" aria-live="polite">
-        <strong>Upcoming within 24h</strong>
-        <div id="upcomingCount" class="upcoming-count">0</div>
-      </div>
 
       <main class="card" aria-live="polite" style="display:flex;flex-direction:column;gap:10px">
         <div style="display:flex;justify-content:space-between;align-items:center">
@@ -231,6 +263,7 @@
             <div class="field">
               <label for="overtime_date">Date</label>
               <div class="date-control">
+                <!-- switched back to date input (yyyy-mm-dd native) -->
                 <input id="overtime_date" name="overtime_date" class="date-text lock-guard" type="date" aria-label="Overtime date" />
                 <button type="button" id="datePickerBtn" class="date-btn lock-guard" aria-label="Open date picker">📅</button>
               </div>
@@ -295,14 +328,13 @@
     const THEME_KEY = 'overtime_theme_v1';
     const LOCAL_KEY = 'overtime_unlocked_v2';
 
-    const upcomingCountEl = document.getElementById('upcomingCount');
-
     let dataCache = [];
     let unlocked = false;
 
     function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
     function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
 
+    // Format date-only display: "yyyy/mm/dd"
     function formatDateOnlyYMD(iso){
       if (!iso) return '—';
       const d = new Date(iso);
@@ -314,12 +346,14 @@
       return `${yyyy}/${mm}/${dd}`;
     }
 
+    // Convert date input value (YYYY-MM-DD) to ISO date string (YYYY-MM-DD) for storage
     function toIsoDateFromInput(val){
       if (!val) return null;
       const m = val.match(/^(\d{4})-(\d{2})-(\d{2})$/);
       return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
     }
 
+    // Convert stored ISO date (YYYY-MM-DD or full ISO) to input value (YYYY-MM-DD)
     function toDateInputValue(stored){
       if (!stored) return '';
       const d = new Date(stored);
@@ -387,20 +421,9 @@
       }
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
-
-      // hide entries list when locked; show when unlocked
-      if (!unlocked) appRoot.classList.add('entries-hidden'); else appRoot.classList.remove('entries-hidden');
-
-      // keep counts in sync
-      updateUpcomingCountFromRendered();
     }
-
-    // PATCHED: do not persist unlocked=true to localStorage to avoid auto-restore on reload
     function setUnlockedState(state, persist = true){
-      unlocked = !!state;
-      updateGuardedControls();
-      // IMPORTANT: persistence disabled to prevent automatic unlock on reload
-      // if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
+      unlocked = !!state; updateGuardedControls(); if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
     function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
@@ -419,8 +442,7 @@
           pwError.textContent = `Server: ${msg}`;
           return;
         }
-        // do not persist unlocked state
-        setUnlockedState(true, false);
+        setUnlockedState(true, true);
         closeModal();
       } catch (err) {
         console.error(err);
@@ -428,6 +450,7 @@
       }
     }
 
+    // Date picker helper for input[type=date]
     (function attachDateBehavior(){
       try {
         function openPicker(){
@@ -440,6 +463,7 @@
       } catch (e) { console.warn('Date behavior attach failed', e); }
     })();
 
+    // Create row element: show date only in yyyy/mm/dd
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -458,8 +482,8 @@
         </div>
         <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
           <div class="item-actions">
-            <button class="btn ghost lock-guard" data-action="edit" type="button">Edit</button>
-            <button class="btn ghost lock-guard" data-action="delete" type="button">Delete</button>
+            <button class="btn ghost lock-guard" data-action="edit">Edit</button>
+            <button class="btn ghost lock-guard" data-action="delete">Delete</button>
           </div>
         </div>
       `;
@@ -468,69 +492,11 @@
 
     function renderList(items){
       rowsEl.innerHTML = '';
-      if (!items || !items.length) {
-        emptyEl.style.display = 'block';
-        statusEl.textContent = 'No entries';
-        updateUpcomingCountFromRendered();
-        return;
-      }
+      if (!items || !items.length) { emptyEl.style.display = 'block'; statusEl.textContent = 'No entries'; return; }
       emptyEl.style.display = 'none';
       items.forEach(r => rowsEl.appendChild(createRowElement(r)));
+      updateGuardedControls();
       statusEl.textContent = `Loaded ${items.length} entries`;
-      updateUpcomingCountFromRendered();
-    }
-
-    function getUpcomingEntries(){
-      const now = new Date();
-      return dataCache.filter(r => {
-        if (!r || !r.overtime_date) return false;
-        const d = new Date(r.overtime_date);
-        const diffHours = (d - now) / (1000 * 60 * 60);
-        return diffHours > 0 && diffHours <= 24;
-      }).sort((a,b) => new Date(a.overtime_date) - new Date(b.overtime_date));
-    }
-
-    function renderEntriesAccordingToLock(){
-      if (unlocked) {
-        const sorted = dataCache.slice().sort((a,b) => new Date(a.overtime_date || 0) - new Date(b.overtime_date || 0));
-        renderList(sorted);
-      } else {
-        const upcoming = getUpcomingEntries();
-        renderList(upcoming);
-      }
-    }
-
-    function getRenderedEntriesCount() {
-      return rowsEl?.children.length || 0;
-    }
-
-    function updateUpcomingCountFromRendered() {
-      const count = getRenderedEntriesCount();
-      upcomingCountEl.textContent = String(count);
-    }
-
-    async function autoDeleteExpired(){
-      const now = new Date();
-      const expired = dataCache.filter(r => {
-        if (!r.overtime_date) return false;
-        const d = new Date(r.overtime_date);
-        return d < now;
-      });
-      if (!expired.length) return;
-      for (const r of expired) {
-        try {
-          const { error } = await supabase.from('overtime_data').delete().eq('id', r.id);
-          if (error) {
-            console.error('Delete failed for id', r.id, error);
-            continue;
-          }
-          dataCache = dataCache.filter(x => String(x.id) !== String(r.id));
-        } catch (err) {
-          console.error('Delete error', err);
-        }
-      }
-      renderEntriesAccordingToLock();
-      updateUpcomingCountFromRendered();
     }
 
     async function loadRows(){
@@ -539,8 +505,7 @@
         const { data, error } = await supabase.from('overtime_data').select('id,name,notes,overtime_date').order('overtime_date',{ascending:true});
         if (error) throw error;
         dataCache = (data || []);
-        renderEntriesAccordingToLock();
-        updateUpcomingCountFromRendered();
+        renderList(dataCache);
       } catch (err) {
         console.error(err);
         statusEl.textContent = 'Error loading data';
@@ -560,8 +525,7 @@
         const { data, error } = await supabase.from('overtime_data').insert([{ name, notes, overtime_date }]).select();
         if (error) throw error;
         dataCache = [...dataCache, ...(data||[])];
-        renderEntriesAccordingToLock();
-        updateUpcomingCountFromRendered();
+        renderList(dataCache);
         form.reset();
         if (dateInput) dateInput.value = '';
       } catch (err) {
@@ -575,10 +539,9 @@
     resetBtn.addEventListener('click', () => { form.reset(); if (dateInput) dateInput.value = ''; });
 
     rowsEl.addEventListener('click', async (ev) => {
-      const btn = ev.target.closest('[data-action]');
-      if (!btn) return;
-      const action = btn.dataset.action;
-      const item = btn.closest('.item');
+      const action = ev.target?.dataset?.action;
+      if (!action) return;
+      const item = ev.target.closest('.item');
       const id = item?.dataset?.id;
       if (!id) return;
 
@@ -589,8 +552,7 @@
           const { error } = await supabase.from('overtime_data').delete().eq('id', id);
           if (error) throw error;
           dataCache = dataCache.filter(r => String(r.id) !== String(id));
-          renderEntriesAccordingToLock();
-          updateUpcomingCountFromRendered();
+          renderList(dataCache);
         } catch (err) {
           console.error(err);
           alert('Delete failed: ' + (err.message || err));
@@ -611,8 +573,8 @@
             </div>
             <input class="edit-input" data-edit="notes" type="text" value="${escapeHtml(row.notes || '')}" />
             <div style="display:flex;gap:8px">
-              <button class="btn ghost" data-action="save" type="button">Save</button>
-              <button class="btn ghost" data-action="cancel" type="button">Cancel</button>
+              <button class="btn ghost" data-action="save">Save</button>
+              <button class="btn ghost" data-action="cancel">Cancel</button>
             </div>
           </div>
         `;
@@ -632,8 +594,7 @@
           const { data, error } = await supabase.from('overtime_data').update({ name, notes, overtime_date }).eq('id', id).select();
           if (error) throw error;
           dataCache = dataCache.map(r => String(r.id) === String(id) ? (data && data[0]) || { ...r, name, notes, overtime_date } : r);
-          renderEntriesAccordingToLock();
-          updateUpcomingCountFromRendered();
+          renderList(dataCache);
         } catch (err) {
           console.error(err);
           alert('Update failed: ' + (err.message || err));
@@ -642,43 +603,29 @@
       }
 
       if (action === 'cancel') {
-        renderEntriesAccordingToLock();
+        renderList(dataCache);
         return;
       }
     });
 
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
-      if (!q) {
-        renderEntriesAccordingToLock();
-        updateUpcomingCountFromRendered();
-        return;
-      }
+      if (!q) return renderList(dataCache);
       const filtered = dataCache.filter(r =>
         (r.name||'').toLowerCase().includes(q) ||
         (r.notes||'').toLowerCase().includes(q) ||
         (r.overtime_date||'').includes(q)
       );
-      if (unlocked) {
-        renderList(filtered);
-      } else {
-        const upcomingFiltered = filtered.filter(r => {
-          if (!r.overtime_date) return false;
-          const d = new Date(r.overtime_date);
-          const diffHours = (d - new Date()) / (1000*60*60);
-          return diffHours > 0 && diffHours <= 24;
-        });
-        renderList(upcomingFiltered);
-      }
-      updateUpcomingCountFromRendered();
+      renderList(filtered);
     });
 
-    openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, false); } });
+    openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
 
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
+    // Live clock (keeps existing behavior)
     function formatToYMDHMSFromDateObj(d){
       if (!d || isNaN(d)) return '—';
       const pad = (n) => String(n).padStart(2,'0');
@@ -699,6 +646,7 @@
       }
     }
 
+    // date picker button helper
     if (dateBtn && dateInput) {
       dateBtn.addEventListener('click', () => {
         try { dateInput.showPicker && dateInput.showPicker(); } catch(e){}
@@ -706,45 +654,13 @@
       });
     }
 
-    const CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
-    setInterval(() => {
-      try {
-        renderEntriesAccordingToLock();
-        updateUpcomingCountFromRendered();
-        autoDeleteExpired();
-      } catch (e) {
-        console.error('Periodic check error', e);
-      }
-    }, CHECK_INTERVAL_MS);
-
-    // Ensure UI starts locked on load and avoid restoring unlocked state
     window.addEventListener('DOMContentLoaded', async () => {
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
 
-      // Remove any persisted unlocked flag (best effort)
-      try { localStorage.removeItem(LOCAL_KEY); } catch (e) { /* ignore */ }
-
-      // Start locked (do not persist)
-      setUnlockedState(false, false);
-
-      // Ensure UI reflects locked state synchronously
-      updateGuardedControls();
-
+      setUnlockedState(false, true);
       await loadRows();
-      try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
-
-    // Diagnostic helper (call from console if needed)
-    window.__overtime_diag = function(){
-      try {
-        console.log('localStorage key raw:', (function(){ try { return localStorage.getItem(LOCAL_KEY); } catch(e){ return 'err'; } })());
-        console.log('unlocked variable:', unlocked);
-        console.log('lockIndicator color:', getComputedStyle(document.getElementById('lockIndicator')||{}).backgroundColor);
-        console.log('lock-guard disabled count:', Array.from(document.querySelectorAll('.lock-guard')).filter(el=>el.disabled).length);
-        console.log('rows children:', document.getElementById('rows')?.children.length);
-      } catch(e){ console.warn('diag error', e); }
-    };
   </script>
 </body>
 </html>
