@@ -109,8 +109,9 @@
     .modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;}
     .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
 
-    /* hide only guarded controls inside the actions area when locked */
-.actions-hidden .item-actions .lock-guard { display: none !important; }
+    /* Minimal change: hide only guarded controls inside actions when locked.
+       This preserves visibility and clickability of Edit buttons (which do not have lock-guard). */
+    .actions-hidden .item-actions .lock-guard { display: none !important; }
 
     .form-hidden #formCard { display: none !important; }
 
@@ -179,7 +180,6 @@
         </div>
       </header>
 
-      <!-- Centered compact section: only aligned count pills -->
       <div class="counts-card card" aria-live="polite" style="margin-top:8px">
         <div class="counts-row" aria-hidden="false">
           <div id="upcomingCount" class="count-pill upcoming" title="Upcoming within 24h">
@@ -283,7 +283,8 @@
     const upcomingCountEl = document.getElementById('upcomingCount');
     const ongoingCountEl = document.getElementById('ongoingCount');
 
-    let dataCache = [];
+    // expose dataCache globally for debugging helpers used earlier
+    window.dataCache = [];
     let unlocked = false;
 
     function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
@@ -404,10 +405,10 @@
     }
 
     function getUpcomingEntries(){
-      if (!Array.isArray(dataCache)) dataCache = [];
+      if (!Array.isArray(window.dataCache)) window.dataCache = [];
       const now = Date.now();
       const in24h = now + (24 * 60 * 60 * 1000);
-      return dataCache.filter(r => {
+      return window.dataCache.filter(r => {
         if (!r || !r.overtime_date) return false;
         const start = parseDateOnlyToLocalMidnight(r.overtime_date);
         if (isNaN(start)) return false;
@@ -417,9 +418,9 @@
     }
 
     function getOngoingEntries(){
-      if (!Array.isArray(dataCache)) dataCache = [];
+      if (!Array.isArray(window.dataCache)) window.dataCache = [];
       const now = Date.now();
-      return dataCache.filter(r => {
+      return window.dataCache.filter(r => {
         if (!r || !r.overtime_date) return false;
         const start = parseDateOnlyToLocalMidnight(r.overtime_date);
         const expiry = computeExpiryForOvertimeDate(r.overtime_date);
@@ -453,48 +454,49 @@
       }
     }
 
-function createRowElement(row){
-  const el = document.createElement('div');
-  el.className = 'item';
-  el.dataset.id = row.id;
-  const dateDisplay = row.overtime_date ? formatDateOnlyYMD(row.overtime_date) : '—';
-  const dateAttr = row.overtime_date ? (String(row.overtime_date).split('T')[0]) : '';
-  el.innerHTML = `
-    <div class="item-top">
-      <div class="item-left">
-        <div class="name" data-field="name">${escapeHtml(row.name)}</div>
-        <div class="notes" data-field="notes">${escapeHtml(row.notes || '')}</div>
-      </div>
-      <div class="date-pill" data-field="overtime_date" aria-hidden="${row.overtime_date ? 'false' : 'true'}">
-        <time datetime="${escapeHtml(dateAttr)}">${escapeHtml(dateDisplay)}</time>
-      </div>
-    </div>
-    <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
-      <div class="item-actions">
-        <!-- Edit must NOT have lock-guard so it stays clickable -->
-        <button class="btn ghost" data-action="edit" type="button">Edit</button>
-        <!-- Delete remains guarded -->
-        <button class="btn ghost lock-guard" data-action="delete" type="button">Delete</button>
-      </div>
-    </div>
-  `;
+    // createRowElement: ensure Edit button does NOT have lock-guard so it remains visible/clickable
+    function createRowElement(row){
+      const el = document.createElement('div');
+      el.className = 'item';
+      el.dataset.id = row.id;
+      const dateDisplay = row.overtime_date ? formatDateOnlyYMD(row.overtime_date) : '—';
+      const dateAttr = row.overtime_date ? (String(row.overtime_date).split('T')[0]) : '';
+      el.innerHTML = `
+        <div class="item-top">
+          <div class="item-left">
+            <div class="name" data-field="name">${escapeHtml(row.name)}</div>
+            <div class="notes" data-field="notes">${escapeHtml(row.notes || '')}</div>
+          </div>
+          <div class="date-pill" data-field="overtime_date" aria-hidden="${row.overtime_date ? 'false' : 'true'}">
+            <time datetime="${escapeHtml(dateAttr)}">${escapeHtml(dateDisplay)}</time>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
+          <div class="item-actions">
+            <!-- Edit remains visible and clickable (no lock-guard) -->
+            <button class="btn ghost" data-action="edit" type="button">Edit</button>
+            <!-- Delete remains guarded -->
+            <button class="btn ghost lock-guard" data-action="delete" type="button">Delete</button>
+          </div>
+        </div>
+      `;
 
-  try {
-    if (row && row.overtime_date) {
-      const now = Date.now();
-      const start = parseDateOnlyToLocalMidnight(row.overtime_date).getTime();
-      const expiry = computeExpiryForOvertimeDate(row.overtime_date).getTime();
-      if (!isNaN(start) && !isNaN(expiry)) {
-        const isFutureUpcoming = start > now && start <= (now + 24*60*60*1000);
-        const isActiveWithinGrace = start <= now && expiry > now;
-        if (isFutureUpcoming) el.classList.add('upcoming');
-        if (isActiveWithinGrace) el.classList.add('ongoing');
-      }
+      try {
+        if (row && row.overtime_date) {
+          const now = Date.now();
+          const start = parseDateOnlyToLocalMidnight(row.overtime_date).getTime();
+          const expiry = computeExpiryForOvertimeDate(row.overtime_date).getTime();
+          if (!isNaN(start) && !isNaN(expiry)) {
+            const isFutureUpcoming = start > now && start <= (now + 24*60*60*1000);
+            const isActiveWithinGrace = start <= now && expiry > now;
+            if (isFutureUpcoming) el.classList.add('upcoming');
+            if (isActiveWithinGrace) el.classList.add('ongoing');
+          }
+        }
+      } catch (e) { /* ignore */ }
+
+      return el;
     }
-  } catch (e) { /* ignore */ }
-
-  return el;
-}
 
     function renderList(items){
       rowsEl.innerHTML = '';
@@ -511,9 +513,9 @@ function createRowElement(row){
     }
 
     function renderEntriesAccordingToLock(){
-      if (!Array.isArray(dataCache)) dataCache = [];
+      if (!Array.isArray(window.dataCache)) window.dataCache = [];
       if (unlocked) {
-        const sorted = dataCache.slice().sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
+        const sorted = window.dataCache.slice().sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
         rowsEl.innerHTML = '';
         sorted.forEach(r => rowsEl.appendChild(createRowElement(r)));
         if (sorted.length) {
@@ -541,9 +543,9 @@ function createRowElement(row){
     }
 
     async function autoDeleteExpired(){
-      if (!Array.isArray(dataCache)) dataCache = [];
+      if (!Array.isArray(window.dataCache)) window.dataCache = [];
       const now = Date.now();
-      const expired = dataCache.filter(r => {
+      const expired = window.dataCache.filter(r => {
         if (!r || !r.overtime_date) return false;
         const expiry = computeExpiryForOvertimeDate(r.overtime_date);
         if (!expiry || isNaN(expiry)) return false;
@@ -559,7 +561,7 @@ function createRowElement(row){
             console.error('Delete failed for id', r.id, error);
             continue;
           }
-          dataCache = dataCache.filter(x => String(x.id) !== String(r.id));
+          window.dataCache = window.dataCache.filter(x => String(x.id) !== String(r.id));
         } catch (err) {
           console.error('Delete error', err);
         }
@@ -574,7 +576,7 @@ function createRowElement(row){
       try {
         const { data, error } = await supabase.from('overtime_data').select('id,name,notes,overtime_date').order('overtime_date',{ascending:true});
         if (error) throw error;
-        dataCache = (data || []).map(r => ({ ...r, overtime_date: normalizeStoredDate(r.overtime_date) }));
+        window.dataCache = (data || []).map(r => ({ ...r, overtime_date: normalizeStoredDate(r.overtime_date) }));
         renderEntriesAccordingToLock();
         updateCounts();
       } catch (err) {
@@ -596,7 +598,7 @@ function createRowElement(row){
         const { data, error } = await supabase.from('overtime_data').insert([{ name, notes, overtime_date }]).select();
         if (error) throw error;
         const inserted = (data || []).map(r => ({ ...r, overtime_date: normalizeStoredDate(r.overtime_date) }));
-        dataCache = [...dataCache, ...inserted];
+        window.dataCache = [...window.dataCache, ...inserted];
         renderEntriesAccordingToLock();
         updateCounts();
         form.reset();
@@ -625,7 +627,7 @@ function createRowElement(row){
         try {
           const { error } = await supabase.from('overtime_data').delete().eq('id', id);
           if (error) throw error;
-          dataCache = dataCache.filter(r => String(r.id) !== String(id));
+          window.dataCache = window.dataCache.filter(r => String(r.id) !== String(id));
           renderEntriesAccordingToLock();
           updateCounts();
         } catch (err) {
@@ -636,8 +638,9 @@ function createRowElement(row){
       }
 
       if (action === 'edit') {
+        // Edit button is visible and clickable even when locked; still require unlocked to actually edit/save
         if (!unlocked) { alert('Actions are locked. Unlock to edit.'); return; }
-        const row = dataCache.find(r => String(r.id) === String(id));
+        const row = window.dataCache.find(r => String(r.id) === String(id));
         if (!row) return;
         item.classList.add('editing');
         item.innerHTML = `
@@ -669,7 +672,7 @@ function createRowElement(row){
           const { data, error } = await supabase.from('overtime_data').update({ name, notes, overtime_date }).eq('id', id).select();
           if (error) throw error;
           const updatedRow = (data && data[0]) ? { ...data[0], overtime_date: normalizeStoredDate(data[0].overtime_date) } : null;
-          dataCache = dataCache.map(r => String(r.id) === String(id) ? (updatedRow || { ...r, name, notes, overtime_date }) : r);
+          window.dataCache = window.dataCache.map(r => String(r.id) === String(id) ? (updatedRow || { ...r, name, notes, overtime_date }) : r);
           renderEntriesAccordingToLock();
           updateCounts();
         } catch (err) {
@@ -692,7 +695,7 @@ function createRowElement(row){
         updateCounts();
         return;
       }
-      const filtered = dataCache.filter(r =>
+      const filtered = window.dataCache.filter(r =>
         (r.name||'').toLowerCase().includes(q) ||
         (r.notes||'').toLowerCase().includes(q) ||
         (r.overtime_date||'').includes(q)
@@ -717,89 +720,80 @@ function createRowElement(row){
       updateCounts();
     });
 
-function updateGuardedControls(){
-  document.querySelectorAll('.lock-guard').forEach(el => {
-    const tag = (el.tagName || '').toUpperCase();
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-      if (!unlocked) el.setAttribute('disabled','true'); else el.removeAttribute('disabled');
-    } else {
-      // keep buttons clickable; mark aria-disabled for screen readers
-      if (!unlocked) {
-        el.setAttribute('aria-disabled','true');
-        el.classList.add('visually-guarded');
-        // ensure no accidental disabled attribute remains on buttons
-        if (el.hasAttribute('disabled')) el.removeAttribute('disabled');
-      } else {
-        el.removeAttribute('aria-disabled');
-        el.classList.remove('visually-guarded');
+    // updateGuardedControls: disable only form controls; keep Edit buttons visible/clickable
+    function updateGuardedControls(){
+      document.querySelectorAll('.lock-guard').forEach(el => {
+        const tag = (el.tagName || '').toUpperCase();
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+          if (!unlocked) el.setAttribute('disabled','true'); else el.removeAttribute('disabled');
+        } else {
+          // For non-form elements (buttons), keep interactive but mark aria-disabled for screen readers
+          if (!unlocked) {
+            el.setAttribute('aria-disabled','true');
+            el.classList.add('visually-guarded');
+            if (el.hasAttribute('disabled')) el.removeAttribute('disabled');
+          } else {
+            el.removeAttribute('aria-disabled');
+            el.classList.remove('visually-guarded');
+          }
+        }
+      });
+
+      lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
+      if (openUnlock) {
+        openUnlock.setAttribute('aria-pressed', unlocked ? 'true' : 'false');
+        openUnlock.title = unlocked ? 'Lock actions' : 'Unlock actions';
+        openUnlock.setAttribute('aria-label', unlocked ? 'Lock actions' : 'Unlock actions');
+        openUnlock.classList.toggle('active', unlocked);
       }
+
+      if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
+      if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
+
+      renderEntriesAccordingToLock();
+      updateCounts();
     }
-  });
-
-  // visual lock indicator + unlock button state
-  lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
-  if (openUnlock) {
-    openUnlock.setAttribute('aria-pressed', unlocked ? 'true' : 'false');
-    openUnlock.title = unlocked ? 'Lock actions' : 'Unlock actions';
-    openUnlock.setAttribute('aria-label', unlocked ? 'Lock actions' : 'Unlock actions');
-    openUnlock.classList.toggle('active', unlocked);
-  }
-
-  if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
-  if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
-
-  // re-render list and counts (keeps current behavior)
-  renderEntriesAccordingToLock();
-  updateCounts();
-}
 
     function setUnlockedState(state, persist = true){
       unlocked = !!state;
       updateGuardedControls();
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
-// Optional: load inert polyfill once (uncomment if needed)
-// import 'https://unpkg.com/wicg-inert/dist/inert.min.js';
 
-function openModal(){
-  // show modal and make it accessible
-  modalBackdrop.style.display = 'flex';
-  modalBackdrop.setAttribute('aria-hidden','false');
+    // Modal open/close with inert handling to avoid aria-hidden focus conflict
+    function openModal(){
+      modalBackdrop.style.display = 'flex';
+      modalBackdrop.setAttribute('aria-hidden','false');
 
-  // mark background app as inert (prevents focus/interaction)
-  try {
-    if (appRoot) {
-      appRoot.inert = true;
-      appRoot.setAttribute('aria-hidden','true');
+      try {
+        if (appRoot) {
+          appRoot.inert = true;
+          appRoot.setAttribute('aria-hidden','true');
+        }
+      } catch (e) {
+        if (appRoot) appRoot.setAttribute('aria-hidden','true');
+      }
+
+      pwError.style.display = 'none';
+      setTimeout(() => { try { pwInput.focus(); } catch(e){} }, 10);
     }
-  } catch (e) {
-    if (appRoot) appRoot.setAttribute('aria-hidden','true');
-  }
 
-  pwError.style.display = 'none';
-  setTimeout(() => { try { pwInput.focus(); } catch(e){} }, 10);
-}
+    function closeModal(){
+      modalBackdrop.style.display = 'none';
+      modalBackdrop.setAttribute('aria-hidden','true');
 
-function closeModal(){
-  modalBackdrop.style.display = 'none';
-  modalBackdrop.setAttribute('aria-hidden','true');
+      try {
+        if (appRoot) {
+          appRoot.inert = false;
+          appRoot.removeAttribute('aria-hidden');
+        }
+      } catch (e) {
+        if (appRoot) appRoot.removeAttribute('aria-hidden');
+      }
 
-  try {
-    if (appRoot) {
-      appRoot.inert = false;
-      appRoot.removeAttribute('aria-hidden');
+      pwError.style.display = 'none';
+      try { openUnlock.focus(); } catch(e){}
     }
-  } catch (e) {
-    if (appRoot) appRoot.removeAttribute('aria-hidden');
-  }
-
-  pwError.style.display = 'none';
-  try { openUnlock.focus(); } catch(e){}
-}
-
-
-
-
 
     async function submitPassword(password){
       try {
@@ -885,7 +879,7 @@ function closeModal(){
         console.log('rows children:', document.getElementById('rows')?.children.length);
         console.log('upcoming elements:', getUpcomingEntries().length);
         console.log('ongoing elements:', getOngoingEntries().length);
-        console.log('dataCache sample:', dataCache.slice(0,10));
+        console.log('dataCache sample:', window.dataCache.slice(0,10));
       } catch(e){ console.warn('diag error', e); }
     };
   </script>
