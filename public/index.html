@@ -11,7 +11,6 @@
   (function(){
     try {
       const KEY = 'overtime_unlocked_v2';
-      // Block writes and reads for this key early in the page lifecycle
       const _set = Storage.prototype.setItem;
       const _get = Storage.prototype.getItem;
       const _remove = Storage.prototype.removeItem;
@@ -28,10 +27,9 @@
         return _remove.apply(this, arguments);
       };
       try { localStorage.removeItem(KEY); } catch(e){}
-      // enforce locked UI quickly if DOM already present
       function enforce(){
         const app = document.getElementById('appRoot');
-        if (app) app.classList.add('actions-hidden','form-hidden','entries-hidden');
+        if (app) app.classList.add('actions-hidden','form-hidden');
         Array.from(document.querySelectorAll('.lock-guard')).forEach(el=>{ try{ el.setAttribute('disabled','true'); }catch(e){} });
         const li = document.getElementById('lockIndicator'); if (li) li.style.background = '#ef4444';
       }
@@ -148,9 +146,9 @@
     .actions-hidden .item-actions { display: none !important; }
     .form-hidden #formCard { display: none !important; }
 
-    /* NEW: hide entries list when locked */
-    .app.entries-hidden #rows { display: none !important; }
-    .app.entries-hidden #empty { display: block !important; }
+    /* keep entries visible even when locked; highlight upcoming items */
+    .item.upcoming { box-shadow: 0 8px 20px rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.12); }
+    .item.upcoming .date-pill { border-color: rgba(16,185,129,0.18); background: linear-gradient(180deg, rgba(16,185,129,0.04), rgba(16,185,129,0.02)); }
 
     @media (max-width:420px){
       .add-row{grid-template-columns:1fr}
@@ -376,6 +374,7 @@
       btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
+    // Update guarded controls: keep entries visible even when locked; hide/disable actions and form
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
@@ -387,19 +386,14 @@
       }
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
-
-      // hide entries list when locked; show when unlocked
-      if (!unlocked) appRoot.classList.add('entries-hidden'); else appRoot.classList.remove('entries-hidden');
-
-      // keep counts in sync
       updateUpcomingCountFromRendered();
     }
 
-    // PATCHED: do not persist unlocked=true to localStorage to avoid auto-restore on reload
+    // Do not persist unlocked=true to localStorage
     function setUnlockedState(state, persist = true){
       unlocked = !!state;
       updateGuardedControls();
-      // IMPORTANT: persistence disabled to prevent automatic unlock on reload
+      // persistence intentionally disabled to avoid automatic restore on reload
       // if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
@@ -419,7 +413,6 @@
           pwError.textContent = `Server: ${msg}`;
           return;
         }
-        // do not persist unlocked state
         setUnlockedState(true, false);
         closeModal();
       } catch (err) {
@@ -466,38 +459,32 @@
       return el;
     }
 
-    function renderList(items){
+    // Always render full list; mark upcoming items with .upcoming
+    function renderEntriesAccordingToLock(){
+      if (!Array.isArray(dataCache)) dataCache = [];
+      const sorted = dataCache.slice().sort((a,b) => new Date(a.overtime_date || 0) - new Date(b.overtime_date || 0));
       rowsEl.innerHTML = '';
-      if (!items || !items.length) {
+      const now = Date.now();
+      sorted.forEach(r => {
+        const el = createRowElement(r);
+        if (r && r.overtime_date) {
+          const d = new Date(r.overtime_date).getTime();
+          if (!isNaN(d)) {
+            const diffHours = (d - now) / (1000 * 60 * 60);
+            if (diffHours > 0 && diffHours <= 24) el.classList.add('upcoming');
+            else el.classList.remove('upcoming');
+          }
+        }
+        rowsEl.appendChild(el);
+      });
+      if (sorted.length) {
+        emptyEl.style.display = 'none';
+        statusEl.textContent = `Loaded ${sorted.length} entries`;
+      } else {
         emptyEl.style.display = 'block';
         statusEl.textContent = 'No entries';
-        updateUpcomingCountFromRendered();
-        return;
       }
-      emptyEl.style.display = 'none';
-      items.forEach(r => rowsEl.appendChild(createRowElement(r)));
-      statusEl.textContent = `Loaded ${items.length} entries`;
       updateUpcomingCountFromRendered();
-    }
-
-    function getUpcomingEntries(){
-      const now = new Date();
-      return dataCache.filter(r => {
-        if (!r || !r.overtime_date) return false;
-        const d = new Date(r.overtime_date);
-        const diffHours = (d - now) / (1000 * 60 * 60);
-        return diffHours > 0 && diffHours <= 24;
-      }).sort((a,b) => new Date(a.overtime_date) - new Date(b.overtime_date));
-    }
-
-    function renderEntriesAccordingToLock(){
-      if (unlocked) {
-        const sorted = dataCache.slice().sort((a,b) => new Date(a.overtime_date || 0) - new Date(b.overtime_date || 0));
-        renderList(sorted);
-      } else {
-        const upcoming = getUpcomingEntries();
-        renderList(upcoming);
-      }
     }
 
     function getRenderedEntriesCount() {
@@ -659,19 +646,25 @@
         (r.notes||'').toLowerCase().includes(q) ||
         (r.overtime_date||'').includes(q)
       );
-      if (unlocked) {
-        renderList(filtered);
-      } else {
-        const upcomingFiltered = filtered.filter(r => {
-          if (!r.overtime_date) return false;
-          const d = new Date(r.overtime_date);
-          const diffHours = (d - new Date()) / (1000*60*60);
-          return diffHours > 0 && diffHours <= 24;
-        });
-        renderList(upcomingFiltered);
-      }
+      // show filtered results regardless of lock state (but actions remain disabled when locked)
+      renderList(filtered);
       updateUpcomingCountFromRendered();
     });
+
+    // helper renderList used by search
+    function renderList(items){
+      rowsEl.innerHTML = '';
+      if (!items || !items.length) {
+        emptyEl.style.display = 'block';
+        statusEl.textContent = 'No entries';
+        updateUpcomingCountFromRendered();
+        return;
+      }
+      emptyEl.style.display = 'none';
+      items.forEach(r => rowsEl.appendChild(createRowElement(r)));
+      statusEl.textContent = `Loaded ${items.length} entries`;
+      updateUpcomingCountFromRendered();
+    }
 
     openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, false); } });
 
@@ -717,25 +710,19 @@
       }
     }, CHECK_INTERVAL_MS);
 
-    // Ensure UI starts locked on load and avoid restoring unlocked state
     window.addEventListener('DOMContentLoaded', async () => {
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
 
-      // Remove any persisted unlocked flag (best effort)
       try { localStorage.removeItem(LOCAL_KEY); } catch (e) { /* ignore */ }
-
-      // Start locked (do not persist)
       setUnlockedState(false, false);
-
-      // Ensure UI reflects locked state synchronously
       updateGuardedControls();
 
       await loadRows();
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
 
-    // Diagnostic helper (call from console if needed)
+    // Diagnostic helper
     window.__overtime_diag = function(){
       try {
         console.log('localStorage key raw:', (function(){ try { return localStorage.getItem(LOCAL_KEY); } catch(e){ return 'err'; } })());
@@ -743,6 +730,7 @@
         console.log('lockIndicator color:', getComputedStyle(document.getElementById('lockIndicator')||{}).backgroundColor);
         console.log('lock-guard disabled count:', Array.from(document.querySelectorAll('.lock-guard')).filter(el=>el.disabled).length);
         console.log('rows children:', document.getElementById('rows')?.children.length);
+        console.log('upcoming elements:', document.querySelectorAll('#rows .item.upcoming').length);
       } catch(e){ console.warn('diag error', e); }
     };
   </script>
