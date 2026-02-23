@@ -85,7 +85,6 @@
     #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block;transition:color var(--theme-transition)}
     .field{display:flex;flex-direction:column;gap:8px;min-width:0}
 
-    /* --- PATCH: prevent date input overlap --- */
     .add-row{display:grid;grid-template-columns:1fr;gap:8px;align-items:start}
     @media(min-width:520px){ .add-row{grid-template-columns:1fr 1fr} }
 
@@ -93,7 +92,6 @@
     .date-control input[type="date"],.date-control input[type="text"],.date-control input[type="datetime-local"]{flex:1;min-width:0;height:var(--input-h);padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);text-align:center;box-sizing:border-box;}
     .date-btn{flex:0 0 auto;width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;}
     @media(max-width:320px){ .date-control{flex-direction:column;align-items:stretch} .date-btn{width:100%} }
-    /* --- end patch --- */
 
     input[type="text"], textarea, input[type="date"]{width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);text-align:center;transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);}
     input[type="text"]:focus, textarea:focus, input[type="date"]:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
@@ -122,12 +120,8 @@
       .live-clock{min-width:140px;font-size:0.78rem}
     }
 
-    /* Upcoming card styles */
     .upcoming-card{margin-top:10px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
     .upcoming-card strong{display:block;margin-bottom:6px}
-    .upcoming-item{padding:6px;border-radius:6px;background:rgba(255,255,255,0.02);margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
-    .upcoming-item .name{font-weight:600;font-size:0.92rem}
-    .upcoming-item .date{color:var(--muted);font-size:0.88rem}
   </style>
 </head>
 <body>
@@ -170,7 +164,7 @@
       <!-- Upcoming Section (above Entries) -->
       <div class="upcoming-card" id="upcomingSection" aria-live="polite">
         <strong>Upcoming within 24h</strong>
-        <div id="upcoming" style="color:var(--muted)">No upcoming leaves/OT within 24h</div>
+        <div id="upcoming" style="color:var(--muted)">No upcoming items</div>
       </div>
 
       <main class="card" aria-live="polite" style="display:flex;flex-direction:column;gap:10px">
@@ -268,7 +262,6 @@
     function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
     function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
 
-    // Format date-only display: "yyyy/mm/dd"
     function formatDateOnlyYMD(iso){
       if (!iso) return '—';
       const d = new Date(iso);
@@ -280,14 +273,12 @@
       return `${yyyy}/${mm}/${dd}`;
     }
 
-    // Convert date input value (YYYY-MM-DD) to ISO date string (YYYY-MM-DD) for storage
     function toIsoDateFromInput(val){
       if (!val) return null;
       const m = val.match(/^(\d{4})-(\d{2})-(\d{2})$/);
       return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
     }
 
-    // Convert stored ISO date (YYYY-MM-DD or full ISO) to input value (YYYY-MM-DD)
     function toDateInputValue(stored){
       if (!stored) return '';
       const d = new Date(stored);
@@ -355,8 +346,9 @@
       }
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
-      // After toggling lock state, re-render entries according to the rule:
+      // After toggling lock state, re-render entries and update upcoming count
       renderEntriesAccordingToLock();
+      updateUpcomingCountFromRendered();
     }
     function setUnlockedState(state, persist = true){
       unlocked = !!state; updateGuardedControls(); if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
@@ -386,7 +378,6 @@
       }
     }
 
-    // Date picker helper for input[type=date]
     (function attachDateBehavior(){
       try {
         function openPicker(){
@@ -399,7 +390,6 @@
       } catch (e) { console.warn('Date behavior attach failed', e); }
     })();
 
-    // Create row element: show date only in yyyy/mm/dd
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -426,66 +416,59 @@
       return el;
     }
 
-    // Render a list into the Entries area (rowsEl)
     function renderList(items){
       rowsEl.innerHTML = '';
       if (!items || !items.length) {
         emptyEl.style.display = 'block';
         statusEl.textContent = 'No entries';
+        updateUpcomingCountFromRendered();
         return;
       }
       emptyEl.style.display = 'none';
       items.forEach(r => rowsEl.appendChild(createRowElement(r)));
       statusEl.textContent = `Loaded ${items.length} entries`;
+      updateUpcomingCountFromRendered();
     }
 
-    // Return upcoming entries (within next 24 hours)
+    // get upcoming entries (within next 24h)
     function getUpcomingEntries(){
       const now = new Date();
       return dataCache.filter(r => {
-        if (!r.overtime_date) return false;
+        if (!r || !r.overtime_date) return false;
         const d = new Date(r.overtime_date);
-        const diffMs = d - now;
-        const diffHours = diffMs / (1000 * 60 * 60);
+        const diffHours = (d - now) / (1000 * 60 * 60);
         return diffHours > 0 && diffHours <= 24;
       }).sort((a,b) => new Date(a.overtime_date) - new Date(b.overtime_date));
     }
 
-    // Render upcoming card
-    function renderUpcoming(list){
-      upcomingEl.innerHTML = '';
-      if (!list || !list.length) {
-        upcomingEl.textContent = 'No upcoming leaves/OT within 24h';
-        return;
-      }
-      list.forEach(r => {
-        const div = document.createElement('div');
-        div.className = 'upcoming-item';
-        const left = document.createElement('div');
-        left.className = 'name';
-        left.textContent = r.name || '—';
-        const right = document.createElement('div');
-        right.className = 'date';
-        right.textContent = formatDateOnlyYMD(r.overtime_date);
-        div.appendChild(left);
-        div.appendChild(right);
-        upcomingEl.appendChild(div);
-      });
-    }
-
-    // Decide what to show in Entries area based on lock state:
-    // - If unlocked: show all entries (dataCache)
-    // - If locked: show only upcoming entries (within 24h). If none, show empty message.
+    // Render entries area depending on lock state
     function renderEntriesAccordingToLock(){
       if (unlocked) {
-        renderList(dataCache.slice().sort((a,b) => new Date(a.overtime_date || 0) - new Date(b.overtime_date || 0)));
+        const sorted = dataCache.slice().sort((a,b) => new Date(a.overtime_date || 0) - new Date(b.overtime_date || 0));
+        renderList(sorted);
       } else {
         const upcoming = getUpcomingEntries();
         renderList(upcoming);
       }
     }
 
-    // Auto-delete expired entries (older than now)
+    // Count of currently rendered rows and update Upcoming card to show that count
+    function getRenderedEntriesCount() {
+      return rowsEl?.children.length || 0;
+    }
+
+    function updateUpcomingCountFromRendered() {
+      const count = getRenderedEntriesCount();
+      upcomingEl.innerHTML = `
+        <div style="display:flex;gap:12px;align-items:center;justify-content:center">
+          <div style="display:flex;flex-direction:column;align-items:center;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,0.01);min-width:100px">
+            <div style="font-weight:700;font-size:1.2rem">${count}</div>
+            <div style="color:var(--muted);font-size:0.9rem">In Entries</div>
+          </div>
+        </div>
+      `;
+    }
+
     async function autoDeleteExpired(){
       const now = new Date();
       const expired = dataCache.filter(r => {
@@ -506,9 +489,8 @@
           console.error('Delete error', err);
         }
       }
-      // After deletion, re-render both upcoming and entries according to lock
-      renderUpcoming(getUpcomingEntries());
       renderEntriesAccordingToLock();
+      updateUpcomingCountFromRendered();
     }
 
     async function loadRows(){
@@ -517,10 +499,8 @@
         const { data, error } = await supabase.from('overtime_data').select('id,name,notes,overtime_date').order('overtime_date',{ascending:true});
         if (error) throw error;
         dataCache = (data || []);
-        // Render upcoming always (it appears above entries)
-        renderUpcoming(getUpcomingEntries());
-        // Render entries according to lock state
         renderEntriesAccordingToLock();
+        updateUpcomingCountFromRendered();
       } catch (err) {
         console.error(err);
         statusEl.textContent = 'Error loading data';
@@ -540,9 +520,8 @@
         const { data, error } = await supabase.from('overtime_data').insert([{ name, notes, overtime_date }]).select();
         if (error) throw error;
         dataCache = [...dataCache, ...(data||[])];
-        // Update upcoming and entries
-        renderUpcoming(getUpcomingEntries());
         renderEntriesAccordingToLock();
+        updateUpcomingCountFromRendered();
         form.reset();
         if (dateInput) dateInput.value = '';
       } catch (err) {
@@ -569,8 +548,8 @@
           const { error } = await supabase.from('overtime_data').delete().eq('id', id);
           if (error) throw error;
           dataCache = dataCache.filter(r => String(r.id) !== String(id));
-          renderUpcoming(getUpcomingEntries());
           renderEntriesAccordingToLock();
+          updateUpcomingCountFromRendered();
         } catch (err) {
           console.error(err);
           alert('Delete failed: ' + (err.message || err));
@@ -612,8 +591,8 @@
           const { data, error } = await supabase.from('overtime_data').update({ name, notes, overtime_date }).eq('id', id).select();
           if (error) throw error;
           dataCache = dataCache.map(r => String(r.id) === String(id) ? (data && data[0]) || { ...r, name, notes, overtime_date } : r);
-          renderUpcoming(getUpcomingEntries());
           renderEntriesAccordingToLock();
+          updateUpcomingCountFromRendered();
         } catch (err) {
           console.error(err);
           alert('Update failed: ' + (err.message || err));
@@ -630,11 +609,10 @@
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) {
-        // show according to lock state
         renderEntriesAccordingToLock();
+        updateUpcomingCountFromRendered();
         return;
       }
-      // search across the full dataset, but still respect lock state for display:
       const filtered = dataCache.filter(r =>
         (r.name||'').toLowerCase().includes(q) ||
         (r.notes||'').toLowerCase().includes(q) ||
@@ -643,7 +621,6 @@
       if (unlocked) {
         renderList(filtered);
       } else {
-        // when locked, only show filtered upcoming items
         const upcomingFiltered = filtered.filter(r => {
           if (!r.overtime_date) return false;
           const d = new Date(r.overtime_date);
@@ -652,6 +629,7 @@
         });
         renderList(upcomingFiltered);
       }
+      updateUpcomingCountFromRendered();
     });
 
     openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
@@ -660,7 +638,6 @@
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
-    // Live clock
     function formatToYMDHMSFromDateObj(d){
       if (!d || isNaN(d)) return '—';
       const pad = (n) => String(n).padStart(2,'0');
@@ -681,7 +658,6 @@
       }
     }
 
-    // date picker button helper
     if (dateBtn && dateInput) {
       dateBtn.addEventListener('click', () => {
         try { dateInput.showPicker && dateInput.showPicker(); } catch(e){}
@@ -689,13 +665,12 @@
       });
     }
 
-    // Periodic checks: every hour run upcoming filter and auto-delete expired
     const CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
     setInterval(() => {
       try {
-        renderUpcoming(getUpcomingEntries());
-        // If locked, entries area should reflect upcoming only; if unlocked, keep all
+        // refresh entries and counts
         renderEntriesAccordingToLock();
+        updateUpcomingCountFromRendered();
         autoDeleteExpired();
       } catch (e) {
         console.error('Periodic check error', e);
@@ -706,12 +681,10 @@
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
 
-      // default locked state (persisted)
       const saved = safeGetLocal(LOCAL_KEY);
       setUnlockedState(saved === 'true');
 
       await loadRows();
-      // initial cleanup
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
   </script>
