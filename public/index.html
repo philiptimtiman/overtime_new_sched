@@ -16,6 +16,7 @@
       --base-font:15px; --theme-transition:220ms ease;
       --ongoing-color: #3b82f6;
       --upcoming-color: #10b981;
+      --expiring-color: #f59e0b;
     }
 
     *,*::before,*::after{box-sizing:border-box}
@@ -109,8 +110,7 @@
     .modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;}
     .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
 
-    /* Minimal change: hide only guarded controls inside actions when locked.
-       This preserves visibility and clickability of Edit buttons (if present). */
+    /* hide only guarded controls inside actions when locked */
     .actions-hidden .item-actions .lock-guard { display: none !important; }
 
     .form-hidden #formCard { display: none !important; }
@@ -120,6 +120,9 @@
 
     .item.ongoing { box-shadow: 0 8px 20px rgba(59,130,246,0.06); border-color: rgba(59,130,246,0.12); }
     .item.ongoing .date-pill { border-color: rgba(59,130,246,0.18); background: linear-gradient(180deg, rgba(59,130,246,0.04), rgba(59,130,246,0.02)); }
+
+    .item.expiring { box-shadow: 0 8px 20px rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.12); }
+    .item.expiring .date-pill { border-color: rgba(245,158,11,0.18); background: linear-gradient(180deg, rgba(245,158,11,0.04), rgba(245,158,11,0.02)); }
 
     @media (max-width:420px){
       .add-row{grid-template-columns:1fr}
@@ -138,6 +141,7 @@
 
     .count-pill.upcoming { background: linear-gradient(180deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04)); border-color: rgba(16,185,129,0.14); color: #eafff5; }
     .count-pill.ongoing  { background: linear-gradient(180deg, rgba(59,130,246,0.10), rgba(59,130,246,0.04)); border-color: rgba(59,130,246,0.14); color: #eaf4ff; }
+    .count-pill.expiring { background: linear-gradient(180deg, rgba(245,158,11,0.10), rgba(245,158,11,0.04)); border-color: rgba(245,158,11,0.14); color: #fff7e6; }
 
     .counts-row .count-pill { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:72px }
   </style>
@@ -187,6 +191,10 @@
           <div id="ongoingCount" class="count-pill ongoing" title="On going (within grace)">
             <div class="count-value">0</div>
             <div class="count-label">On going</div>
+          </div>
+          <div id="expiringCount" class="count-pill expiring" title="Expiring soon (within grace)">
+            <div class="count-value">0</div>
+            <div class="count-label">Expiring</div>
           </div>
         </div>
       </div>
@@ -280,9 +288,15 @@
 
     const upcomingCountEl = document.getElementById('upcomingCount');
     const ongoingCountEl = document.getElementById('ongoingCount');
+    const expiringCountEl = document.getElementById('expiringCount');
 
+    // expose dataCache globally for debugging
     window.dataCache = [];
     let unlocked = false;
+
+    // Grace period: 7 hours 20 minutes -> 7*60 + 20 = 440 minutes
+    const GRACE_MINUTES = 440;
+    const GRACE_MS = GRACE_MINUTES * 60 * 1000;
 
     function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
     function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
@@ -394,10 +408,11 @@
       return isNaN(d) ? NaN : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
     }
 
+    // compute expiry using GRACE_MS (7h20m)
     function computeExpiryForOvertimeDate(dateOnly) {
       const startMidnight = parseDateOnlyToLocalMidnight(dateOnly);
       if (isNaN(startMidnight)) return NaN;
-      const expiryMs = startMidnight.getTime() + (1880 * 60 * 1000); // 31h20m
+      const expiryMs = startMidnight.getTime() + GRACE_MS;
       return new Date(expiryMs);
     }
 
@@ -426,32 +441,54 @@
       }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
     }
 
+    // New: entries whose expiry is within the next GRACE_MS window (will be deleted soon)
+    function getExpiringEntries(){
+      if (!Array.isArray(window.dataCache)) window.dataCache = [];
+      const now = Date.now();
+      const soonThreshold = now + GRACE_MS;
+      return window.dataCache.filter(r => {
+        if (!r || !r.overtime_date) return false;
+        const expiry = computeExpiryForOvertimeDate(r.overtime_date);
+        if (!expiry || isNaN(expiry)) return false;
+        // expiry in future but within the next GRACE_MS window
+        return expiry.getTime() > now && expiry.getTime() <= soonThreshold;
+      }).sort((a,b) => computeExpiryForOvertimeDate(a.overtime_date) - computeExpiryForOvertimeDate(b.overtime_date));
+    }
+
     function updateCounts(){
       try {
         const upcoming = getUpcomingEntries();
         const ongoing = getOngoingEntries();
+        const expiring = getExpiringEntries();
         if (upcomingCountEl) {
           const valEl = upcomingCountEl.querySelector('.count-value');
           if (valEl) valEl.textContent = String(upcoming.length);
           upcomingCountEl.classList.add('upcoming');
-          upcomingCountEl.classList.remove('ongoing');
+          upcomingCountEl.classList.remove('ongoing','expiring');
         }
         if (ongoingCountEl) {
           const valEl = ongoingCountEl.querySelector('.count-value');
           if (valEl) valEl.textContent = String(ongoing.length);
           ongoingCountEl.classList.add('ongoing');
-          ongoingCountEl.classList.remove('upcoming');
+          ongoingCountEl.classList.remove('upcoming','expiring');
         }
-        return { upcoming, ongoing };
+        if (expiringCountEl) {
+          const valEl = expiringCountEl.querySelector('.count-value');
+          if (valEl) valEl.textContent = String(expiring.length);
+          expiringCountEl.classList.add('expiring');
+          expiringCountEl.classList.remove('upcoming','ongoing');
+        }
+        return { upcoming, ongoing, expiring };
       } catch (e) {
         console.warn('updateCounts failed', e);
         if (upcomingCountEl) upcomingCountEl.querySelector('.count-value').textContent = '0';
         if (ongoingCountEl) ongoingCountEl.querySelector('.count-value').textContent = '0';
-        return { upcoming: [], ongoing: [] };
+        if (expiringCountEl) expiringCountEl.querySelector('.count-value').textContent = '0';
+        return { upcoming: [], ongoing: [], expiring: [] };
       }
     }
 
-    // createRowElement: Edit button removed; only Delete remains
+    // createRowElement: Delete only (Edit removed earlier per request)
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -470,7 +507,6 @@
         </div>
         <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
           <div class="item-actions">
-            <!-- Only Delete button remains and is guarded -->
             <button class="btn ghost lock-guard" data-action="delete" type="button">Delete</button>
           </div>
         </div>
@@ -484,8 +520,10 @@
           if (!isNaN(start) && !isNaN(expiry)) {
             const isFutureUpcoming = start > now && start <= (now + 24*60*60*1000);
             const isActiveWithinGrace = start <= now && expiry > now;
+            const willExpireSoon = expiry > now && expiry <= (now + GRACE_MS);
             if (isFutureUpcoming) el.classList.add('upcoming');
             if (isActiveWithinGrace) el.classList.add('ongoing');
+            if (willExpireSoon) el.classList.add('expiring');
           }
         }
       } catch (e) { /* ignore */ }
@@ -822,6 +860,7 @@
         console.log('rows children:', document.getElementById('rows')?.children.length);
         console.log('upcoming elements:', getUpcomingEntries().length);
         console.log('ongoing elements:', getOngoingEntries().length);
+        console.log('expiring elements:', getExpiringEntries().length);
         console.log('dataCache sample:', window.dataCache.slice(0,10));
       } catch(e){ console.warn('diag error', e); }
     };
