@@ -5,6 +5,43 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Overtime Scheduler</title>
   <meta name="description" content="Overtime Schedule for SLT Foreign TE" />
+
+  <!-- PREPATCH: run first to block reads/writes for the unlock key and enforce locked UI early -->
+  <script>
+  (function(){
+    try {
+      const KEY = 'overtime_unlocked_v2';
+      // Block writes and reads for this key early in the page lifecycle
+      const _set = Storage.prototype.setItem;
+      const _get = Storage.prototype.getItem;
+      const _remove = Storage.prototype.removeItem;
+      Storage.prototype.setItem = function(k,v){
+        if (String(k) === KEY) { console.warn('prepatch blocked setItem', KEY, v); return; }
+        return _set.apply(this, arguments);
+      };
+      Storage.prototype.getItem = function(k){
+        if (String(k) === KEY) return null;
+        return _get.apply(this, arguments);
+      };
+      Storage.prototype.removeItem = function(k){
+        if (String(k) === KEY) return;
+        return _remove.apply(this, arguments);
+      };
+      try { localStorage.removeItem(KEY); } catch(e){}
+      // enforce locked UI quickly if DOM already present
+      function enforce(){
+        const app = document.getElementById('appRoot');
+        if (app) app.classList.add('actions-hidden','form-hidden','entries-hidden');
+        Array.from(document.querySelectorAll('.lock-guard')).forEach(el=>{ try{ el.setAttribute('disabled','true'); }catch(e){} });
+        const li = document.getElementById('lockIndicator'); if (li) li.style.background = '#ef4444';
+      }
+      enforce();
+      document.addEventListener('DOMContentLoaded', enforce, { once:true });
+      console.log('Overtime prepatch installed: blocked reads/writes for', KEY);
+    } catch(e){ console.warn('prepatch failed', e); }
+  })();
+  </script>
+
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
