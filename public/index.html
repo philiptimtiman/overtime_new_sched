@@ -451,47 +451,48 @@
       }
     }
 
-    function createRowElement(row){
-      const el = document.createElement('div');
-      el.className = 'item';
-      el.dataset.id = row.id;
-      const dateDisplay = row.overtime_date ? formatDateOnlyYMD(row.overtime_date) : '—';
-      const dateAttr = row.overtime_date ? (String(row.overtime_date).split('T')[0]) : '';
-      el.innerHTML = `
-        <div class="item-top">
-          <div class="item-left">
-            <div class="name" data-field="name">${escapeHtml(row.name)}</div>
-            <div class="notes" data-field="notes">${escapeHtml(row.notes || '')}</div>
-          </div>
-          <div class="date-pill" data-field="overtime_date" aria-hidden="${row.overtime_date ? 'false' : 'true'}">
-            <time datetime="${escapeHtml(dateAttr)}">${escapeHtml(dateDisplay)}</time>
-          </div>
-        </div>
-        <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
-          <div class="item-actions">
-            <!-- Edit remains clickable even when locked -->
-            <button class="btn ghost" data-action="edit" type="button">Edit</button>
-            <button class="btn ghost lock-guard" data-action="delete" type="button">Delete</button>
-          </div>
-        </div>
-      `;
+function createRowElement(row){
+  const el = document.createElement('div');
+  el.className = 'item';
+  el.dataset.id = row.id;
+  const dateDisplay = row.overtime_date ? formatDateOnlyYMD(row.overtime_date) : '—';
+  const dateAttr = row.overtime_date ? (String(row.overtime_date).split('T')[0]) : '';
+  el.innerHTML = `
+    <div class="item-top">
+      <div class="item-left">
+        <div class="name" data-field="name">${escapeHtml(row.name)}</div>
+        <div class="notes" data-field="notes">${escapeHtml(row.notes || '')}</div>
+      </div>
+      <div class="date-pill" data-field="overtime_date" aria-hidden="${row.overtime_date ? 'false' : 'true'}">
+        <time datetime="${escapeHtml(dateAttr)}">${escapeHtml(dateDisplay)}</time>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
+      <div class="item-actions">
+        <!-- Edit must NOT have lock-guard so it stays clickable -->
+        <button class="btn ghost" data-action="edit" type="button">Edit</button>
+        <!-- Delete remains guarded -->
+        <button class="btn ghost lock-guard" data-action="delete" type="button">Delete</button>
+      </div>
+    </div>
+  `;
 
-      try {
-        if (row && row.overtime_date) {
-          const now = Date.now();
-          const start = parseDateOnlyToLocalMidnight(row.overtime_date).getTime();
-          const expiry = computeExpiryForOvertimeDate(row.overtime_date).getTime();
-          if (!isNaN(start) && !isNaN(expiry)) {
-            const isFutureUpcoming = start > now && start <= (now + 24*60*60*1000);
-            const isActiveWithinGrace = start <= now && expiry > now;
-            if (isFutureUpcoming) el.classList.add('upcoming');
-            if (isActiveWithinGrace) el.classList.add('ongoing');
-          }
-        }
-      } catch (e) { /* ignore */ }
-
-      return el;
+  try {
+    if (row && row.overtime_date) {
+      const now = Date.now();
+      const start = parseDateOnlyToLocalMidnight(row.overtime_date).getTime();
+      const expiry = computeExpiryForOvertimeDate(row.overtime_date).getTime();
+      if (!isNaN(start) && !isNaN(expiry)) {
+        const isFutureUpcoming = start > now && start <= (now + 24*60*60*1000);
+        const isActiveWithinGrace = start <= now && expiry > now;
+        if (isFutureUpcoming) el.classList.add('upcoming');
+        if (isActiveWithinGrace) el.classList.add('ongoing');
+      }
     }
+  } catch (e) { /* ignore */ }
+
+  return el;
+}
 
     function renderList(items){
       rowsEl.innerHTML = '';
@@ -715,16 +716,17 @@
     });
 
 function updateGuardedControls(){
-  // Disable only real form controls that should be non-interactive when locked
   document.querySelectorAll('.lock-guard').forEach(el => {
     const tag = (el.tagName || '').toUpperCase();
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
       if (!unlocked) el.setAttribute('disabled','true'); else el.removeAttribute('disabled');
     } else {
-      // For non-form elements (buttons, icons) keep them interactive but mark aria-disabled for screen readers
+      // keep buttons clickable; mark aria-disabled for screen readers
       if (!unlocked) {
         el.setAttribute('aria-disabled','true');
         el.classList.add('visually-guarded');
+        // ensure no accidental disabled attribute remains on buttons
+        if (el.hasAttribute('disabled')) el.removeAttribute('disabled');
       } else {
         el.removeAttribute('aria-disabled');
         el.classList.remove('visually-guarded');
@@ -741,7 +743,6 @@ function updateGuardedControls(){
     openUnlock.classList.toggle('active', unlocked);
   }
 
-  // hide form and actions visually when locked (existing behavior)
   if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
   if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
 
@@ -759,36 +760,28 @@ function updateGuardedControls(){
 // import 'https://unpkg.com/wicg-inert/dist/inert.min.js';
 
 function openModal(){
-  // Make modal visible and accessible
+  // show modal and make it accessible
   modalBackdrop.style.display = 'flex';
   modalBackdrop.setAttribute('aria-hidden','false');
 
-  // Mark background app as inert (prevents focus and interaction)
+  // mark background app as inert (prevents focus/interaction)
   try {
     if (appRoot) {
-      // native inert if supported
       appRoot.inert = true;
-      appRoot.setAttribute('aria-hidden', 'true');
+      appRoot.setAttribute('aria-hidden','true');
     }
   } catch (e) {
-    // fallback: add a class that visually dims background (still allow aria-hidden)
-    if (appRoot) appRoot.setAttribute('aria-hidden', 'true');
+    if (appRoot) appRoot.setAttribute('aria-hidden','true');
   }
 
-  // Clear any previous error, then focus the password input
   pwError.style.display = 'none';
-  // small timeout to ensure element is visible before focusing
-  setTimeout(() => {
-    try { pwInput.focus(); } catch (e) { /* ignore */ }
-  }, 10);
+  setTimeout(() => { try { pwInput.focus(); } catch(e){} }, 10);
 }
 
 function closeModal(){
-  // Remove modal from view and mark hidden
   modalBackdrop.style.display = 'none';
   modalBackdrop.setAttribute('aria-hidden','true');
 
-  // Remove inert / aria-hidden from background app
   try {
     if (appRoot) {
       appRoot.inert = false;
@@ -798,10 +791,14 @@ function closeModal(){
     if (appRoot) appRoot.removeAttribute('aria-hidden');
   }
 
-  // Clear error and return focus to the unlock button for keyboard users
   pwError.style.display = 'none';
-  try { openUnlock.focus(); } catch (e) { /* ignore */ }
+  try { openUnlock.focus(); } catch(e){}
 }
+
+
+
+
+
     async function submitPassword(password){
       try {
         pwError.style.display = 'block';
