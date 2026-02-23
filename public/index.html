@@ -6,13 +6,13 @@
   <title>Overtime Scheduler</title>
   <meta name="description" content="Overtime Schedule for SLT Foreign TE" />
 
-  <!-- Changelog (integrated)
-       - Preserved original lock behavior and persistence.
-       - Added helper updateUpcomingCountFromDataCache() to compute upcoming items within 24h.
-       - Marked rows within 24h with .upcoming class (visual cue).
-       - Expiry rule: overtime_date expires at local midnight + 7 hours 20 minutes.
-       - Ensured the count updater is called after loadRows and after insert/update/delete.
-       - Minimal, non-invasive changes only.
+  <!-- Changelog (this file)
+       - Lock behavior preserved.
+       - When LOCKED: entries list shows ONLY items whose overtime day STARTS within 24 hours.
+       - When UNLOCKED: show full list.
+       - Expiry rule: overtime_date expires at local midnight + 7 hours 20 minutes (grace period).
+       - Auto-delete uses the expiry rule; upcoming count is based on "start within 24h".
+       - Visual cue: .upcoming class for items starting within 24h.
   -->
 
   <style>
@@ -188,7 +188,7 @@
         </div>
 
         <div id="rows" class="list" aria-live="polite"></div>
-        <div id="empty" class="empty" style="display:none;color:var(--muted);padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);text-align:center">Walang entries. I-unlock at magdagdag ng bagong overtime o leave.</div>
+        <div id="empty" class="empty" style="display:none;color:var(--muted);padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);text-align:center">Walang malapit na overtime o leave sa loob ng 24 oras.</div>
       </main>
 
       <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle" style="display:flex;flex-direction:column;gap:8px">
@@ -349,7 +349,7 @@
       btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
-    // Update guarded controls: keep entries visible even when locked; hide/disable actions and form
+    // Update guarded controls: hide/disable actions and form when locked; keep entries visibility controlled by renderEntriesAccordingToLock
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
@@ -361,7 +361,7 @@
       }
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
-      // keep entries visible; rendering will always show full list but mark upcoming
+      // rendering will decide which entries to show
       renderEntriesAccordingToLock();
       updateUpcomingCountFromDataCache();
     }
@@ -408,28 +408,6 @@
       } catch (e) { console.warn('Date behavior attach failed', e); }
     })();
 
-    // Helper: compute upcoming items from dataCache (within 24 hours)
-    function updateUpcomingCountFromDataCache(){
-      try {
-        if (!Array.isArray(dataCache)) dataCache = [];
-        const now = Date.now();
-        const upcoming = dataCache.filter(r => {
-          if (!r || !r.overtime_date) return false;
-          const t = parseDateOnlyToLocalMidnight(r.overtime_date).getTime();
-          if (isNaN(t)) return false;
-          // upcoming defined as start midnight within next 24 hours
-          const hoursUntilStart = (t - now) / (1000 * 60 * 60);
-          return hoursUntilStart > 0 && hoursUntilStart <= 24;
-        });
-        if (upcomingCountEl) upcomingCountEl.textContent = String(upcoming.length);
-        return upcoming;
-      } catch (e) {
-        console.warn('updateUpcomingCountFromDataCache failed', e);
-        if (upcomingCountEl) upcomingCountEl.textContent = '0';
-        return [];
-      }
-    }
-
     // Parse a date-only string (YYYY-MM-DD) into a Date at local midnight
     function parseDateOnlyToLocalMidnight(dateOnly) {
       if (!dateOnly) return NaN;
@@ -441,13 +419,39 @@
       return isNaN(d) ? NaN : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
     }
 
-    // Compute expiry for an overtime_date: midnight + 7 hours 20 minutes
+    // Compute expiry for an overtime_date: midnight + 7 hours 20 minutes (grace)
     function computeExpiryForOvertimeDate(dateOnly) {
       const startMidnight = parseDateOnlyToLocalMidnight(dateOnly);
       if (isNaN(startMidnight)) return NaN;
       // 7 hours 20 minutes = 7*60 + 20 = 440 minutes
       const expiryMs = startMidnight.getTime() + (440 * 60 * 1000);
       return new Date(expiryMs);
+    }
+
+    // Upcoming entries: those whose overtime day STARTS within next 24 hours
+    function getUpcomingEntries(){
+      if (!Array.isArray(dataCache)) dataCache = [];
+      const now = Date.now();
+      const in24h = now + (24 * 60 * 60 * 1000);
+      return dataCache.filter(r => {
+        if (!r || !r.overtime_date) return false;
+        const start = parseDateOnlyToLocalMidnight(r.overtime_date);
+        if (isNaN(start)) return false;
+        return start.getTime() > now && start.getTime() <= in24h;
+      }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
+    }
+
+    // Compute and update upcoming count (based on start within 24h)
+    function updateUpcomingCountFromDataCache(){
+      try {
+        const upcoming = getUpcomingEntries();
+        if (upcomingCountEl) upcomingCountEl.textContent = String(upcoming.length);
+        return upcoming;
+      } catch (e) {
+        console.warn('updateUpcomingCountFromDataCache failed', e);
+        if (upcomingCountEl) upcomingCountEl.textContent = '0';
+        return [];
+      }
     }
 
     function createRowElement(row){
@@ -503,19 +507,38 @@
       updateUpcomingCountFromDataCache();
     }
 
-    // Render full list always; upcoming rows are visually marked
+    // Render according to lock state:
+    // - unlocked: show full list
+    // - locked: show only upcoming (start within 24h). If none, show empty placeholder.
     function renderEntriesAccordingToLock(){
       if (!Array.isArray(dataCache)) dataCache = [];
-      const sorted = dataCache.slice().sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
-      rowsEl.innerHTML = '';
-      sorted.forEach(r => rowsEl.appendChild(createRowElement(r)));
-      if (sorted.length) {
-        emptyEl.style.display = 'none';
-        statusEl.textContent = `Loaded ${sorted.length} entries`;
-      } else {
-        emptyEl.style.display = 'block';
-        statusEl.textContent = 'No entries';
+      if (unlocked) {
+        const sorted = dataCache.slice().sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
+        rowsEl.innerHTML = '';
+        sorted.forEach(r => rowsEl.appendChild(createRowElement(r)));
+        if (sorted.length) {
+          emptyEl.style.display = 'none';
+          statusEl.textContent = `Loaded ${sorted.length} entries`;
+        } else {
+          emptyEl.style.display = 'block';
+          statusEl.textContent = 'No entries';
+        }
+        updateUpcomingCountFromDataCache();
+        return;
       }
+
+      // locked: show only upcoming
+      const upcoming = getUpcomingEntries();
+      rowsEl.innerHTML = '';
+      if (!upcoming.length) {
+        emptyEl.style.display = 'block';
+        statusEl.textContent = 'No upcoming entries within 24h';
+        updateUpcomingCountFromDataCache();
+        return;
+      }
+      emptyEl.style.display = 'none';
+      upcoming.forEach(r => rowsEl.appendChild(createRowElement(r)));
+      statusEl.textContent = `Showing ${upcoming.length} upcoming entries`;
       updateUpcomingCountFromDataCache();
     }
 
@@ -524,7 +547,7 @@
     }
 
     function updateUpcomingCountFromRendered() {
-      // kept for compatibility; prefer dataCache-based count
+      // compatibility helper (not primary)
       const count = getRenderedEntriesCount();
       if (upcomingCountEl) upcomingCountEl.textContent = String(count);
     }
@@ -685,8 +708,20 @@
         (r.notes||'').toLowerCase().includes(q) ||
         (r.overtime_date||'').includes(q)
       );
-      // show filtered results regardless of lock state (actions remain disabled when locked)
-      renderList(filtered);
+      // When locked: filter then keep only upcoming results
+      if (!unlocked) {
+        const upcomingFiltered = filtered.filter(r => {
+          if (!r.overtime_date) return false;
+          const start = parseDateOnlyToLocalMidnight(r.overtime_date);
+          if (isNaN(start)) return false;
+          const now = Date.now();
+          const hours = (start.getTime() - now) / (1000*60*60);
+          return hours > 0 && hours <= 24;
+        });
+        renderList(upcomingFiltered);
+      } else {
+        renderList(filtered);
+      }
       updateUpcomingCountFromDataCache();
     });
 
@@ -739,7 +774,6 @@
       setInterval(updateLiveClock, 1000);
 
       // AUTO-LOCK ON REFRESH: always start locked.
-      // Also remove any persisted unlocked flag so it won't re-open automatically.
       try { localStorage.removeItem(LOCAL_KEY); } catch (e) {}
       setUnlockedState(false);
 
