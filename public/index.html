@@ -665,17 +665,23 @@
       }
     }, CHECK_INTERVAL_MS);
 
+    // --- DOMContentLoaded: force auto-lock on refresh (clear persisted flag, set locked UI immediately) ---
     window.addEventListener('DOMContentLoaded', async () => {
+      // Start live clock immediately
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
 
-      // FORCE AUTO-LOCK ON REFRESH:
-      // 1) remove any persisted unlocked flag (so previous 'true' won't re-open)
-      // 2) explicitly set unlocked = false and persist that state (so UI updates immediately)
+      // 1) remove any persisted unlocked flag (best effort)
       try { localStorage.removeItem(LOCAL_KEY); } catch (e) { /* ignore */ }
-      // ensure UI is locked before loading rows
-      setUnlockedState(false, true);
 
+      // 2) set unlocked = false and update UI immediately (do NOT persist here)
+      setUnlockedState(false, false);
+
+      // 3) ensure UI reflects locked state synchronously
+      updateGuardedControls();
+      updateUpcomingCountFromRendered();
+
+      // 4) now load data and run cleanup
       await loadRows();
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
