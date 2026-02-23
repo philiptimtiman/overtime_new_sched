@@ -407,8 +407,8 @@
         </div>
         <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
           <div class="item-actions">
-            <button class="btn ghost lock-guard" data-action="edit">Edit</button>
-            <button class="btn ghost lock-guard" data-action="delete">Delete</button>
+            <button class="btn ghost lock-guard" data-action="edit" type="button">Edit</button>
+            <button class="btn ghost lock-guard" data-action="delete" type="button">Delete</button>
           </div>
         </div>
       `;
@@ -523,10 +523,12 @@
 
     resetBtn.addEventListener('click', () => { form.reset(); if (dateInput) dateInput.value = ''; });
 
+    // Improved delegation: find closest element with data-action
     rowsEl.addEventListener('click', async (ev) => {
-      const action = ev.target?.dataset?.action;
-      if (!action) return;
-      const item = ev.target.closest('.item');
+      const btn = ev.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const item = btn.closest('.item');
       const id = item?.dataset?.id;
       if (!id) return;
 
@@ -559,8 +561,8 @@
             </div>
             <input class="edit-input" data-edit="notes" type="text" value="${escapeHtml(row.notes || '')}" />
             <div style="display:flex;gap:8px">
-              <button class="btn ghost" data-action="save">Save</button>
-              <button class="btn ghost" data-action="cancel">Cancel</button>
+              <button class="btn ghost" data-action="save" type="button">Save</button>
+              <button class="btn ghost" data-action="cancel" type="button">Cancel</button>
             </div>
           </div>
         `;
@@ -665,23 +667,21 @@
       }
     }, CHECK_INTERVAL_MS);
 
-    // --- DOMContentLoaded: force auto-lock on refresh (clear persisted flag, set locked UI immediately) ---
+    // DOMContentLoaded: force auto-lock on refresh (clear persisted flag, set locked UI immediately)
     window.addEventListener('DOMContentLoaded', async () => {
-      // Start live clock immediately
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
 
-      // 1) remove any persisted unlocked flag (best effort)
       try { localStorage.removeItem(LOCAL_KEY); } catch (e) { /* ignore */ }
 
-      // 2) set unlocked = false and update UI immediately (do NOT persist here)
+      // set locked state immediately (do not persist)
       setUnlockedState(false, false);
 
-      // 3) ensure UI reflects locked state synchronously
+      // ensure UI reflects locked state synchronously
       updateGuardedControls();
       updateUpcomingCountFromRendered();
 
-      // 4) now load data and run cleanup
+      // load data after UI locked
       await loadRows();
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
