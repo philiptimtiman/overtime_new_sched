@@ -3,8 +3,45 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Date Pill Fix</title>
-  <meta name="description" content="Overtime Scheduler with fixed date pill in entries list." />
+  <title>Overtime Scheduler</title>
+  <meta name="description" content="Overtime Schedule for SLT Foreign TE" />
+
+  <!-- PREPATCH: run first to block reads/writes for the unlock key and enforce locked UI early -->
+  <script>
+  (function(){
+    try {
+      const KEY = 'overtime_unlocked_v2';
+      // Block writes and reads for this key early in the page lifecycle
+      const _set = Storage.prototype.setItem;
+      const _get = Storage.prototype.getItem;
+      const _remove = Storage.prototype.removeItem;
+      Storage.prototype.setItem = function(k,v){
+        if (String(k) === KEY) { console.warn('prepatch blocked setItem', KEY, v); return; }
+        return _set.apply(this, arguments);
+      };
+      Storage.prototype.getItem = function(k){
+        if (String(k) === KEY) return null;
+        return _get.apply(this, arguments);
+      };
+      Storage.prototype.removeItem = function(k){
+        if (String(k) === KEY) return;
+        return _remove.apply(this, arguments);
+      };
+      try { localStorage.removeItem(KEY); } catch(e){}
+      // enforce locked UI quickly if DOM already present
+      function enforce(){
+        const app = document.getElementById('appRoot');
+        if (app) app.classList.add('actions-hidden','form-hidden','entries-hidden');
+        Array.from(document.querySelectorAll('.lock-guard')).forEach(el=>{ try{ el.setAttribute('disabled','true'); }catch(e){} });
+        const li = document.getElementById('lockIndicator'); if (li) li.style.background = '#ef4444';
+      }
+      enforce();
+      document.addEventListener('DOMContentLoaded', enforce, { once:true });
+      console.log('Overtime prepatch installed: blocked reads/writes for', KEY);
+    } catch(e){ console.warn('prepatch failed', e); }
+  })();
+  </script>
+
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -36,13 +73,16 @@
       border-radius:var(--radius);padding:12px;box-shadow:0 8px 20px rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.04);
     }
 
-    .header.card{display:flex;flex-direction:column;gap:8px}
-    .brand{display:flex;flex-direction:column;align-items:center}
+    .header.card{display:flex;flex-direction:column;gap:8px;position:relative;padding-top:12px}
+    .brand{display:flex;flex-direction:column;align-items:center;text-align:center}
     .brand h1{margin:0;font-size:1rem}
     .brand p{margin:0;color:var(--muted);font-size:.85rem}
 
     .controls{display:flex;gap:8px;align-items:center}
     .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--text)}
+
+    .live-row{display:flex;align-items:center;justify-content:center;margin-top:4px}
+    .live-clock{font-family:monospace;font-size:0.86rem;color:var(--muted);background:rgba(255,255,255,0.02);padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);min-width:170px;text-align:center;pointer-events:none}
 
     .theme-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px}
     .theme-swatch{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,0.06);display:inline-flex;align-items:center;justify-content:center;padding:0;background:transparent}
@@ -56,35 +96,14 @@
     .meta{font-size:.82rem;color:var(--muted);text-align:center}
 
     .list{display:flex;flex-direction:column;gap:8px}
-    .item{
-      display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);
-    }
+    .item{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
     .item-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
     .item-left{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0}
 
     .name{font-weight:600;font-size:.96rem;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .notes{color:var(--muted);font-size:.82rem;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-    /* FIXED date pill: stable sizing, centered text, accessible time element */
-    .date-pill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-width:72px;        /* ensures pill doesn't collapse */
-      max-width:120px;       /* prevents it from growing too wide */
-      padding:6px 10px;
-      border-radius:8px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
-      border:1px solid rgba(255,255,255,0.02);
-      color:var(--text);
-      box-sizing:border-box;
-      font-size:0.88rem;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      flex-shrink:0;         /* important: don't shrink when container is tight */
-      line-height:1;
-    }
+    .date-pill{display:inline-flex;align-items:center;justify-content:center;min-width:72px;max-width:160px;padding:6px 10px;border-radius:8px;background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));border:1px solid rgba(255,255,255,0.02);color:var(--text);box-sizing:border-box;font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;line-height:1;text-align:center}
     .date-pill time{ display:block; width:100%; text-align:center; }
 
     .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
@@ -94,20 +113,27 @@
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
     .btn.full{width:100%}
 
+    .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border-radius:10px;background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;}
+    .icon-btn svg{ display:block; width:18px; height:18px; }
+    .icon-btn.active{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent;box-shadow:0 8px 20px rgba(0,0,0,0.25);}
+    .icon-btn:focus{ outline:2px solid rgba(255,255,255,0.06); outline-offset:2px; }
+
     #formCard{display:flex;flex-direction:column;gap:10px}
     #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block;transition:color var(--theme-transition)}
     .field{display:flex;flex-direction:column;gap:8px;min-width:0}
 
-    input[type="text"], textarea{
-      width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
-      text-align:center;
-      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
-    }
-    input[type="text"]:focus, textarea:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
+    .add-row{display:grid;grid-template-columns:1fr;gap:8px;align-items:start}
+    @media(min-width:520px){ .add-row{grid-template-columns:1fr 1fr} }
 
-    .date-control{position:relative;display:block;min-width:0}
+    .date-control{display:flex;align-items:center;gap:8px;min-width:0;}
+    .date-control input[type="date"],.date-control input[type="text"],.date-control input[type="datetime-local"]{flex:1;min-width:0;height:var(--input-h);padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);text-align:center;box-sizing:border-box;}
+    .date-btn{flex:0 0 auto;width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;}
+    @media(max-width:320px){ .date-control{flex-direction:column;align-items:stretch} .date-btn{width:100%} }
+
+    input[type="text"], textarea, input[type="date"]{width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);text-align:center;transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);}
+    input[type="text"]:focus, textarea:focus, input[type="date"]:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
+
     .date-text{padding-right:48px;cursor:pointer}
-    .date-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;z-index:2;font-size:1rem;padding:0}
     .native-date{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;opacity:0;border:0;padding:0;margin:0;background:transparent;z-index:3;cursor:pointer}
 
     .editing .edit-input{display:block}
@@ -116,13 +142,15 @@
     .item.editing { display:flex; flex-direction:column; gap:8px; }
     .item.editing .edit-input { width:100%; max-width:100%; }
 
-    .modal-backdrop{
-      position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;
-    }
+    .modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;}
     .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
 
     .actions-hidden .item-actions { display: none !important; }
     .form-hidden #formCard { display: none !important; }
+
+    /* NEW: hide entries list when locked */
+    .app.entries-hidden #rows { display: none !important; }
+    .app.entries-hidden #empty { display: block !important; }
 
     @media (max-width:420px){
       .add-row{grid-template-columns:1fr}
@@ -130,32 +158,44 @@
       .date-text{padding-right:48px}
       .theme-row{flex-wrap:wrap}
       .date-pill{min-width:64px; max-width:96px; font-size:0.85rem}
+      .live-clock{min-width:140px;font-size:0.78rem}
     }
+
+    .upcoming-card{margin-top:10px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .upcoming-card strong{font-size:0.95rem;display:block;color:var(--text)}
+    .upcoming-count{font-weight:800;font-size:1.4rem;color:var(--text);min-width:36px;text-align:right}
   </style>
 </head>
 <body>
   <div class="canvas">
-    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler" data-theme="forest">
+    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler">
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
-          <h1 id="appTitle">Overtime Scheduler</h1>
-          <p class="meta">Locked by default — unlock to add or edit</p>
+          <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482</p>
+          <p class="meta" style="margin-top:6px">BxTHPTver202602230600</p>
         </div>
 
-        <div class="controls" role="search" style="margin-top:6px;display:flex;gap:8px;align-items:center">
+        <div class="live-row" aria-hidden="false">
+          <div id="liveClock" class="live-clock" role="status" aria-live="polite">—</div>
+        </div>
+
+        <div class="controls" role="search" style="margin-top:8px;display:flex;gap:8px;align-items:center">
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search entries" />
-          <div style="display:flex;align-items:center;gap:8px">
+          <div class="lock-group" style="margin-left:6px;display:flex;align-items:center;gap:8px">
             <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444;transition:background var(--theme-transition)"></div>
-            <button id="openUnlock" class="icon-btn" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">
-              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
-                <path class="icon-fill" d="M12 17a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-                <path class="icon-fill" d="M17 8h-1V6a4 4 0 10-8 0v2H7a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2v-7a2 2 0 00-2-2zM9 8V6a3 3 0 116 0v2" />
+
+            <button id="openUnlock" class="btn ghost icon-btn" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="11" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.4" />
+                <path d="M7 11V8a5 5 0 0110 0v3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="16" r="1.2" fill="currentColor"/>
               </svg>
             </button>
           </div>
         </div>
 
-        <div class="theme-row" role="toolbar" aria-label="Theme switcher">
+        <div class="theme-row" role="toolbar" aria-label="Theme switcher" style="margin-top:10px">
           <button class="theme-swatch swatch-ocean" data-theme="ocean" aria-label="Ocean Indigo" title="Ocean Indigo" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-warm" data-theme="warm" aria-label="Warm Sunset" title="Warm Sunset" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-forest active" data-theme="forest" aria-label="Forest Teal" title="Forest Teal" type="button"><span class="dot" aria-hidden="true"></span></button>
@@ -163,20 +203,23 @@
         </div>
       </header>
 
-      <main class="card" aria-live="polite">
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <strong>Entries</strong>
-            <span id="status" class="meta">Idle</span>
-          </div>
+      <div class="upcoming-card" id="upcomingSection" aria-live="polite">
+        <strong>Upcoming within 24h</strong>
+        <div id="upcomingCount" class="upcoming-count">0</div>
+      </div>
 
-          <div id="rows" class="list" aria-live="polite"></div>
-          <div id="empty" class="empty" style="display:none;color:var(--muted);padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);text-align:center">Walang entries. I-unlock at magdagdag ng bagong overtime.</div>
+      <main class="card" aria-live="polite" style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>Entries</strong>
+          <span id="status" class="meta">Idle</span>
         </div>
+
+        <div id="rows" class="list" aria-live="polite"></div>
+        <div id="empty" class="empty" style="display:none;color:var(--muted);padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);text-align:center">Walang entries. I-unlock at magdagdag ng bagong overtime o leave.</div>
       </main>
 
-      <aside id="formCard" class="card" aria-labelledby="addOvertimeTitle">
-        <strong id="addOvertimeTitle" style="display:block;text-align:center;font-size:1rem">Add Overtime</strong>
+      <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle" style="display:flex;flex-direction:column;gap:8px">
+        <strong id="addOvertimeTitle" style="display:block;text-align:center">Add Entries</strong>
 
         <form id="addForm" autocomplete="off" novalidate>
           <div class="field">
@@ -184,13 +227,12 @@
             <input id="name" name="name" class="lock-guard" type="text" placeholder="Employee name" required />
           </div>
 
-          <div class="add-row">
+          <div class="add-row" style="display:grid;grid-template-columns:1fr;gap:8px">
             <div class="field">
-              <label for="overtime_date_text">Date</label>
+              <label for="overtime_date">Date</label>
               <div class="date-control">
-                <input id="overtime_date_text" name="overtime_date_text" class="date-text lock-guard" type="text" placeholder="YYYY-MM-DD" aria-label="Overtime date" readonly />
-                <button type="button" id="datePickerBtn" class="date-btn" aria-label="Open date picker">📅</button>
-                <input id="overtime_date_native" class="native-date" type="date" aria-hidden="true" />
+                <input id="overtime_date" name="overtime_date" class="date-text lock-guard" type="date" aria-label="Overtime date" />
+                <button type="button" id="datePickerBtn" class="date-btn lock-guard" aria-label="Open date picker">📅</button>
               </div>
             </div>
 
@@ -200,23 +242,12 @@
             </div>
           </div>
 
-          <div class="form-actions" role="group" aria-label="Form actions">
-            <button id="submitBtn" class="btn btn-add lock-guard" type="submit" title="Add entry" aria-label="Add entry">
-              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M11 11V6h2v5h5v2h-5v5h-2v-5H6v-2z"/></svg>
-              <span>Add</span>
-            </button>
-
-            <button id="resetBtn" type="button" class="btn ghost lock-guard" title="Reset form" aria-label="Reset form">
-              Reset
-            </button>
+          <div class="form-actions" role="group" aria-label="Form actions" style="margin-top:8px">
+            <button id="submitBtn" class="btn" type="submit" title="Add entry" aria-label="Add entry">Add</button>
+            <button id="resetBtn" type="button" class="btn ghost lock-guard" title="Reset form" aria-label="Reset form">Reset</button>
           </div>
         </form>
       </aside>
-
-      <footer style="text-align:center;color:var(--muted);font-size:.8rem;padding:6px 0">
-        <div style="font-weight:700">BoxTechHub™</div>
-        <div style="font-size:.75rem;margin-top:4px">© 2026 BoxTechHub</div>
-      </footer>
     </div>
   </div>
 
@@ -256,42 +287,95 @@
     const pwCancel = document.getElementById('pwCancel');
     const pwError = document.getElementById('pwError');
 
-    const dateText = document.getElementById('overtime_date_text');
-    const dateNative = document.getElementById('overtime_date_native');
+    const dateInput = document.getElementById('overtime_date');
     const dateBtn = document.getElementById('datePickerBtn');
+    const liveClockEl = document.getElementById('liveClock');
 
     const swatches = Array.from(document.querySelectorAll('.theme-swatch'));
     const THEME_KEY = 'overtime_theme_v1';
     const LOCAL_KEY = 'overtime_unlocked_v2';
+
+    const upcomingCountEl = document.getElementById('upcomingCount');
 
     let dataCache = [];
     let unlocked = false;
 
     function safeGetLocal(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
     function safeSetLocal(key, value){ try { localStorage.setItem(key, value); return true; } catch (e) { return false; } }
-    function formatDate(d){ if(!d) return '—'; return new Date(d + 'T00:00:00').toLocaleDateString(); }
-    function isoDateFromText(s){ if(!s) return null; const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? `${m[1]}-${m[2]}-${m[3]}` : null; }
+
+    function formatDateOnlyYMD(iso){
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (isNaN(d)) return '—';
+      const pad = (n) => String(n).padStart(2,'0');
+      const yyyy = d.getFullYear();
+      const mm = pad(d.getMonth()+1);
+      const dd = pad(d.getDate());
+      return `${yyyy}/${mm}/${dd}`;
+    }
+
+    function toIsoDateFromInput(val){
+      if (!val) return null;
+      const m = val.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
+    }
+
+    function toDateInputValue(stored){
+      if (!stored) return '';
+      const d = new Date(stored);
+      if (!isNaN(d)) {
+        const pad = (n) => String(n).padStart(2,'0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+      }
+      const m = String(stored).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m ? `${m[1]}-${m[2]}-${m[3]}` : '';
+    }
+
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    // Theme handling (batched)
+    const THEME_MAP = {
+      forest: {
+        '--accent':'#10b981','--accent-2':'#059669',
+        '--bg-top':'#04251f','--bg-bottom':'#0b3b36',
+        '--card-bg-top':'rgba(8,40,34,0.06)','--card-bg-bottom':'rgba(6,30,26,0.03)',
+        '--text':'#e6f7f2','--muted':'#9fcfc3'
+      },
+      ocean: {
+        '--accent':'#4f46e5','--accent-2':'#3b82f6',
+        '--bg-top':'#071428','--bg-bottom':'#0b1f2b',
+        '--card-bg-top':'rgba(10,20,40,0.06)','--card-bg-bottom':'rgba(8,18,34,0.03)',
+        '--text':'#e6eef8','--muted':'#9fb0c6'
+      },
+      warm: {
+        '--accent':'#ff7a59','--accent-2':'#ff5a36',
+        '--bg-top':'#2b0b3a','--bg-bottom':'#3b0f2f',
+        '--card-bg-top':'rgba(60,20,50,0.06)','--card-bg-bottom':'rgba(50,18,45,0.03)',
+        '--text':'#f0eef6','--muted':'#c9bfc9'
+      },
+      violet: {
+        '--accent':'#d946ef','--accent-2':'#a78bfa',
+        '--bg-top':'#0b0b12','--bg-bottom':'#2b1536',
+        '--card-bg-top':'rgba(40,18,40,0.06)','--card-bg-bottom':'rgba(36,14,36,0.03)',
+        '--text':'#f3eefb','--muted':'#d6c7e9'
+      }
+    };
+
     function applyTheme(theme){
-      if (!theme) theme = 'forest';
-      swatches.forEach(btn => btn.classList.remove('active'));
-      requestAnimationFrame(() => {
-        appRoot.setAttribute('data-theme', theme);
-        requestAnimationFrame(() => {
-          swatches.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === theme));
-          safeSetLocal(THEME_KEY, theme);
-        });
-      });
+      if (!theme || !THEME_MAP[theme]) theme = 'forest';
+      const vars = THEME_MAP[theme];
+      const root = document.documentElement;
+      Object.keys(vars).forEach(k => root.style.setProperty(k, vars[k]));
+      if (appRoot) appRoot.setAttribute('data-theme', theme);
+      swatches.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === theme));
+      safeSetLocal(THEME_KEY, theme);
     }
+
     (function initTheme(){ const saved = safeGetLocal(THEME_KEY) || 'forest'; applyTheme(saved); })();
     swatches.forEach(btn => {
       btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
       btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
-    // Update controls
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
@@ -303,9 +387,20 @@
       }
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
+
+      // hide entries list when locked; show when unlocked
+      if (!unlocked) appRoot.classList.add('entries-hidden'); else appRoot.classList.remove('entries-hidden');
+
+      // keep counts in sync
+      updateUpcomingCountFromRendered();
     }
+
+    // PATCHED: do not persist unlocked=true to localStorage to avoid auto-restore on reload
     function setUnlockedState(state, persist = true){
-      unlocked = !!state; updateGuardedControls(); if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
+      unlocked = !!state;
+      updateGuardedControls();
+      // IMPORTANT: persistence disabled to prevent automatic unlock on reload
+      // if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
     function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
@@ -324,7 +419,8 @@
           pwError.textContent = `Server: ${msg}`;
           return;
         }
-        setUnlockedState(true, true);
+        // do not persist unlocked state
+        setUnlockedState(true, false);
         closeModal();
       } catch (err) {
         console.error(err);
@@ -332,34 +428,24 @@
       }
     }
 
-    // Date picker behavior
     (function attachDateBehavior(){
       try {
-        function openNativePicker(initialIso){
-          if (!dateNative) return;
-          if (initialIso && /^\d{4}-\d{2}-\d{2}$/.test(initialIso)) dateNative.value = initialIso;
-          else dateNative.value = '';
-          if (typeof dateNative.showPicker === 'function') {
-            dateNative.showPicker();
-          } else {
-            dateNative.focus();
-            try { dateNative.click(); } catch(e){}
-          }
+        function openPicker(){
+          if (!dateInput) return;
+          dateInput.focus();
+          try { dateInput.showPicker && dateInput.showPicker(); } catch(e){}
         }
-        if (dateNative) dateNative.addEventListener('change', () => dateText.value = dateNative.value || '');
-        if (dateBtn) dateBtn.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
-        if (dateText) dateText.addEventListener('click', () => openNativePicker(isoDateFromText(dateText.value)));
-        if (dateText) dateText.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openNativePicker(isoDateFromText(dateText.value)); } });
+        if (dateBtn) dateBtn.addEventListener('click', openPicker);
+        if (dateInput) dateInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); } });
       } catch (e) { console.warn('Date behavior attach failed', e); }
     })();
 
-    // Create row element uses <time> for date pill
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
       el.dataset.id = row.id;
-      const dateDisplay = row.overtime_date ? formatDate(row.overtime_date) : '—';
-      const dateAttr = row.overtime_date ? row.overtime_date : '';
+      const dateDisplay = row.overtime_date ? formatDateOnlyYMD(row.overtime_date) : '—';
+      const dateAttr = row.overtime_date ? (String(row.overtime_date).split('T')[0]) : '';
       el.innerHTML = `
         <div class="item-top">
           <div class="item-left">
@@ -372,8 +458,8 @@
         </div>
         <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
           <div class="item-actions">
-            <button class="btn ghost lock-guard" data-action="edit">Edit</button>
-            <button class="btn ghost lock-guard" data-action="delete">Delete</button>
+            <button class="btn ghost lock-guard" data-action="edit" type="button">Edit</button>
+            <button class="btn ghost lock-guard" data-action="delete" type="button">Delete</button>
           </div>
         </div>
       `;
@@ -382,43 +468,102 @@
 
     function renderList(items){
       rowsEl.innerHTML = '';
-      if (!items || !items.length) { emptyEl.style.display = 'block'; statusEl.textContent = 'No entries'; return; }
+      if (!items || !items.length) {
+        emptyEl.style.display = 'block';
+        statusEl.textContent = 'No entries';
+        updateUpcomingCountFromRendered();
+        return;
+      }
       emptyEl.style.display = 'none';
       items.forEach(r => rowsEl.appendChild(createRowElement(r)));
-      updateGuardedControls();
       statusEl.textContent = `Loaded ${items.length} entries`;
+      updateUpcomingCountFromRendered();
     }
 
-    // Load rows
+    function getUpcomingEntries(){
+      const now = new Date();
+      return dataCache.filter(r => {
+        if (!r || !r.overtime_date) return false;
+        const d = new Date(r.overtime_date);
+        const diffHours = (d - now) / (1000 * 60 * 60);
+        return diffHours > 0 && diffHours <= 24;
+      }).sort((a,b) => new Date(a.overtime_date) - new Date(b.overtime_date));
+    }
+
+    function renderEntriesAccordingToLock(){
+      if (unlocked) {
+        const sorted = dataCache.slice().sort((a,b) => new Date(a.overtime_date || 0) - new Date(b.overtime_date || 0));
+        renderList(sorted);
+      } else {
+        const upcoming = getUpcomingEntries();
+        renderList(upcoming);
+      }
+    }
+
+    function getRenderedEntriesCount() {
+      return rowsEl?.children.length || 0;
+    }
+
+    function updateUpcomingCountFromRendered() {
+      const count = getRenderedEntriesCount();
+      upcomingCountEl.textContent = String(count);
+    }
+
+    async function autoDeleteExpired(){
+      const now = new Date();
+      const expired = dataCache.filter(r => {
+        if (!r.overtime_date) return false;
+        const d = new Date(r.overtime_date);
+        return d < now;
+      });
+      if (!expired.length) return;
+      for (const r of expired) {
+        try {
+          const { error } = await supabase.from('overtime_data').delete().eq('id', r.id);
+          if (error) {
+            console.error('Delete failed for id', r.id, error);
+            continue;
+          }
+          dataCache = dataCache.filter(x => String(x.id) !== String(r.id));
+        } catch (err) {
+          console.error('Delete error', err);
+        }
+      }
+      renderEntriesAccordingToLock();
+      updateUpcomingCountFromRendered();
+    }
+
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
         const { data, error } = await supabase.from('overtime_data').select('id,name,notes,overtime_date').order('overtime_date',{ascending:true});
         if (error) throw error;
         dataCache = (data || []);
-        renderList(dataCache);
+        renderEntriesAccordingToLock();
+        updateUpcomingCountFromRendered();
       } catch (err) {
         console.error(err);
         statusEl.textContent = 'Error loading data';
       }
     }
 
-    // Form submit
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!unlocked) { alert('Actions are locked. Unlock to add entries.'); return; }
       const name = form.name.value.trim();
       const notes = form.notes.value.trim();
-      const overtime_date = isoDateFromText(dateText.value) || null;
+      const dateVal = dateInput?.value || '';
+      const overtime_date = toIsoDateFromInput(dateVal);
       if (!name) { alert('Name is required'); return; }
       submitBtn.disabled = true; submitBtn.setAttribute('aria-busy','true');
       try {
         const { data, error } = await supabase.from('overtime_data').insert([{ name, notes, overtime_date }]).select();
         if (error) throw error;
         dataCache = [...dataCache, ...(data||[])];
-        renderList(dataCache);
+        renderEntriesAccordingToLock();
+        updateUpcomingCountFromRendered();
         form.reset();
-        dateText.value = '';
+        if (dateInput) dateInput.value = '';
       } catch (err) {
         console.error(err);
         alert('Insert failed: ' + (err.message || err));
@@ -427,14 +572,13 @@
       }
     });
 
-    // Reset button
-    resetBtn.addEventListener('click', () => { form.reset(); dateText.value = ''; });
+    resetBtn.addEventListener('click', () => { form.reset(); if (dateInput) dateInput.value = ''; });
 
-    // Row actions
     rowsEl.addEventListener('click', async (ev) => {
-      const action = ev.target?.dataset?.action;
-      if (!action) return;
-      const item = ev.target.closest('.item');
+      const btn = ev.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const item = btn.closest('.item');
       const id = item?.dataset?.id;
       if (!id) return;
 
@@ -445,7 +589,8 @@
           const { error } = await supabase.from('overtime_data').delete().eq('id', id);
           if (error) throw error;
           dataCache = dataCache.filter(r => String(r.id) !== String(id));
-          renderList(dataCache);
+          renderEntriesAccordingToLock();
+          updateUpcomingCountFromRendered();
         } catch (err) {
           console.error(err);
           alert('Delete failed: ' + (err.message || err));
@@ -462,12 +607,12 @@
           <div style="display:flex;flex-direction:column;gap:8px">
             <input class="edit-input" data-edit="name" type="text" value="${escapeHtml(row.name)}" />
             <div style="display:flex;gap:8px;align-items:center">
-              <input class="edit-input" data-edit="overtime_date" type="date" value="${row.overtime_date || ''}" style="flex:1;max-width:100%;box-sizing:border-box" />
+              <input class="edit-input" data-edit="overtime_date" type="date" value="${toDateInputValue(row.overtime_date)}" style="flex:1;max-width:100%;box-sizing:border-box" />
             </div>
             <input class="edit-input" data-edit="notes" type="text" value="${escapeHtml(row.notes || '')}" />
             <div style="display:flex;gap:8px">
-              <button class="btn ghost" data-action="save">Save</button>
-              <button class="btn ghost" data-action="cancel">Cancel</button>
+              <button class="btn ghost" data-action="save" type="button">Save</button>
+              <button class="btn ghost" data-action="cancel" type="button">Cancel</button>
             </div>
           </div>
         `;
@@ -479,14 +624,16 @@
         if (!unlocked) { alert('Actions are locked. Unlock to save.'); return; }
         const inputs = item.querySelectorAll('.edit-input');
         const name = inputs[0]?.value.trim();
-        const overtime_date = inputs[1]?.value || null;
+        const dateLocal = inputs[1]?.value || null;
+        const overtime_date = toIsoDateFromInput(dateLocal);
         const notes = inputs[2]?.value.trim();
         if (!name) { alert('Name required'); return; }
         try {
           const { data, error } = await supabase.from('overtime_data').update({ name, notes, overtime_date }).eq('id', id).select();
           if (error) throw error;
           dataCache = dataCache.map(r => String(r.id) === String(id) ? (data && data[0]) || { ...r, name, notes, overtime_date } : r);
-          renderList(dataCache);
+          renderEntriesAccordingToLock();
+          updateUpcomingCountFromRendered();
         } catch (err) {
           console.error(err);
           alert('Update failed: ' + (err.message || err));
@@ -495,34 +642,109 @@
       }
 
       if (action === 'cancel') {
-        renderList(dataCache);
+        renderEntriesAccordingToLock();
         return;
       }
     });
 
-    // Search filter
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
-      if (!q) return renderList(dataCache);
+      if (!q) {
+        renderEntriesAccordingToLock();
+        updateUpcomingCountFromRendered();
+        return;
+      }
       const filtered = dataCache.filter(r =>
         (r.name||'').toLowerCase().includes(q) ||
         (r.notes||'').toLowerCase().includes(q) ||
         (r.overtime_date||'').includes(q)
       );
-      renderList(filtered);
+      if (unlocked) {
+        renderList(filtered);
+      } else {
+        const upcomingFiltered = filtered.filter(r => {
+          if (!r.overtime_date) return false;
+          const d = new Date(r.overtime_date);
+          const diffHours = (d - new Date()) / (1000*60*60);
+          return diffHours > 0 && diffHours <= 24;
+        });
+        renderList(upcomingFiltered);
+      }
+      updateUpcomingCountFromRendered();
     });
 
-    // openUnlock behavior unchanged
-    openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
+    openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, false); } });
 
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
+    function formatToYMDHMSFromDateObj(d){
+      if (!d || isNaN(d)) return '—';
+      const pad = (n) => String(n).padStart(2,'0');
+      const yyyy = d.getFullYear();
+      const mm = pad(d.getMonth()+1);
+      const dd = pad(d.getDate());
+      const hh = pad(d.getHours());
+      const min = pad(d.getMinutes());
+      const ss = pad(d.getSeconds());
+      return `${yyyy}${mm}${dd} ${hh}:${min}:${ss}`;
+    }
+    function updateLiveClock(){
+      try {
+        const now = new Date();
+        liveClockEl.textContent = formatToYMDHMSFromDateObj(now);
+      } catch (e) {
+        liveClockEl.textContent = '—';
+      }
+    }
+
+    if (dateBtn && dateInput) {
+      dateBtn.addEventListener('click', () => {
+        try { dateInput.showPicker && dateInput.showPicker(); } catch(e){}
+        dateInput.focus();
+      });
+    }
+
+    const CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+    setInterval(() => {
+      try {
+        renderEntriesAccordingToLock();
+        updateUpcomingCountFromRendered();
+        autoDeleteExpired();
+      } catch (e) {
+        console.error('Periodic check error', e);
+      }
+    }, CHECK_INTERVAL_MS);
+
+    // Ensure UI starts locked on load and avoid restoring unlocked state
     window.addEventListener('DOMContentLoaded', async () => {
-      setUnlockedState(false, true);
+      updateLiveClock();
+      setInterval(updateLiveClock, 1000);
+
+      // Remove any persisted unlocked flag (best effort)
+      try { localStorage.removeItem(LOCAL_KEY); } catch (e) { /* ignore */ }
+
+      // Start locked (do not persist)
+      setUnlockedState(false, false);
+
+      // Ensure UI reflects locked state synchronously
+      updateGuardedControls();
+
       await loadRows();
+      try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
+
+    // Diagnostic helper (call from console if needed)
+    window.__overtime_diag = function(){
+      try {
+        console.log('localStorage key raw:', (function(){ try { return localStorage.getItem(LOCAL_KEY); } catch(e){ return 'err'; } })());
+        console.log('unlocked variable:', unlocked);
+        console.log('lockIndicator color:', getComputedStyle(document.getElementById('lockIndicator')||{}).backgroundColor);
+        console.log('lock-guard disabled count:', Array.from(document.querySelectorAll('.lock-guard')).filter(el=>el.disabled).length);
+        console.log('rows children:', document.getElementById('rows')?.children.length);
+      } catch(e){ console.warn('diag error', e); }
+    };
   </script>
 </body>
 </html>
