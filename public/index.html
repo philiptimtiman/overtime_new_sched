@@ -166,7 +166,6 @@
         </div>
       </header>
 
-      <!-- Upcoming Section (above Entries) -->
       <div class="upcoming-card" id="upcomingSection" aria-live="polite">
         <strong>Upcoming within 24h</strong>
         <div id="upcomingCount" class="upcoming-count">0</div>
@@ -227,11 +226,8 @@
       <div id="pwError" style="color:var(--danger);margin-top:8px;display:none"></div>
     </div>
   </div>
- 
+
   <script type="module">
-  
-  
-  
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
     const SUPABASE_URL = 'https://bisvmgjgyvludhqsvvcn.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
@@ -355,16 +351,19 @@
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
 
-      // NEW: hide entries list when locked; show when unlocked
+      // hide entries list when locked; show when unlocked
       if (!unlocked) appRoot.classList.add('entries-hidden'); else appRoot.classList.remove('entries-hidden');
 
       // keep counts in sync
       updateUpcomingCountFromRendered();
     }
+
+    // PATCHED: do not persist unlocked=true to localStorage to avoid auto-restore on reload
     function setUnlockedState(state, persist = true){
       unlocked = !!state;
       updateGuardedControls();
-      if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
+      // IMPORTANT: persistence disabled to prevent automatic unlock on reload
+      // if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
     function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
@@ -383,7 +382,8 @@
           pwError.textContent = `Server: ${msg}`;
           return;
         }
-        setUnlockedState(true, true);
+        // do not persist unlocked state
+        setUnlockedState(true, false);
         closeModal();
       } catch (err) {
         console.error(err);
@@ -636,7 +636,7 @@
       updateUpcomingCountFromRendered();
     });
 
-    openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
+    openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, false); } });
 
     pwSubmit.addEventListener('click', () => submitPassword(pwInput.value || '') );
     pwCancel.addEventListener('click', () => closeModal());
@@ -680,20 +680,34 @@
       }
     }, CHECK_INTERVAL_MS);
 
+    // Ensure UI starts locked on load and avoid restoring unlocked state
     window.addEventListener('DOMContentLoaded', async () => {
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
 
-      // FORCE auto-lock on refresh: clear persisted unlocked flag and start locked
+      // Remove any persisted unlocked flag (best effort)
       try { localStorage.removeItem(LOCAL_KEY); } catch (e) { /* ignore */ }
+
+      // Start locked (do not persist)
       setUnlockedState(false, false);
 
-      // ensure UI reflects locked state synchronously
+      // Ensure UI reflects locked state synchronously
       updateGuardedControls();
 
       await loadRows();
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
+
+    // Diagnostic helper (call from console if needed)
+    window.__overtime_diag = function(){
+      try {
+        console.log('localStorage key raw:', (function(){ try { return localStorage.getItem(LOCAL_KEY); } catch(e){ return 'err'; } })());
+        console.log('unlocked variable:', unlocked);
+        console.log('lockIndicator color:', getComputedStyle(document.getElementById('lockIndicator')||{}).backgroundColor);
+        console.log('lock-guard disabled count:', Array.from(document.querySelectorAll('.lock-guard')).filter(el=>el.disabled).length);
+        console.log('rows children:', document.getElementById('rows')?.children.length);
+      } catch(e){ console.warn('diag error', e); }
+    };
   </script>
 </body>
 </html>
