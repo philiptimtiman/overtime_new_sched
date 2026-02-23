@@ -36,9 +36,7 @@
       border-radius:var(--radius);padding:12px;box-shadow:0 8px 20px rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.04);
     }
 
-    /* Header: stacked order (title, p1, clock, controls, theme) */
     .header.card{display:flex;flex-direction:column;gap:8px;position:relative;padding-top:12px}
-    /* Center the brand/title and p1 */
     .brand{display:flex;flex-direction:column;align-items:center;text-align:center}
     .brand h1{margin:0;font-size:1rem}
     .brand p{margin:0;color:var(--muted);font-size:.85rem}
@@ -46,25 +44,8 @@
     .controls{display:flex;gap:8px;align-items:center}
     .search{flex:1;border-radius:8px;padding:8px 10px;height:var(--input-h);border:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.12);color:var(--text)}
 
-    /* Live clock centered under p1 */
-    .live-row{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      margin-top:4px;
-    }
-    .live-clock{
-      font-family:monospace;
-      font-size:0.86rem;
-      color:var(--muted);
-      background:rgba(255,255,255,0.02);
-      padding:6px 10px;
-      border-radius:8px;
-      border:1px solid rgba(255,255,255,0.03);
-      min-width:170px;
-      text-align:center;
-      pointer-events:none;
-    }
+    .live-row{display:flex;align-items:center;justify-content:center;margin-top:4px}
+    .live-clock{font-family:monospace;font-size:0.86rem;color:var(--muted);background:rgba(255,255,255,0.02);padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);min-width:170px;text-align:center;pointer-events:none}
 
     .theme-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px}
     .theme-swatch{width:36px;height:36px;border-radius:999px;border:2px solid rgba(255,255,255,0.06);display:inline-flex;align-items:center;justify-content:center;padding:0;background:transparent}
@@ -95,26 +76,9 @@
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
     .btn.full{width:100%}
 
-    .icon-btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      width:40px;
-      height:40px;
-      padding:0;
-      border-radius:10px;
-      background:transparent;
-      color:var(--muted);
-      border:1px solid rgba(255,255,255,0.04);
-      transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;
-    }
+    .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border-radius:10px;background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;}
     .icon-btn svg{ display:block; width:18px; height:18px; }
-    .icon-btn.active{
-      background:linear-gradient(180deg,var(--accent),var(--accent-2));
-      color:#fff;
-      border-color:transparent;
-      box-shadow:0 8px 20px rgba(0,0,0,0.25);
-    }
+    .icon-btn.active{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent;box-shadow:0 8px 20px rgba(0,0,0,0.25);}
     .icon-btn:focus{ outline:2px solid rgba(255,255,255,0.06); outline-offset:2px; }
 
     #formCard{display:flex;flex-direction:column;gap:10px}
@@ -125,50 +89,13 @@
     .add-row{display:grid;grid-template-columns:1fr;gap:8px;align-items:start}
     @media(min-width:520px){ .add-row{grid-template-columns:1fr 1fr} }
 
-    .date-control{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      min-width:0;
-    }
-    .date-control input[type="date"],
-    .date-control input[type="text"],
-    .date-control input[type="datetime-local"]{
-      flex:1;
-      min-width:0;
-      height:var(--input-h);
-      padding:8px 10px;
-      border-radius:8px;
-      border:1px solid rgba(255,255,255,0.04);
-      background:rgba(0,0,0,0.12);
-      color:var(--text);
-      text-align:center;
-      box-sizing:border-box;
-    }
-    .date-btn{
-      flex:0 0 auto;
-      width:40px;
-      height:40px;
-      border-radius:8px;
-      border:1px solid rgba(255,255,255,0.04);
-      background:transparent;
-      color:var(--muted);
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-    }
-    @media(max-width:320px){
-      .date-control{flex-direction:column;align-items:stretch}
-      .date-btn{width:100%}
-    }
+    .date-control{display:flex;align-items:center;gap:8px;min-width:0;}
+    .date-control input[type="date"],.date-control input[type="text"],.date-control input[type="datetime-local"]{flex:1;min-width:0;height:var(--input-h);padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);text-align:center;box-sizing:border-box;}
+    .date-btn{flex:0 0 auto;width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;}
+    @media(max-width:320px){ .date-control{flex-direction:column;align-items:stretch} .date-btn{width:100%} }
     /* --- end patch --- */
 
-    input[type="text"], textarea, input[type="date"]{
-      width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);
-      text-align:center;
-      transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);
-    }
+    input[type="text"], textarea, input[type="date"]{width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);text-align:center;transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);}
     input[type="text"]:focus, textarea:focus, input[type="date"]:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
 
     .date-text{padding-right:48px;cursor:pointer}
@@ -180,9 +107,7 @@
     .item.editing { display:flex; flex-direction:column; gap:8px; }
     .item.editing .edit-input { width:100%; max-width:100%; }
 
-    .modal-backdrop{
-      position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;
-    }
+    .modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;}
     .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
 
     .actions-hidden .item-actions { display: none !important; }
@@ -209,25 +134,21 @@
   <div class="canvas">
     <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler">
       <header class="card header" aria-labelledby="appTitle">
-        <!-- Header title centered -->
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
           <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482</p>
           <p class="meta" style="margin-top:6px">BxTHPTver202602230600</p>
         </div>
 
-        <!-- Live clock centered under the header/p1 -->
         <div class="live-row" aria-hidden="false">
           <div id="liveClock" class="live-clock" role="status" aria-live="polite">—</div>
         </div>
 
-        <!-- Controls (search + lock) -->
         <div class="controls" role="search" style="margin-top:8px;display:flex;gap:8px;align-items:center">
           <input id="search" class="search" placeholder="Search name or notes" aria-label="Search entries" />
           <div class="lock-group" style="margin-left:6px;display:flex;align-items:center;gap:8px">
             <div id="lockIndicator" aria-hidden="true" style="width:10px;height:10px;border-radius:50%;background:#ef4444;transition:background var(--theme-transition)"></div>
 
-            <!-- Lock icon button (id preserved) -->
             <button id="openUnlock" class="btn ghost icon-btn" aria-pressed="false" aria-label="Unlock actions" title="Unlock actions" type="button">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
                 <rect x="3" y="11" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.4" />
@@ -238,7 +159,6 @@
           </div>
         </div>
 
-        <!-- Theme row -->
         <div class="theme-row" role="toolbar" aria-label="Theme switcher" style="margin-top:10px">
           <button class="theme-swatch swatch-ocean" data-theme="ocean" aria-label="Ocean Indigo" title="Ocean Indigo" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-warm" data-theme="warm" aria-label="Warm Sunset" title="Warm Sunset" type="button"><span class="dot" aria-hidden="true"></span></button>
@@ -247,7 +167,7 @@
         </div>
       </header>
 
-      <!-- NEW Upcoming Section (moved above Entries) -->
+      <!-- Upcoming Section (above Entries) -->
       <div class="upcoming-card" id="upcomingSection" aria-live="polite">
         <strong>Upcoming within 24h</strong>
         <div id="upcoming" style="color:var(--muted)">No upcoming leaves/OT within 24h</div>
@@ -276,7 +196,6 @@
             <div class="field">
               <label for="overtime_date">Date</label>
               <div class="date-control">
-                <!-- switched back to date input (yyyy-mm-dd native) -->
                 <input id="overtime_date" name="overtime_date" class="date-text lock-guard" type="date" aria-label="Overtime date" />
                 <button type="button" id="datePickerBtn" class="date-btn lock-guard" aria-label="Open date picker">📅</button>
               </div>
@@ -436,6 +355,8 @@
       }
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
+      // After toggling lock state, re-render entries according to the rule:
+      renderEntriesAccordingToLock();
     }
     function setUnlockedState(state, persist = true){
       unlocked = !!state; updateGuardedControls(); if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
@@ -505,28 +426,32 @@
       return el;
     }
 
+    // Render a list into the Entries area (rowsEl)
     function renderList(items){
       rowsEl.innerHTML = '';
-      if (!items || !items.length) { emptyEl.style.display = 'block'; statusEl.textContent = 'No entries'; return; }
+      if (!items || !items.length) {
+        emptyEl.style.display = 'block';
+        statusEl.textContent = 'No entries';
+        return;
+      }
       emptyEl.style.display = 'none';
       items.forEach(r => rowsEl.appendChild(createRowElement(r)));
-      updateGuardedControls();
       statusEl.textContent = `Loaded ${items.length} entries`;
     }
 
-    // --- Upcoming functions ---
-    function filterUpcoming(){
+    // Return upcoming entries (within next 24 hours)
+    function getUpcomingEntries(){
       const now = new Date();
-      const upcoming = dataCache.filter(r => {
+      return dataCache.filter(r => {
         if (!r.overtime_date) return false;
         const d = new Date(r.overtime_date);
         const diffMs = d - now;
         const diffHours = diffMs / (1000 * 60 * 60);
         return diffHours > 0 && diffHours <= 24;
-      });
-      renderUpcoming(upcoming);
+      }).sort((a,b) => new Date(a.overtime_date) - new Date(b.overtime_date));
     }
 
+    // Render upcoming card
     function renderUpcoming(list){
       upcomingEl.innerHTML = '';
       if (!list || !list.length) {
@@ -546,6 +471,18 @@
         div.appendChild(right);
         upcomingEl.appendChild(div);
       });
+    }
+
+    // Decide what to show in Entries area based on lock state:
+    // - If unlocked: show all entries (dataCache)
+    // - If locked: show only upcoming entries (within 24h). If none, show empty message.
+    function renderEntriesAccordingToLock(){
+      if (unlocked) {
+        renderList(dataCache.slice().sort((a,b) => new Date(a.overtime_date || 0) - new Date(b.overtime_date || 0)));
+      } else {
+        const upcoming = getUpcomingEntries();
+        renderList(upcoming);
+      }
     }
 
     // Auto-delete expired entries (older than now)
@@ -569,8 +506,9 @@
           console.error('Delete error', err);
         }
       }
-      renderList(dataCache);
-      filterUpcoming();
+      // After deletion, re-render both upcoming and entries according to lock
+      renderUpcoming(getUpcomingEntries());
+      renderEntriesAccordingToLock();
     }
 
     async function loadRows(){
@@ -579,8 +517,10 @@
         const { data, error } = await supabase.from('overtime_data').select('id,name,notes,overtime_date').order('overtime_date',{ascending:true});
         if (error) throw error;
         dataCache = (data || []);
-        renderList(dataCache);
-        filterUpcoming();
+        // Render upcoming always (it appears above entries)
+        renderUpcoming(getUpcomingEntries());
+        // Render entries according to lock state
+        renderEntriesAccordingToLock();
       } catch (err) {
         console.error(err);
         statusEl.textContent = 'Error loading data';
@@ -600,8 +540,9 @@
         const { data, error } = await supabase.from('overtime_data').insert([{ name, notes, overtime_date }]).select();
         if (error) throw error;
         dataCache = [...dataCache, ...(data||[])];
-        renderList(dataCache);
-        filterUpcoming();
+        // Update upcoming and entries
+        renderUpcoming(getUpcomingEntries());
+        renderEntriesAccordingToLock();
         form.reset();
         if (dateInput) dateInput.value = '';
       } catch (err) {
@@ -628,8 +569,8 @@
           const { error } = await supabase.from('overtime_data').delete().eq('id', id);
           if (error) throw error;
           dataCache = dataCache.filter(r => String(r.id) !== String(id));
-          renderList(dataCache);
-          filterUpcoming();
+          renderUpcoming(getUpcomingEntries());
+          renderEntriesAccordingToLock();
         } catch (err) {
           console.error(err);
           alert('Delete failed: ' + (err.message || err));
@@ -671,8 +612,8 @@
           const { data, error } = await supabase.from('overtime_data').update({ name, notes, overtime_date }).eq('id', id).select();
           if (error) throw error;
           dataCache = dataCache.map(r => String(r.id) === String(id) ? (data && data[0]) || { ...r, name, notes, overtime_date } : r);
-          renderList(dataCache);
-          filterUpcoming();
+          renderUpcoming(getUpcomingEntries());
+          renderEntriesAccordingToLock();
         } catch (err) {
           console.error(err);
           alert('Update failed: ' + (err.message || err));
@@ -681,20 +622,36 @@
       }
 
       if (action === 'cancel') {
-        renderList(dataCache);
+        renderEntriesAccordingToLock();
         return;
       }
     });
 
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
-      if (!q) return renderList(dataCache);
+      if (!q) {
+        // show according to lock state
+        renderEntriesAccordingToLock();
+        return;
+      }
+      // search across the full dataset, but still respect lock state for display:
       const filtered = dataCache.filter(r =>
         (r.name||'').toLowerCase().includes(q) ||
         (r.notes||'').toLowerCase().includes(q) ||
         (r.overtime_date||'').includes(q)
       );
-      renderList(filtered);
+      if (unlocked) {
+        renderList(filtered);
+      } else {
+        // when locked, only show filtered upcoming items
+        const upcomingFiltered = filtered.filter(r => {
+          if (!r.overtime_date) return false;
+          const d = new Date(r.overtime_date);
+          const diffHours = (d - new Date()) / (1000*60*60);
+          return diffHours > 0 && diffHours <= 24;
+        });
+        renderList(upcomingFiltered);
+      }
     });
 
     openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
@@ -703,7 +660,7 @@
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
-    // Live clock (keeps existing behavior)
+    // Live clock
     function formatToYMDHMSFromDateObj(d){
       if (!d || isNaN(d)) return '—';
       const pad = (n) => String(n).padStart(2,'0');
@@ -736,7 +693,9 @@
     const CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
     setInterval(() => {
       try {
-        filterUpcoming();
+        renderUpcoming(getUpcomingEntries());
+        // If locked, entries area should reflect upcoming only; if unlocked, keep all
+        renderEntriesAccordingToLock();
         autoDeleteExpired();
       } catch (e) {
         console.error('Periodic check error', e);
@@ -747,9 +706,12 @@
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
 
-      setUnlockedState(false, true);
+      // default locked state (persisted)
+      const saved = safeGetLocal(LOCAL_KEY);
+      setUnlockedState(saved === 'true');
+
       await loadRows();
-      // run an initial cleanup in case some entries are already expired
+      // initial cleanup
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
   </script>
