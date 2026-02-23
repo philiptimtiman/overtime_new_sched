@@ -128,9 +128,9 @@
       .live-clock{min-width:140px;font-size:0.78rem}
     }
 
-    /* compact aligned pills */
-    .counts-card{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
-    .counts-row{display:flex;gap:10px;align-items:center;margin-left:auto}
+    /* compact aligned pills centered */
+    .counts-card{display:flex;align-items:center;justify-content:center;gap:12px;padding:8px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
+    .counts-row{display:flex;gap:10px;align-items:center}
     .count-pill{min-width:64px;padding:8px 10px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
     .count-label{font-size:0.68rem;color:var(--muted);font-weight:600}
     .count-value{font-size:1.05rem;font-weight:800}
@@ -178,13 +178,9 @@
         </div>
       </header>
 
-      <!-- Compact section: only label + aligned count pills -->
+      <!-- Centered compact section: only aligned count pills -->
       <div class="counts-card card" aria-live="polite" style="margin-top:8px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <!-- left can be empty or show a small title; user requested only label + pill, so keep minimal -->
-        </div>
-
-        <div class="counts-row" aria-hidden="false" style="margin-left:auto">
+        <div class="counts-row" aria-hidden="false">
           <div id="upcomingCount" class="count-pill upcoming" title="Upcoming within 24h">
             <div class="count-value">0</div>
             <div class="count-label">Upcoming</div>
@@ -365,7 +361,6 @@
       btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
-    // Robust normalize: handle YYYY-MM-DD, ISO datetimes, timestamps, embedded date substrings
     function normalizeStoredDate(val) {
       if (!val) return null;
       const s = String(val).trim();
@@ -390,7 +385,6 @@
       return null;
     }
 
-    // Parse a date-only string (YYYY-MM-DD) into a Date at local midnight
     function parseDateOnlyToLocalMidnight(dateOnly) {
       if (!dateOnly) return NaN;
       const m = String(dateOnly).match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -401,7 +395,6 @@
       return isNaN(d) ? NaN : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
     }
 
-    // Expiry: end-of-day + 7h20 => startMidnight + 31h20m
     function computeExpiryForOvertimeDate(dateOnly) {
       const startMidnight = parseDateOnlyToLocalMidnight(dateOnly);
       if (isNaN(startMidnight)) return NaN;
@@ -409,7 +402,6 @@
       return new Date(expiryMs);
     }
 
-    // Upcoming: start within next 24h
     function getUpcomingEntries(){
       if (!Array.isArray(dataCache)) dataCache = [];
       const now = Date.now();
@@ -423,7 +415,6 @@
       }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
     }
 
-    // Ongoing: start <= now < expiry
     function getOngoingEntries(){
       if (!Array.isArray(dataCache)) dataCache = [];
       const now = Date.now();
@@ -436,19 +427,16 @@
       }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
     }
 
-    // Update both counts and update pill labels/colors
     function updateCounts(){
       try {
         const upcoming = getUpcomingEntries();
         const ongoing = getOngoingEntries();
-        // update upcoming pill
         if (upcomingCountEl) {
           const valEl = upcomingCountEl.querySelector('.count-value');
           if (valEl) valEl.textContent = String(upcoming.length);
           upcomingCountEl.classList.add('upcoming');
           upcomingCountEl.classList.remove('ongoing');
         }
-        // update ongoing pill
         if (ongoingCountEl) {
           const valEl = ongoingCountEl.querySelector('.count-value');
           if (valEl) valEl.textContent = String(ongoing.length);
@@ -488,7 +476,6 @@
         </div>
       `;
 
-      // mark upcoming or ongoing
       try {
         if (row && row.overtime_date) {
           const now = Date.now();
@@ -520,9 +507,6 @@
       updateCounts();
     }
 
-    // Render according to lock state:
-    // - unlocked: show full list
-    // - locked: show only ongoing + upcoming (both), combined with ongoing first
     function renderEntriesAccordingToLock(){
       if (!Array.isArray(dataCache)) dataCache = [];
       if (unlocked) {
@@ -540,7 +524,6 @@
         return;
       }
 
-      // locked: show ongoing first, then upcoming (dedupe)
       const { upcoming, ongoing } = updateCounts();
       const combined = [...ongoing, ...upcoming].filter((v, i, a) => a.findIndex(x => String(x.id) === String(v.id)) === i);
       rowsEl.innerHTML = '';
@@ -554,7 +537,6 @@
       statusEl.textContent = `Showing ${combined.length} entries (ongoing + upcoming)`;
     }
 
-    // Auto-delete expired entries using expiry = end-of-day + 7:20 (startMidnight + 31h20m)
     async function autoDeleteExpired(){
       if (!Array.isArray(dataCache)) dataCache = [];
       const now = Date.now();
@@ -589,11 +571,7 @@
       try {
         const { data, error } = await supabase.from('overtime_data').select('id,name,notes,overtime_date').order('overtime_date',{ascending:true});
         if (error) throw error;
-        // Normalize overtime_date to date-only strings (local)
-        dataCache = (data || []).map(r => ({
-          ...r,
-          overtime_date: normalizeStoredDate(r.overtime_date)
-        }));
+        dataCache = (data || []).map(r => ({ ...r, overtime_date: normalizeStoredDate(r.overtime_date) }));
         renderEntriesAccordingToLock();
         updateCounts();
       } catch (err) {
@@ -614,7 +592,6 @@
       try {
         const { data, error } = await supabase.from('overtime_data').insert([{ name, notes, overtime_date }]).select();
         if (error) throw error;
-        // Normalize returned rows before adding to cache
         const inserted = (data || []).map(r => ({ ...r, overtime_date: normalizeStoredDate(r.overtime_date) }));
         dataCache = [...dataCache, ...inserted];
         renderEntriesAccordingToLock();
@@ -688,7 +665,6 @@
         try {
           const { data, error } = await supabase.from('overtime_data').update({ name, notes, overtime_date }).eq('id', id).select();
           if (error) throw error;
-          // Normalize returned updated row if present
           const updatedRow = (data && data[0]) ? { ...data[0], overtime_date: normalizeStoredDate(data[0].overtime_date) } : null;
           dataCache = dataCache.map(r => String(r.id) === String(id) ? (updatedRow || { ...r, name, notes, overtime_date }) : r);
           renderEntriesAccordingToLock();
@@ -719,7 +695,6 @@
         (r.overtime_date||'').includes(q)
       );
       if (!unlocked) {
-        // keep only upcoming or ongoing from filtered
         const now = Date.now();
         const in24h = now + (24 * 60 * 60 * 1000);
         const filteredCombined = filtered.filter(r => {
@@ -739,7 +714,6 @@
       updateCounts();
     });
 
-    // Update guarded controls: hide/disable actions and form when locked; keep entries visibility controlled by renderEntriesAccordingToLock
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
@@ -832,7 +806,6 @@
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
 
-      // AUTO-LOCK ON REFRESH: always start locked.
       try { localStorage.removeItem(LOCAL_KEY); } catch (e) {}
       setUnlockedState(false);
 
@@ -840,7 +813,6 @@
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
 
-    // Diagnostic helper
     window.__overtime_diag = function(){
       try {
         console.log('localStorage key raw:', (function(){ try { return localStorage.getItem(LOCAL_KEY); } catch(e){ return 'err'; } })());
