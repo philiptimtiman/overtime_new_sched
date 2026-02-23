@@ -115,6 +115,9 @@
     .item.upcoming { box-shadow: 0 8px 20px rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.12); }
     .item.upcoming .date-pill { border-color: rgba(16,185,129,0.18); background: linear-gradient(180deg, rgba(16,185,129,0.04), rgba(16,185,129,0.02)); }
 
+    .item.ongoing { box-shadow: 0 8px 20px rgba(59,130,246,0.06); border-color: rgba(59,130,246,0.12); }
+    .item.ongoing .date-pill { border-color: rgba(59,130,246,0.18); background: linear-gradient(180deg, rgba(59,130,246,0.04), rgba(59,130,246,0.02)); }
+
     @media (max-width:420px){
       .add-row{grid-template-columns:1fr}
       .app{width:320px}
@@ -124,9 +127,8 @@
       .live-clock{min-width:140px;font-size:0.78rem}
     }
 
-    .upcoming-card{margin-top:10px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .upcoming-card strong{font-size:0.95rem;display:block;color:var(--text)}
-    .upcoming-count{font-weight:800;font-size:1.4rem;color:var(--text);min-width:36px;text-align:right}
+    .counts-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px}
+    .count-pill{padding:8px 12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));border:1px solid rgba(255,255,255,0.03);color:var(--text);font-weight:700}
   </style>
 </head>
 <body>
@@ -136,7 +138,7 @@
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
           <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482</p>
-          <p class="meta" style="margin-top:6px">BxTHPTver202602230600.25</p>
+          <p class="meta" style="margin-top:6px">BxTHPTver202602230600</p>
         </div>
 
         <div class="live-row" aria-hidden="false">
@@ -166,12 +168,19 @@
         </div>
       </header>
 
-      <div class="upcoming-card" id="upcomingSection" aria-live="polite">
-        <strong>Upcoming within 24h</strong>
-        <div id="upcomingCount" class="upcoming-count">0</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="upcoming-card card" id="upcomingSection" aria-live="polite" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <strong>Upcoming within 24h</strong>
+          <div id="upcomingCount" class="upcoming-count">0</div>
+        </div>
+
+        <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+          <strong>On going (active within grace)</strong>
+          <div id="ongoingCount" class="count-pill">0</div>
+        </div>
       </div>
 
-      <main class="card" aria-live="polite" style="display:flex;flex-direction:column;gap:10px">
+      <main class="card" aria-live="polite" style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <strong>Entries</strong>
           <span id="status" class="meta">Idle</span>
@@ -259,6 +268,7 @@
     const LOCAL_KEY = 'overtime_unlocked_v2';
 
     const upcomingCountEl = document.getElementById('upcomingCount');
+    const ongoingCountEl = document.getElementById('ongoingCount');
 
     let dataCache = [];
     let unlocked = false;
@@ -339,15 +349,29 @@
       btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
-    // Normalize stored date values to YYYY-MM-DD (local date)
+    // Robust normalize: handle YYYY-MM-DD, ISO datetimes, timestamps, embedded date substrings
     function normalizeStoredDate(val) {
       if (!val) return null;
-      const m = String(val).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      const s = String(val).trim();
+      const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if (m) return `${m[1]}-${m[2]}-${m[3]}`;
-      const d = new Date(val);
-      if (isNaN(d)) return null;
-      const pad = n => String(n).padStart(2,'0');
-      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+      if (s.includes('T')) {
+        const d = new Date(s);
+        if (!isNaN(d)) {
+          const pad = n => String(n).padStart(2,'0');
+          return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+        }
+      }
+      if (/^\d+$/.test(s)) {
+        const d = new Date(Number(s));
+        if (!isNaN(d)) {
+          const pad = n => String(n).padStart(2,'0');
+          return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+        }
+      }
+      const sub = s.match(/(\d{4}-\d{2}-\d{2})/);
+      if (sub) return sub[1];
+      return null;
     }
 
     // Parse a date-only string (YYYY-MM-DD) into a Date at local midnight
@@ -361,77 +385,15 @@
       return isNaN(d) ? NaN : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
     }
 
-    // Compute expiry for an overtime_date: end of that calendar day + 7 hours 20 minutes
-    // That is: startMidnight + 24h + 7h20m = startMidnight + 31h20m
+    // Expiry: end-of-day + 7h20 => startMidnight + 31h20m
     function computeExpiryForOvertimeDate(dateOnly) {
       const startMidnight = parseDateOnlyToLocalMidnight(dateOnly);
       if (isNaN(startMidnight)) return NaN;
-      // 31 hours 20 minutes = 31*60 + 20 = 1880 minutes
-      const expiryMs = startMidnight.getTime() + (1880 * 60 * 1000);
+      const expiryMs = startMidnight.getTime() + (1880 * 60 * 1000); // 31h20m
       return new Date(expiryMs);
     }
 
-    // Update guarded controls: hide/disable actions and form when locked; keep entries visibility controlled by renderEntriesAccordingToLock
-    function updateGuardedControls(){
-      document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
-      lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
-      if (openUnlock) {
-        openUnlock.setAttribute('aria-pressed', unlocked ? 'true' : 'false');
-        openUnlock.title = unlocked ? 'Lock actions' : 'Unlock actions';
-        openUnlock.setAttribute('aria-label', unlocked ? 'Lock actions' : 'Unlock actions');
-        openUnlock.classList.toggle('active', unlocked);
-      }
-      if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
-      if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
-      renderEntriesAccordingToLock();
-      updateUpcomingCountFromDataCache();
-    }
-
-    function setUnlockedState(state, persist = true){
-      unlocked = !!state;
-      updateGuardedControls();
-      if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
-    }
-
-    function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
-    function closeModal(){ modalBackdrop.style.display = 'none'; modalBackdrop.setAttribute('aria-hidden','true'); pwError.style.display='none'; }
-
-    async function submitPassword(password){
-      try {
-        pwError.style.display = 'block';
-        pwError.textContent = 'Checking...';
-        const res = await fetch('/api/unlock', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password }) });
-        const raw = await res.text();
-        let parsed;
-        try { parsed = raw ? JSON.parse(raw) : null; } catch (e) { parsed = null; }
-        if (!res.ok) {
-          const msg = parsed?.error || parsed?.message || raw || `HTTP ${res.status}`;
-          pwError.textContent = `Server: ${msg}`;
-          return;
-        }
-        setUnlockedState(true, true);
-        closeModal();
-      } catch (err) {
-        console.error(err);
-        pwError.textContent = 'Network or server error.';
-      }
-    }
-
-    (function attachDateBehavior(){
-      try {
-        function openPicker(){
-          if (!dateInput) return;
-          dateInput.focus();
-          try { dateInput.showPicker && dateInput.showPicker(); } catch(e){}
-        }
-        if (dateBtn) dateBtn.addEventListener('click', openPicker);
-        if (dateInput) dateInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); } });
-      } catch (e) { console.warn('Date behavior attach failed', e); }
-    })();
-
-    // Upcoming entries: include
-    // - items whose start midnight is within next 24 hours (future upcoming), OR
-    // - items whose start midnight is <= now but expiry (end-of-day + 7:20) is still in the future (active today within grace)
+    // Upcoming: start within next 24h
     function getUpcomingEntries(){
       if (!Array.isArray(dataCache)) dataCache = [];
       const now = Date.now();
@@ -440,27 +402,37 @@
         if (!r || !r.overtime_date) return false;
         const start = parseDateOnlyToLocalMidnight(r.overtime_date);
         if (isNaN(start)) return false;
-        const expiry = computeExpiryForOvertimeDate(r.overtime_date);
-        if (isNaN(expiry)) return false;
         const startMs = start.getTime();
-        // future upcoming: start within next 24h
-        if (startMs > now && startMs <= in24h) return true;
-        // active today within grace: start <= now < expiry
-        if (startMs <= now && expiry.getTime() > now) return true;
-        return false;
+        return startMs > now && startMs <= in24h;
       }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
     }
 
-    // Compute and update upcoming count (based on start within 24h or active within grace)
-    function updateUpcomingCountFromDataCache(){
+    // Ongoing: start <= now < expiry
+    function getOngoingEntries(){
+      if (!Array.isArray(dataCache)) dataCache = [];
+      const now = Date.now();
+      return dataCache.filter(r => {
+        if (!r || !r.overtime_date) return false;
+        const start = parseDateOnlyToLocalMidnight(r.overtime_date);
+        const expiry = computeExpiryForOvertimeDate(r.overtime_date);
+        if (isNaN(start) || isNaN(expiry)) return false;
+        return start.getTime() <= now && expiry.getTime() > now;
+      }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
+    }
+
+    // Update both counts and return objects
+    function updateCounts(){
       try {
         const upcoming = getUpcomingEntries();
+        const ongoing = getOngoingEntries();
         if (upcomingCountEl) upcomingCountEl.textContent = String(upcoming.length);
-        return upcoming;
+        if (ongoingCountEl) ongoingCountEl.textContent = String(ongoing.length);
+        return { upcoming, ongoing };
       } catch (e) {
-        console.warn('updateUpcomingCountFromDataCache failed', e);
+        console.warn('updateCounts failed', e);
         if (upcomingCountEl) upcomingCountEl.textContent = '0';
-        return [];
+        if (ongoingCountEl) ongoingCountEl.textContent = '0';
+        return { upcoming: [], ongoing: [] };
       }
     }
 
@@ -488,17 +460,17 @@
         </div>
       `;
 
-      // mark upcoming or active within grace
+      // mark upcoming or ongoing
       try {
         if (row && row.overtime_date) {
           const now = Date.now();
           const start = parseDateOnlyToLocalMidnight(row.overtime_date).getTime();
           const expiry = computeExpiryForOvertimeDate(row.overtime_date).getTime();
           if (!isNaN(start) && !isNaN(expiry)) {
-            const hoursUntilStart = (start - now) / (1000 * 60 * 60);
-            const isFutureUpcoming = hoursUntilStart > 0 && hoursUntilStart <= 24;
+            const isFutureUpcoming = start > now && start <= (now + 24*60*60*1000);
             const isActiveWithinGrace = start <= now && expiry > now;
-            if (isFutureUpcoming || isActiveWithinGrace) el.classList.add('upcoming');
+            if (isFutureUpcoming) el.classList.add('upcoming');
+            if (isActiveWithinGrace) el.classList.add('ongoing');
           }
         }
       } catch (e) { /* ignore */ }
@@ -511,18 +483,18 @@
       if (!items || !items.length) {
         emptyEl.style.display = 'block';
         statusEl.textContent = 'No entries';
-        updateUpcomingCountFromDataCache();
+        updateCounts();
         return;
       }
       emptyEl.style.display = 'none';
       items.forEach(r => rowsEl.appendChild(createRowElement(r)));
       statusEl.textContent = `Loaded ${items.length} entries`;
-      updateUpcomingCountFromDataCache();
+      updateCounts();
     }
 
     // Render according to lock state:
     // - unlocked: show full list
-    // - locked: show only upcoming (start within 24h OR active within grace)
+    // - locked: show only upcoming + ongoing (both), combined
     function renderEntriesAccordingToLock(){
       if (!Array.isArray(dataCache)) dataCache = [];
       if (unlocked) {
@@ -536,32 +508,26 @@
           emptyEl.style.display = 'block';
           statusEl.textContent = 'No entries';
         }
-        updateUpcomingCountFromDataCache();
+        updateCounts();
         return;
       }
 
-      // locked: show only upcoming or active-within-grace
-      const upcoming = getUpcomingEntries();
+      // locked: show upcoming + ongoing
+      const { upcoming, ongoing } = updateCounts();
+      const combined = [...ongoing, ...upcoming].filter((v, i, a) => a.findIndex(x => String(x.id) === String(v.id)) === i);
       rowsEl.innerHTML = '';
-      if (!upcoming.length) {
+      if (!combined.length) {
         emptyEl.style.display = 'block';
-        statusEl.textContent = 'No upcoming entries within 24h';
-        updateUpcomingCountFromDataCache();
+        statusEl.textContent = 'No upcoming or ongoing entries';
         return;
       }
       emptyEl.style.display = 'none';
-      upcoming.forEach(r => rowsEl.appendChild(createRowElement(r)));
-      statusEl.textContent = `Showing ${upcoming.length} upcoming entries`;
-      updateUpcomingCountFromDataCache();
+      combined.forEach(r => rowsEl.appendChild(createRowElement(r)));
+      statusEl.textContent = `Showing ${combined.length} entries (ongoing + upcoming)`;
     }
 
     function getRenderedEntriesCount() {
       return rowsEl?.children.length || 0;
-    }
-
-    function updateUpcomingCountFromRendered() {
-      const count = getRenderedEntriesCount();
-      if (upcomingCountEl) upcomingCountEl.textContent = String(count);
     }
 
     // Auto-delete expired entries using expiry = end-of-day + 7:20 (startMidnight + 31h20m)
@@ -591,7 +557,7 @@
       }
 
       renderEntriesAccordingToLock();
-      updateUpcomingCountFromDataCache();
+      updateCounts();
     }
 
     async function loadRows(){
@@ -605,7 +571,7 @@
           overtime_date: normalizeStoredDate(r.overtime_date)
         }));
         renderEntriesAccordingToLock();
-        updateUpcomingCountFromDataCache();
+        updateCounts();
       } catch (err) {
         console.error(err);
         statusEl.textContent = 'Error loading data';
@@ -628,7 +594,7 @@
         const inserted = (data || []).map(r => ({ ...r, overtime_date: normalizeStoredDate(r.overtime_date) }));
         dataCache = [...dataCache, ...inserted];
         renderEntriesAccordingToLock();
-        updateUpcomingCountFromDataCache();
+        updateCounts();
         form.reset();
         if (dateInput) dateInput.value = '';
       } catch (err) {
@@ -657,7 +623,7 @@
           if (error) throw error;
           dataCache = dataCache.filter(r => String(r.id) !== String(id));
           renderEntriesAccordingToLock();
-          updateUpcomingCountFromDataCache();
+          updateCounts();
         } catch (err) {
           console.error(err);
           alert('Delete failed: ' + (err.message || err));
@@ -702,7 +668,7 @@
           const updatedRow = (data && data[0]) ? { ...data[0], overtime_date: normalizeStoredDate(data[0].overtime_date) } : null;
           dataCache = dataCache.map(r => String(r.id) === String(id) ? (updatedRow || { ...r, name, notes, overtime_date }) : r);
           renderEntriesAccordingToLock();
-          updateUpcomingCountFromDataCache();
+          updateCounts();
         } catch (err) {
           console.error(err);
           alert('Update failed: ' + (err.message || err));
@@ -720,7 +686,7 @@
       const q = searchInput.value.trim().toLowerCase();
       if (!q) {
         renderEntriesAccordingToLock();
-        updateUpcomingCountFromDataCache();
+        updateCounts();
         return;
       }
       const filtered = dataCache.filter(r =>
@@ -729,23 +695,24 @@
         (r.overtime_date||'').includes(q)
       );
       if (!unlocked) {
-        const upcomingFiltered = filtered.filter(r => {
+        // keep only upcoming or ongoing from filtered
+        const now = Date.now();
+        const in24h = now + (24 * 60 * 60 * 1000);
+        const filteredCombined = filtered.filter(r => {
           if (!r.overtime_date) return false;
           const start = parseDateOnlyToLocalMidnight(r.overtime_date);
           const expiry = computeExpiryForOvertimeDate(r.overtime_date);
           if (isNaN(start) || isNaN(expiry)) return false;
-          const now = Date.now();
           const startMs = start.getTime();
-          const in24h = now + (24 * 60 * 60 * 1000);
           const futureUpcoming = startMs > now && startMs <= in24h;
           const activeWithinGrace = startMs <= now && expiry.getTime() > now;
           return futureUpcoming || activeWithinGrace;
         });
-        renderList(upcomingFiltered);
+        renderList(filteredCombined);
       } else {
         renderList(filtered);
       }
-      updateUpcomingCountFromDataCache();
+      updateCounts();
     });
 
     openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
@@ -785,7 +752,7 @@
     setInterval(() => {
       try {
         renderEntriesAccordingToLock();
-        updateUpcomingCountFromDataCache();
+        updateCounts();
         autoDeleteExpired();
       } catch (e) {
         console.error('Periodic check error', e);
@@ -812,7 +779,8 @@
         console.log('lockIndicator color:', getComputedStyle(document.getElementById('lockIndicator')||{}).backgroundColor);
         console.log('lock-guard disabled count:', Array.from(document.querySelectorAll('.lock-guard')).filter(el=>el.disabled).length);
         console.log('rows children:', document.getElementById('rows')?.children.length);
-        console.log('upcoming elements:', document.querySelectorAll('#rows .item.upcoming').length);
+        console.log('upcoming elements:', getUpcomingEntries().length);
+        console.log('ongoing elements:', getOngoingEntries().length);
         console.log('dataCache sample:', dataCache.slice(0,10));
       } catch(e){ console.warn('diag error', e); }
     };
