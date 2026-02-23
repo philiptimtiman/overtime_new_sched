@@ -196,6 +196,13 @@
       .date-pill{min-width:64px; max-width:96px; font-size:0.85rem}
       .live-clock{min-width:140px;font-size:0.78rem}
     }
+
+    /* Upcoming card styles */
+    .upcoming-card{margin-top:10px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
+    .upcoming-card strong{display:block;margin-bottom:6px}
+    .upcoming-item{padding:6px;border-radius:6px;background:rgba(255,255,255,0.02);margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
+    .upcoming-item .name{font-weight:600;font-size:0.92rem}
+    .upcoming-item .date{color:var(--muted);font-size:0.88rem}
   </style>
 </head>
 <body>
@@ -206,7 +213,7 @@
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
           <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482</p>
-		  <p class="meta" style="margin-top:6px">BxTHPTver202602230600</p>
+          <p class="meta" style="margin-top:6px">BxTHPTver202602230600</p>
         </div>
 
         <!-- Live clock centered under the header/p1 -->
@@ -250,6 +257,12 @@
         <div id="empty" class="empty" style="display:none;color:var(--muted);padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);text-align:center">Walang entries. I-unlock at magdagdag ng bagong overtime o leave.</div>
       </main>
 
+      <!-- NEW Upcoming Section -->
+      <div class="upcoming-card" id="upcomingSection" aria-live="polite">
+        <strong>Upcoming within 24h</strong>
+        <div id="upcoming" style="color:var(--muted)">No upcoming leaves/OT within 24h</div>
+      </div>
+
       <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle" style="display:flex;flex-direction:column;gap:8px">
         <strong id="addOvertimeTitle" style="display:block;text-align:center">Add Entries</strong>
 
@@ -263,7 +276,6 @@
             <div class="field">
               <label for="overtime_date">Date</label>
               <div class="date-control">
-                <!-- switched back to date input (yyyy-mm-dd native) -->
                 <input id="overtime_date" name="overtime_date" class="date-text lock-guard" type="date" aria-label="Overtime date" />
                 <button type="button" id="datePickerBtn" class="date-btn lock-guard" aria-label="Open date picker">📅</button>
               </div>
@@ -327,6 +339,8 @@
     const swatches = Array.from(document.querySelectorAll('.theme-swatch'));
     const THEME_KEY = 'overtime_theme_v1';
     const LOCAL_KEY = 'overtime_unlocked_v2';
+
+    const upcomingEl = document.getElementById('upcoming');
 
     let dataCache = [];
     let unlocked = false;
@@ -499,6 +513,65 @@
       statusEl.textContent = `Loaded ${items.length} entries`;
     }
 
+    // --- Upcoming functions ---
+    function filterUpcoming(){
+      const now = new Date();
+      const upcoming = dataCache.filter(r => {
+        if (!r.overtime_date) return false;
+        const d = new Date(r.overtime_date);
+        const diffMs = d - now;
+        const diffHours = diffMs / (1000 * 60 * 60);
+        return diffHours > 0 && diffHours <= 24;
+      });
+      renderUpcoming(upcoming);
+    }
+
+    function renderUpcoming(list){
+      upcomingEl.innerHTML = '';
+      if (!list || !list.length) {
+        upcomingEl.textContent = 'No upcoming leaves/OT within 24h';
+        return;
+      }
+      list.forEach(r => {
+        const div = document.createElement('div');
+        div.className = 'upcoming-item';
+        const left = document.createElement('div');
+        left.className = 'name';
+        left.textContent = r.name || '—';
+        const right = document.createElement('div');
+        right.className = 'date';
+        right.textContent = formatDateOnlyYMD(r.overtime_date);
+        div.appendChild(left);
+        div.appendChild(right);
+        upcomingEl.appendChild(div);
+      });
+    }
+
+    // Auto-delete expired entries (older than now)
+    async function autoDeleteExpired(){
+      const now = new Date();
+      const expired = dataCache.filter(r => {
+        if (!r.overtime_date) return false;
+        const d = new Date(r.overtime_date);
+        return d < now;
+      });
+      if (!expired.length) return;
+      for (const r of expired) {
+        try {
+          const { error } = await supabase.from('overtime_data').delete().eq('id', r.id);
+          if (error) {
+            console.error('Delete failed for id', r.id, error);
+            continue;
+          }
+          dataCache = dataCache.filter(x => String(x.id) !== String(r.id));
+        } catch (err) {
+          console.error('Delete error', err);
+        }
+      }
+      renderList(dataCache);
+      filterUpcoming();
+    }
+
     async function loadRows(){
       statusEl.textContent = 'Loading...';
       try {
@@ -506,6 +579,7 @@
         if (error) throw error;
         dataCache = (data || []);
         renderList(dataCache);
+        filterUpcoming();
       } catch (err) {
         console.error(err);
         statusEl.textContent = 'Error loading data';
@@ -526,6 +600,7 @@
         if (error) throw error;
         dataCache = [...dataCache, ...(data||[])];
         renderList(dataCache);
+        filterUpcoming();
         form.reset();
         if (dateInput) dateInput.value = '';
       } catch (err) {
@@ -553,6 +628,7 @@
           if (error) throw error;
           dataCache = dataCache.filter(r => String(r.id) !== String(id));
           renderList(dataCache);
+          filterUpcoming();
         } catch (err) {
           console.error(err);
           alert('Delete failed: ' + (err.message || err));
@@ -595,6 +671,7 @@
           if (error) throw error;
           dataCache = dataCache.map(r => String(r.id) === String(id) ? (data && data[0]) || { ...r, name, notes, overtime_date } : r);
           renderList(dataCache);
+          filterUpcoming();
         } catch (err) {
           console.error(err);
           alert('Update failed: ' + (err.message || err));
@@ -654,12 +731,25 @@
       });
     }
 
+    // Periodic checks: every hour run upcoming filter and auto-delete expired
+    const CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+    setInterval(() => {
+      try {
+        filterUpcoming();
+        autoDeleteExpired();
+      } catch (e) {
+        console.error('Periodic check error', e);
+      }
+    }, CHECK_INTERVAL_MS);
+
     window.addEventListener('DOMContentLoaded', async () => {
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
 
       setUnlockedState(false, true);
       await loadRows();
+      // run an initial cleanup in case some entries are already expired
+      try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
   </script>
 </body>
