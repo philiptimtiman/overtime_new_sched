@@ -346,11 +346,11 @@
       }
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
-      renderEntriesAccordingToLock();
-      updateUpcomingCountFromRendered();
     }
     function setUnlockedState(state, persist = true){
-      unlocked = !!state; updateGuardedControls(); if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
+      unlocked = !!state;
+      updateGuardedControls();
+      if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
     function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
@@ -389,7 +389,6 @@
       } catch (e) { console.warn('Date behavior attach failed', e); }
     })();
 
-    // createRowElement, renderList, getUpcomingEntries, renderEntriesAccordingToLock, updateUpcomingCountFromRendered, etc.
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -670,10 +669,12 @@
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
 
-      // AUTO-LOCK ON REFRESH: always start locked.
-      // Also remove any persisted unlocked flag so it won't re-open automatically.
-      try { localStorage.removeItem(LOCAL_KEY); } catch (e) {}
-      setUnlockedState(false);
+      // FORCE AUTO-LOCK ON REFRESH:
+      // 1) remove any persisted unlocked flag (so previous 'true' won't re-open)
+      // 2) explicitly set unlocked = false and persist that state (so UI updates immediately)
+      try { localStorage.removeItem(LOCAL_KEY); } catch (e) { /* ignore */ }
+      // ensure UI is locked before loading rows
+      setUnlockedState(false, true);
 
       await loadRows();
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
