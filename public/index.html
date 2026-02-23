@@ -120,7 +120,6 @@
       .live-clock{min-width:140px;font-size:0.78rem}
     }
 
-    /* Upcoming card layout: label left, numeric count right (no text) */
     .upcoming-card{margin-top:10px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:space-between;gap:12px}
     .upcoming-card strong{font-size:0.95rem;display:block;color:var(--text)}
     .upcoming-count{font-weight:800;font-size:1.4rem;color:var(--text);min-width:36px;text-align:right}
@@ -163,7 +162,6 @@
         </div>
       </header>
 
-      <!-- Upcoming Section (above Entries) -->
       <div class="upcoming-card" id="upcomingSection" aria-live="polite">
         <strong>Upcoming within 24h</strong>
         <div id="upcomingCount" class="upcoming-count">0</div>
@@ -391,6 +389,7 @@
       } catch (e) { console.warn('Date behavior attach failed', e); }
     })();
 
+    // createRowElement, renderList, getUpcomingEntries, renderEntriesAccordingToLock, updateUpcomingCountFromRendered, etc.
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -457,7 +456,6 @@
 
     function updateUpcomingCountFromRendered() {
       const count = getRenderedEntriesCount();
-      // show only the numeric count on the right side (no label)
       upcomingCountEl.textContent = String(count);
     }
 
@@ -672,8 +670,10 @@
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
 
-      const saved = safeGetLocal(LOCAL_KEY);
-      setUnlockedState(saved === 'true');
+      // AUTO-LOCK ON REFRESH: always start locked.
+      // Also remove any persisted unlocked flag so it won't re-open automatically.
+      try { localStorage.removeItem(LOCAL_KEY); } catch (e) {}
+      setUnlockedState(false);
 
       await loadRows();
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
