@@ -152,7 +152,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.24</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.24.1</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -200,16 +200,7 @@
         </div>
       </div>
 
-      <main class="card" aria-live="polite" style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <strong>Entries</strong>
-          <span id="status" class="meta">Idle</span>
-        </div>
-
-        <div id="rows" class="list" aria-live="polite"></div>
-        <div id="empty" class="empty" style="display:none;color:var(--muted);padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);text-align:center">Walang malapit na overtime o leave sa loob ng 24 oras.</div>
-      </main>
-
+      <!-- Add Entries moved before Entries list as requested -->
       <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle" style="display:flex;flex-direction:column;gap:8px">
         <strong id="addOvertimeTitle" style="display:block;text-align:center">Add Entries</strong>
 
@@ -240,6 +231,16 @@
           </div>
         </form>
       </aside>
+
+      <main class="card" aria-live="polite" style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <strong>Entries</strong>
+          <span id="status" class="meta">Idle</span>
+        </div>
+
+        <div id="rows" class="list" aria-live="polite"></div>
+        <div id="empty" class="empty" style="display:none;color:var(--muted);padding:6px;border-radius:8px;background:rgba(255,255,255,0.01);text-align:center">Walang malapit na overtime o leave sa loob ng 24 oras.</div>
+      </main>
     </div>
   </div>
 
