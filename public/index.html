@@ -65,6 +65,8 @@
     .count-pill.upcoming { background: linear-gradient(180deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04)); border-color: rgba(16,185,129,0.14); color: #eafff5; }
     .count-pill.ongoing  { background: linear-gradient(180deg, rgba(59,130,246,0.10), rgba(59,130,246,0.04)); border-color: rgba(59,130,246,0.14); color: #eaf4ff; }
     @media (max-width:420px){ .add-row{grid-template-columns:1fr} .app{width:320px} .date-text{padding-right:48px} .theme-row{flex-wrap:wrap} .date-pill{min-width:64px; max-width:96px; font-size:0.85rem} .live-clock{min-width:140px;font-size:0.78rem} }
+    /* small helper to visually indicate guarded buttons (but still clickable) */
+    .visually-guarded { opacity: 0.9; filter: grayscale(0.02); }
   </style>
 </head>
 <body>
@@ -284,7 +286,6 @@
       btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
-    // Robust normalize: handle YYYY-MM-DD, ISO datetimes, timestamps, embedded date substrings
     function normalizeStoredDate(val) {
       if (!val) return null;
       const s = String(val).trim();
@@ -351,15 +352,14 @@
       }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
     }
 
-    // Update guarded controls: only disable form inputs (not buttons) so delegated handlers still receive clicks.
+    // Disable only form controls (inputs, textareas, selects) that have .lock-guard
     function updateGuardedControls(){
-      // Disable only form controls (inputs, textareas, selects) that have .lock-guard
       document.querySelectorAll('.lock-guard').forEach(el => {
         const tag = (el.tagName || '').toUpperCase();
         if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
           unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true');
         } else {
-          // For non-form elements (buttons), keep them interactive but add an aria-disabled attribute for accessibility when locked
+          // keep buttons clickable; add aria-disabled for accessibility when locked
           if (!unlocked) {
             el.setAttribute('aria-disabled','true');
             el.classList.add('visually-guarded');
@@ -595,7 +595,6 @@
         if (!unlocked) { alert('Actions are locked. Unlock to edit.'); return; }
         const row = dataCache.find(r => String(r.id) === String(id));
         if (!row) return;
-        // Build edit UI without disabling the save/cancel buttons
         item.classList.add('editing');
         item.innerHTML = `
           <div style="display:flex;flex-direction:column;gap:8px">
@@ -610,7 +609,6 @@
             </div>
           </div>
         `;
-        // Ensure guarded controls state is applied to inputs only
         updateGuardedControls();
         return;
       }
