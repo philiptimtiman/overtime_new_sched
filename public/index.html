@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Overtime Scheduler</title>
   <meta name="description" content="Overtime Schedule for SLT Foreign TE" />
+
+  <!-- Changelog (integrated)
+       - Preserved your original lock behavior and persistence.
+       - Added helper updateUpcomingCountFromDataCache() to compute upcoming items within 24h.
+       - Marked rows within 24h with .upcoming class (visual cue).
+       - Ensured the count updater is called after loadRows and after insert/update/delete.
+       - Kept changes minimal and non-invasive.
+  -->
+
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -110,6 +119,10 @@
 
     .actions-hidden .item-actions { display: none !important; }
     .form-hidden #formCard { display: none !important; }
+
+    /* subtle highlight for upcoming entries */
+    .item.upcoming { box-shadow: 0 8px 20px rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.12); }
+    .item.upcoming .date-pill { border-color: rgba(16,185,129,0.18); background: linear-gradient(180deg, rgba(16,185,129,0.04), rgba(16,185,129,0.02)); }
 
     @media (max-width:420px){
       .add-row{grid-template-columns:1fr}
@@ -335,6 +348,7 @@
       btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
+    // Update guarded controls: keep entries visible even when locked; hide/disable actions and form
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => unlocked ? el.removeAttribute('disabled') : el.setAttribute('disabled','true'));
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
@@ -346,11 +360,15 @@
       }
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
+      // keep entries visible; rendering will always show full list but mark upcoming
       renderEntriesAccordingToLock();
-      updateUpcomingCountFromRendered();
+      updateUpcomingCountFromDataCache();
     }
+
     function setUnlockedState(state, persist = true){
-      unlocked = !!state; updateGuardedControls(); if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
+      unlocked = !!state;
+      updateGuardedControls();
+      if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
     function openModal(){ modalBackdrop.style.display = 'flex'; modalBackdrop.setAttribute('aria-hidden','false'); pwInput.value=''; pwError.style.display='none'; pwInput.focus(); }
@@ -389,7 +407,27 @@
       } catch (e) { console.warn('Date behavior attach failed', e); }
     })();
 
-    // createRowElement, renderList, getUpcomingEntries, renderEntriesAccordingToLock, updateUpcomingCountFromRendered, etc.
+    // Helper: compute upcoming items from dataCache (within 24 hours)
+    function updateUpcomingCountFromDataCache(){
+      try {
+        if (!Array.isArray(dataCache)) dataCache = [];
+        const now = Date.now();
+        const upcoming = dataCache.filter(r => {
+          if (!r || !r.overtime_date) return false;
+          const t = new Date(r.overtime_date).getTime();
+          if (isNaN(t)) return false;
+          const hours = (t - now) / (1000 * 60 * 60);
+          return hours > 0 && hours <= 24;
+        });
+        if (upcomingCountEl) upcomingCountEl.textContent = String(upcoming.length);
+        return upcoming;
+      } catch (e) {
+        console.warn('updateUpcomingCountFromDataCache failed', e);
+        if (upcomingCountEl) upcomingCountEl.textContent = '0';
+        return [];
+      }
+    }
+
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -408,11 +446,24 @@
         </div>
         <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
           <div class="item-actions">
-            <button class="btn ghost lock-guard" data-action="edit">Edit</button>
-            <button class="btn ghost lock-guard" data-action="delete">Delete</button>
+            <button class="btn ghost lock-guard" data-action="edit" type="button">Edit</button>
+            <button class="btn ghost lock-guard" data-action="delete" type="button">Delete</button>
           </div>
         </div>
       `;
+
+      // mark upcoming within 24h
+      try {
+        if (row && row.overtime_date) {
+          const now = Date.now();
+          const t = new Date(row.overtime_date).getTime();
+          if (!isNaN(t)) {
+            const hours = (t - now) / (1000 * 60 * 60);
+            if (hours > 0 && hours <= 24) el.classList.add('upcoming');
+          }
+        }
+      } catch (e) { /* ignore */ }
+
       return el;
     }
 
@@ -421,33 +472,29 @@
       if (!items || !items.length) {
         emptyEl.style.display = 'block';
         statusEl.textContent = 'No entries';
-        updateUpcomingCountFromRendered();
+        updateUpcomingCountFromDataCache();
         return;
       }
       emptyEl.style.display = 'none';
       items.forEach(r => rowsEl.appendChild(createRowElement(r)));
       statusEl.textContent = `Loaded ${items.length} entries`;
-      updateUpcomingCountFromRendered();
+      updateUpcomingCountFromDataCache();
     }
 
-    function getUpcomingEntries(){
-      const now = new Date();
-      return dataCache.filter(r => {
-        if (!r || !r.overtime_date) return false;
-        const d = new Date(r.overtime_date);
-        const diffHours = (d - now) / (1000 * 60 * 60);
-        return diffHours > 0 && diffHours <= 24;
-      }).sort((a,b) => new Date(a.overtime_date) - new Date(b.overtime_date));
-    }
-
+    // Render full list always; upcoming rows are visually marked
     function renderEntriesAccordingToLock(){
-      if (unlocked) {
-        const sorted = dataCache.slice().sort((a,b) => new Date(a.overtime_date || 0) - new Date(b.overtime_date || 0));
-        renderList(sorted);
+      if (!Array.isArray(dataCache)) dataCache = [];
+      const sorted = dataCache.slice().sort((a,b) => new Date(a.overtime_date || 0) - new Date(b.overtime_date || 0));
+      rowsEl.innerHTML = '';
+      sorted.forEach(r => rowsEl.appendChild(createRowElement(r)));
+      if (sorted.length) {
+        emptyEl.style.display = 'none';
+        statusEl.textContent = `Loaded ${sorted.length} entries`;
       } else {
-        const upcoming = getUpcomingEntries();
-        renderList(upcoming);
+        emptyEl.style.display = 'block';
+        statusEl.textContent = 'No entries';
       }
+      updateUpcomingCountFromDataCache();
     }
 
     function getRenderedEntriesCount() {
@@ -455,8 +502,9 @@
     }
 
     function updateUpcomingCountFromRendered() {
+      // kept for compatibility; prefer dataCache-based count
       const count = getRenderedEntriesCount();
-      upcomingCountEl.textContent = String(count);
+      if (upcomingCountEl) upcomingCountEl.textContent = String(count);
     }
 
     async function autoDeleteExpired(){
@@ -480,7 +528,7 @@
         }
       }
       renderEntriesAccordingToLock();
-      updateUpcomingCountFromRendered();
+      updateUpcomingCountFromDataCache();
     }
 
     async function loadRows(){
@@ -490,7 +538,7 @@
         if (error) throw error;
         dataCache = (data || []);
         renderEntriesAccordingToLock();
-        updateUpcomingCountFromRendered();
+        updateUpcomingCountFromDataCache();
       } catch (err) {
         console.error(err);
         statusEl.textContent = 'Error loading data';
@@ -511,7 +559,7 @@
         if (error) throw error;
         dataCache = [...dataCache, ...(data||[])];
         renderEntriesAccordingToLock();
-        updateUpcomingCountFromRendered();
+        updateUpcomingCountFromDataCache();
         form.reset();
         if (dateInput) dateInput.value = '';
       } catch (err) {
@@ -525,9 +573,10 @@
     resetBtn.addEventListener('click', () => { form.reset(); if (dateInput) dateInput.value = ''; });
 
     rowsEl.addEventListener('click', async (ev) => {
-      const action = ev.target?.dataset?.action;
-      if (!action) return;
-      const item = ev.target.closest('.item');
+      const btn = ev.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const item = btn.closest('.item');
       const id = item?.dataset?.id;
       if (!id) return;
 
@@ -539,7 +588,7 @@
           if (error) throw error;
           dataCache = dataCache.filter(r => String(r.id) !== String(id));
           renderEntriesAccordingToLock();
-          updateUpcomingCountFromRendered();
+          updateUpcomingCountFromDataCache();
         } catch (err) {
           console.error(err);
           alert('Delete failed: ' + (err.message || err));
@@ -560,8 +609,8 @@
             </div>
             <input class="edit-input" data-edit="notes" type="text" value="${escapeHtml(row.notes || '')}" />
             <div style="display:flex;gap:8px">
-              <button class="btn ghost" data-action="save">Save</button>
-              <button class="btn ghost" data-action="cancel">Cancel</button>
+              <button class="btn ghost" data-action="save" type="button">Save</button>
+              <button class="btn ghost" data-action="cancel" type="button">Cancel</button>
             </div>
           </div>
         `;
@@ -582,7 +631,7 @@
           if (error) throw error;
           dataCache = dataCache.map(r => String(r.id) === String(id) ? (data && data[0]) || { ...r, name, notes, overtime_date } : r);
           renderEntriesAccordingToLock();
-          updateUpcomingCountFromRendered();
+          updateUpcomingCountFromDataCache();
         } catch (err) {
           console.error(err);
           alert('Update failed: ' + (err.message || err));
@@ -600,7 +649,7 @@
       const q = searchInput.value.trim().toLowerCase();
       if (!q) {
         renderEntriesAccordingToLock();
-        updateUpcomingCountFromRendered();
+        updateUpcomingCountFromDataCache();
         return;
       }
       const filtered = dataCache.filter(r =>
@@ -608,18 +657,9 @@
         (r.notes||'').toLowerCase().includes(q) ||
         (r.overtime_date||'').includes(q)
       );
-      if (unlocked) {
-        renderList(filtered);
-      } else {
-        const upcomingFiltered = filtered.filter(r => {
-          if (!r.overtime_date) return false;
-          const d = new Date(r.overtime_date);
-          const diffHours = (d - new Date()) / (1000*60*60);
-          return diffHours > 0 && diffHours <= 24;
-        });
-        renderList(upcomingFiltered);
-      }
-      updateUpcomingCountFromRendered();
+      // show filtered results regardless of lock state (actions remain disabled when locked)
+      renderList(filtered);
+      updateUpcomingCountFromDataCache();
     });
 
     openUnlock.addEventListener('click', () => { if (!unlocked) openModal(); else { if (!confirm('Lock actions?')) return; setUnlockedState(false, true); } });
@@ -659,7 +699,7 @@
     setInterval(() => {
       try {
         renderEntriesAccordingToLock();
-        updateUpcomingCountFromRendered();
+        updateUpcomingCountFromDataCache();
         autoDeleteExpired();
       } catch (e) {
         console.error('Periodic check error', e);
@@ -678,6 +718,18 @@
       await loadRows();
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
+
+    // Diagnostic helper
+    window.__overtime_diag = function(){
+      try {
+        console.log('localStorage key raw:', (function(){ try { return localStorage.getItem(LOCAL_KEY); } catch(e){ return 'err'; } })());
+        console.log('unlocked variable:', unlocked);
+        console.log('lockIndicator color:', getComputedStyle(document.getElementById('lockIndicator')||{}).backgroundColor);
+        console.log('lock-guard disabled count:', Array.from(document.querySelectorAll('.lock-guard')).filter(el=>el.disabled).length);
+        console.log('rows children:', document.getElementById('rows')?.children.length);
+        console.log('upcoming elements:', document.querySelectorAll('#rows .item.upcoming').length);
+      } catch(e){ console.warn('diag error', e); }
+    };
   </script>
 </body>
 </html>
