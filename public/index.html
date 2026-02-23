@@ -227,58 +227,7 @@
       <div id="pwError" style="color:var(--danger);margin-top:8px;display:none"></div>
     </div>
   </div>
-  
-  <script>
-(function(){
-  try {
-    const KEY = 'overtime_unlocked_v2';
-    // Block writes for this key
-    const _set = Storage.prototype.setItem;
-    Storage.prototype.setItem = function(k,v){
-      if (String(k) === KEY) {
-        console.warn('Blocked setItem for', KEY, 'value:', v);
-        return;
-      }
-      return _set.apply(this, arguments);
-    };
-    // Remove any existing persisted flag
-    try { localStorage.removeItem(KEY); } catch(e){}
-
-    // Enforce locked UI immediately and repeatedly for a short period
-    function enforceLockUI(){
-      const app = document.getElementById('appRoot');
-      if (app) {
-        app.classList.add('actions-hidden','form-hidden','entries-hidden');
-      }
-      Array.from(document.querySelectorAll('.lock-guard')).forEach(el=>{
-        try { el.setAttribute('disabled','true'); } catch(e){}
-      });
-      const li = document.getElementById('lockIndicator');
-      if (li) li.style.background = '#ef4444';
-    }
-
-    // Run immediately
-    enforceLockUI();
-    // Re-apply frequently for the first 5 seconds to avoid race conditions
-    let runs = 0;
-    const interval = setInterval(()=>{
-      try { enforceLockUI(); } catch(e){}
-      runs++;
-      if (runs > 50) clearInterval(interval); // ~5 seconds at 100ms
-    }, 100);
-
-    // Also ensure DOMContentLoaded enforces lock
-    window.addEventListener('DOMContentLoaded', () => { try { enforceLockUI(); } catch(e){} });
-
-    // Expose flag for diagnostics
-    window.__overtime_force_locked = true;
-    console.log('Overtime pre-patch installed: lock enforced and writes blocked for', KEY);
-  } catch (err) {
-    console.warn('Pre-patch failed', err);
-  }
-})();
-</script>
-
+ 
   <script type="module">
   
   
