@@ -577,7 +577,7 @@
       }
       emptyEl.style.display = 'none';
       combined.forEach(r => rowsEl.appendChild(createRowElement(r)));
-      statusEl.textContent = `Showing ${combined.length} entries (ongoing + upcoming)`;
+      statusEl.textContent = `Showing ${combined.length} entries`;
     }
 
     async function autoDeleteExpired(){
