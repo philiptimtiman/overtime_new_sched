@@ -58,18 +58,10 @@
     .swatch-forest .dot{background:linear-gradient(180deg,#10b981,#059669)}
     .swatch-violet .dot{background:linear-gradient(180deg,#d946ef,#a78bfa)}
 
-    /* Black and White separate swatches */
     .theme-swatch.swatch-black { border: 1px solid rgba(255,255,255,0.06); background: transparent; }
-    .swatch-black .dot{
-      width:24px;height:24px;border-radius:999px;background:#000000;border:0;box-shadow:0 4px 10px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.03);
-      display:block;
-    }
-
+    .swatch-black .dot{ width:24px;height:24px;border-radius:999px;background:#000000;display:block;box-shadow:0 4px 10px rgba(0,0,0,0.25); }
     .theme-swatch.swatch-white { border: 1px solid rgba(0,0,0,0.08); background: transparent; }
-    .swatch-white .dot{
-      width:24px;height:24px;border-radius:999px;background:#ffffff;border:0;box-shadow:0 4px 10px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(0,0,0,0.04);
-      display:block;
-    }
+    .swatch-white .dot{ width:24px;height:24px;border-radius:999px;background:#ffffff;display:block;box-shadow:0 4px 10px rgba(0,0,0,0.08); }
 
     .theme-swatch.active{transform:scale(1.06);box-shadow:0 8px 26px rgba(0,0,0,0.32);border-color:transparent}
 
@@ -124,9 +116,7 @@
     .modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;}
     .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
 
-    /* hide only guarded controls inside actions when locked */
     .actions-hidden .item-actions .lock-guard { display: none !important; }
-
     .form-hidden #formCard { display: none !important; }
 
     .item.upcoming { box-shadow: 0 8px 20px rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.12); }
@@ -157,43 +147,17 @@
     .count-pill.ongoing  { background: linear-gradient(180deg, rgba(59,130,246,0.10), rgba(59,130,246,0.04)); border-color: rgba(59,130,246,0.14); color: #eaf4ff; }
     .count-pill.expiring { background: linear-gradient(180deg, rgba(245,158,11,0.10), rgba(245,158,11,0.04)); border-color: rgba(245,158,11,0.14); color: #fff7e6; }
 
-    /* user pill style */
     .count-pill.user { background: linear-gradient(180deg, rgba(99,102,241,0.10), rgba(99,102,241,0.04)); border-color: rgba(99,102,241,0.14); color: #eef2ff; }
     .count-pill.user .count-label { color: #dbeafe; font-weight:700; }
 
     .counts-row .count-pill { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:72px }
 
-    /* ===== Adjustments for White theme so numbers remain visible ===== */
-    [data-theme="white"] .count-pill {
-      border-color: rgba(0,0,0,0.08);
-      background: rgba(0,0,0,0.03);
-      color: var(--text);
-    }
-    [data-theme="white"] .count-pill .count-value {
-      color: var(--text);
-    }
-    [data-theme="white"] .count-pill.upcoming {
-      background: linear-gradient(180deg, rgba(16,185,129,0.12), rgba(16,185,129,0.06));
-      border-color: rgba(16,185,129,0.18);
-      color: #04201a;
-    }
-    [data-theme="white"] .count-pill.ongoing {
-      background: linear-gradient(180deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06));
-      border-color: rgba(59,130,246,0.18);
-      color: #071433;
-    }
-    [data-theme="white"] .count-pill.expiring {
-      background: linear-gradient(180deg, rgba(245,158,11,0.12), rgba(245,158,11,0.06));
-      border-color: rgba(245,158,11,0.18);
-      color: #4a2b00;
-    }
-
-    [data-theme="white"] .date-pill {
-      border-color: rgba(0,0,0,0.06);
-      background: rgba(0,0,0,0.02);
-      color: var(--text);
-    }
-
+    [data-theme="white"] .count-pill { border-color: rgba(0,0,0,0.08); background: rgba(0,0,0,0.03); color: var(--text); }
+    [data-theme="white"] .count-pill .count-value { color: var(--text); }
+    [data-theme="white"] .count-pill.upcoming { background: linear-gradient(180deg, rgba(16,185,129,0.12), rgba(16,185,129,0.06)); border-color: rgba(16,185,129,0.18); color: #04201a; }
+    [data-theme="white"] .count-pill.ongoing { background: linear-gradient(180deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06)); border-color: rgba(59,130,246,0.18); color: #071433; }
+    [data-theme="white"] .count-pill.expiring { background: linear-gradient(180deg, rgba(245,158,11,0.12), rgba(245,158,11,0.06)); border-color: rgba(245,158,11,0.18); color: #4a2b00; }
+    [data-theme="white"] .date-pill { border-color: rgba(0,0,0,0.06); background: rgba(0,0,0,0.02); color: var(--text); }
     [data-theme="white"] .theme-swatch.active { box-shadow: 0 8px 26px rgba(0,0,0,0.12); transform: scale(1.06); }
 
   </style>
@@ -232,8 +196,6 @@
           <button class="theme-swatch swatch-warm" data-theme="warm" aria-label="Warm Sunset" title="Warm Sunset" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-forest active" data-theme="forest" aria-label="Forest Teal" title="Forest Teal" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-violet" data-theme="violet" aria-label="Violet Glow" title="Violet Glow" type="button"><span class="dot" aria-hidden="true"></span></button>
-
-          <!-- Separate Black and White swatches -->
           <button class="theme-swatch swatch-black" data-theme="black" aria-label="Black Theme" title="Black Theme" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-white" data-theme="white" aria-label="White Theme" title="White Theme" type="button"><span class="dot" aria-hidden="true"></span></button>
         </div>
@@ -254,7 +216,6 @@
             <div class="count-label">Expiring</div>
           </div>
 
-          <!-- New User Count Pill -->
           <div id="userCount" class="count-pill user" title="Unique users who opened the WebApp">
             <div class="count-value">0</div>
             <div class="count-label">Users</div>
@@ -262,7 +223,6 @@
         </div>
       </div>
 
-      <!-- Add Entries moved before Entries list as requested -->
       <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle" style="display:flex;flex-direction:column;gap:8px">
         <strong id="addOvertimeTitle" style="display:block;text-align:center">Add Entries</strong>
 
@@ -355,13 +315,11 @@
     const expiringCountEl = document.getElementById('expiringCount');
     const userCountEl = document.getElementById('userCount');
 
-    // expose dataCache globally for debugging
     window.dataCache = [];
     let unlocked = false;
 
-    // Deletion expiry: 31h20m (original behavior)
-    const ORIGINAL_EXPIRY_MINUTES = 1880; // 31 hours 20 minutes
-    const EXPIRING_WINDOW_MINUTES = 440;  // 7 hours 20 minutes (expiring window)
+    const ORIGINAL_EXPIRY_MINUTES = 1880;
+    const EXPIRING_WINDOW_MINUTES = 440;
     const ORIGINAL_EXPIRY_MS = ORIGINAL_EXPIRY_MINUTES * 60 * 1000;
     const EXPIRING_WINDOW_MS = EXPIRING_WINDOW_MINUTES * 60 * 1000;
 
@@ -423,14 +381,12 @@
         '--card-bg-top':'rgba(40,18,40,0.06)','--card-bg-bottom':'rgba(36,14,36,0.03)',
         '--text':'#f3eefb','--muted':'#d6c7e9'
       },
-      // Black theme (dark)
       black: {
         '--accent':'#111111','--accent-2':'#333333',
         '--bg-top':'#000000','--bg-bottom':'#0b0b0b',
         '--card-bg-top':'rgba(255,255,255,0.02)','--card-bg-bottom':'rgba(255,255,255,0.01)',
         '--text':'#e6eef8','--muted':'#9fb0c6'
       },
-      // White theme (light)
       white: {
         '--accent':'#0b7285','--accent-2':'#0ea5a4',
         '--bg-top':'#ffffff','--bg-bottom':'#f7f7f7',
@@ -489,7 +445,6 @@
       return isNaN(d) ? NaN : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
     }
 
-    // helper: compare two date-only strings or Date objects by local date (YYYY-MM-DD)
     function isSameLocalDate(a, b) {
       if (!a || !b) return false;
       const da = (a instanceof Date) ? a : parseDateOnlyToLocalMidnight(String(a));
@@ -500,14 +455,12 @@
         && da.getDate() === db.getDate();
     }
 
-    // compute expiry used for deletion and for determining ongoing (original 31h20m)
     function computeExpiryForOvertimeDate(dateOnly) {
       const startMidnight = parseDateOnlyToLocalMidnight(dateOnly);
       if (isNaN(startMidnight)) return NaN;
       return new Date(startMidnight.getTime() + ORIGINAL_EXPIRY_MS);
     }
 
-    // helper: whether an entry will expire within the next EXPIRING_WINDOW_MS
     function isExpiringSoon(dateOnly) {
       const expiry = computeExpiryForOvertimeDate(dateOnly);
       if (!expiry || isNaN(expiry)) return false;
@@ -524,12 +477,10 @@
         const start = parseDateOnlyToLocalMidnight(r.overtime_date);
         if (isNaN(start)) return false;
         const startMs = start.getTime();
-        // upcoming = starts within next 24 hours
         return startMs > now && startMs <= in24h;
       }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
     }
 
-    // ONGOING: only entries whose overtime_date is the same local date as today
     function getOngoingEntries(){
       if (!Array.isArray(window.dataCache)) window.dataCache = [];
       const now = new Date();
@@ -537,12 +488,10 @@
         if (!r || !r.overtime_date) return false;
         const start = parseDateOnlyToLocalMidnight(r.overtime_date);
         if (isNaN(start)) return false;
-        // ongoing = start's local date === today's local date
         return isSameLocalDate(start, now);
       }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
     }
 
-    // EXPIRING: entries whose deletion expiry is in the future but within the expiring window
     function getExpiringEntries(){
       if (!Array.isArray(window.dataCache)) window.dataCache = [];
       const now = Date.now();
@@ -551,7 +500,6 @@
         if (!r || !r.overtime_date) return false;
         const expiry = computeExpiryForOvertimeDate(r.overtime_date);
         if (!expiry || isNaN(expiry)) return false;
-        // expiring = expiry is in future but within the next EXPIRING_WINDOW_MS
         return expiry.getTime() > now && expiry.getTime() <= soonThreshold;
       }).sort((a,b) => computeExpiryForOvertimeDate(a.overtime_date) - computeExpiryForOvertimeDate(b.overtime_date));
     }
@@ -573,7 +521,6 @@
           const valEl = expiringCountEl.querySelector('.count-value');
           if (valEl) valEl.textContent = String(expiring.length);
         }
-        // user count is updated separately via updateUserCount()
         return { upcoming, ongoing, expiring };
       } catch (e) {
         console.warn('updateCounts failed', e);
@@ -584,7 +531,6 @@
       }
     }
 
-    // createRowElement: Delete only (Edit removed earlier per request)
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -616,7 +562,6 @@
           const expiry = computeExpiryForOvertimeDate(row.overtime_date).getTime();
           if (!isNaN(start) && !isNaN(expiry)) {
             const isFutureUpcoming = start > now && start <= (now + 24*60*60*1000);
-            // ongoing only if start's local date === today
             const isActiveToday = isSameLocalDate(startDateObj, new Date());
             const willExpireSoon = expiry > now && expiry <= (now + EXPIRING_WINDOW_MS);
             if (isFutureUpcoming) el.classList.add('upcoming');
@@ -716,62 +661,126 @@
       }
     }
 
-    // -------------------------
-    // Visitor registration + user count
-    // -------------------------
-    async function registerVisitorIfNeeded(){
+    // Robust visitor registration + user count update with heartbeat
+    let HEARTBEAT_INTERVAL_MS = 30 * 1000; // 30 seconds
+    let heartbeatTimer = null;
+
+    async function registerVisitorIfNeeded() {
       try {
         let vid = safeGetLocal('visitor_id');
         if (!vid) {
-          // generate id
           try {
             vid = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('v-' + Date.now() + '-' + Math.random().toString(36).slice(2,9));
           } catch (e) {
             vid = 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2,9);
           }
           safeSetLocal('visitor_id', vid);
+          console.log('[visitor] generated id', vid);
+        } else {
+          console.log('[visitor] existing id', vid);
+        }
 
-          // upsert into overtime_visitors (table should exist with visitor_id as unique/primary)
-          try {
-            const { error } = await supabase.from('overtime_visitors').upsert([{ visitor_id: vid }], { onConflict: ['visitor_id'] });
-            if (error) {
-              // not fatal; log for debugging
-              console.warn('Visitor upsert error', error);
+        try {
+          const { error } = await supabase
+            .from('overtime_visitors')
+            .upsert([{ visitor_id: vid, last_seen: new Date().toISOString() }], { onConflict: ['visitor_id'] });
+          if (error) {
+            console.warn('[visitor] upsert returned error', error);
+            try {
+              const { error: insErr } = await supabase
+                .from('overtime_visitors')
+                .insert([{ visitor_id: vid, last_seen: new Date().toISOString() }]);
+              if (insErr) console.warn('[visitor] fallback insert error', insErr);
+            } catch (ie) {
+              console.warn('[visitor] fallback insert exception', ie);
             }
-          } catch (err) {
-            console.warn('Visitor upsert failed', err);
+          } else {
+            console.log('[visitor] upsert ok');
+          }
+        } catch (upErr) {
+          console.warn('[visitor] upsert exception', upErr);
+          try {
+            const { error: insErr } = await supabase
+              .from('overtime_visitors')
+              .insert([{ visitor_id: vid, last_seen: new Date().toISOString() }]);
+            if (insErr) console.warn('[visitor] fallback insert error', insErr);
+          } catch (ie) {
+            console.warn('[visitor] fallback insert exception', ie);
           }
         }
       } catch (e) {
-        console.warn('registerVisitorIfNeeded failed', e);
+        console.warn('[visitor] register failed', e);
       } finally {
-        // always try to update the displayed user count
-        updateUserCount();
+        try { await updateUserCount(); } catch(e){ console.warn('[visitor] updateUserCount failed', e); }
       }
     }
 
     async function updateUserCount(){
       if (!userCountEl) return;
       try {
-        // Count rows in overtime_visitors table
-        const { data, error, count } = await supabase.from('overtime_visitors').select('visitor_id', { count: 'exact' });
-        if (error) {
-          console.warn('updateUserCount query error', error);
-          userCountEl.querySelector('.count-value').textContent = '—';
+        const res = await supabase
+          .from('overtime_visitors')
+          .select('visitor_id', { count: 'exact', head: false });
+        if (res.error) {
+          console.warn('[userCount] query error', res.error);
+          const { data, error } = await supabase.from('overtime_visitors').select('visitor_id');
+          if (error) {
+            console.warn('[userCount] fallback select error', error);
+            userCountEl.querySelector('.count-value').textContent = '—';
+            return;
+          }
+          userCountEl.querySelector('.count-value').textContent = String((data||[]).length);
           return;
         }
-        // count should be available in `count`
-        const total = (typeof count === 'number') ? count : (Array.isArray(data) ? data.length : 0);
+        const total = (typeof res.count === 'number') ? res.count : (Array.isArray(res.data) ? res.data.length : 0);
         userCountEl.querySelector('.count-value').textContent = String(total);
+        console.log('[userCount] total', total);
       } catch (err) {
-        console.warn('updateUserCount failed', err);
+        console.warn('[userCount] failed', err);
         try { userCountEl.querySelector('.count-value').textContent = '—'; } catch(e){}
       }
     }
 
-    // -------------------------
-    // End visitor logic
-    // -------------------------
+    async function sendHeartbeat() {
+      const vid = safeGetLocal('visitor_id');
+      if (!vid) return;
+      try {
+        await supabase.from('overtime_visitors').upsert([{ visitor_id: vid, last_seen: new Date().toISOString() }], { onConflict: ['visitor_id'] });
+      } catch (e) {
+        console.warn('heartbeat failed', e);
+      }
+    }
+
+    function startHeartbeat() {
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
+      sendHeartbeat();
+      heartbeatTimer = setInterval(async () => {
+        await sendHeartbeat();
+        // refresh displayed active user count (counts active window server-side)
+        await updateUserCount();
+      }, HEARTBEAT_INTERVAL_MS);
+    }
+
+    function stopHeartbeat() {
+      if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+    }
+
+    // best-effort unload ping using navigator.sendBeacon (may not be supported)
+    window.addEventListener('beforeunload', () => {
+      try {
+        const vid = safeGetLocal('visitor_id');
+        if (!vid) return;
+        const payload = JSON.stringify({ visitor_id: vid, last_seen: new Date().toISOString() });
+        // Supabase REST endpoint requires API key and proper headers; sendBeacon may not work with Supabase directly.
+        // This is best-effort and may be ignored by server; heartbeat + active window is primary mechanism.
+        if (navigator.sendBeacon) {
+          // Attempt to send to a lightweight endpoint if you have one; otherwise this will be a no-op.
+          // Example placeholder (won't work without server-side support): `${SUPABASE_URL}/rest/v1/overtime_visitors`
+          // We avoid sending to Supabase REST directly here to prevent CORS/authorization issues.
+          // navigator.sendBeacon(url, payload);
+        }
+      } catch(e){}
+    });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -801,7 +810,6 @@
 
     resetBtn.addEventListener('click', () => { form.reset(); if (dateInput) dateInput.value = ''; });
 
-    // Delegated click handler: only handles Delete action now
     rowsEl.addEventListener('click', async (ev) => {
       const btn = ev.target.closest('[data-action]');
       if (!btn) return;
@@ -900,16 +908,7 @@
     function openModal(){
       modalBackdrop.style.display = 'flex';
       modalBackdrop.setAttribute('aria-hidden','false');
-
-      try {
-        if (appRoot) {
-          appRoot.inert = true;
-          appRoot.setAttribute('aria-hidden','true');
-        }
-      } catch (e) {
-        if (appRoot) appRoot.setAttribute('aria-hidden','true');
-      }
-
+      try { if (appRoot) { appRoot.inert = true; appRoot.setAttribute('aria-hidden','true'); } } catch (e) { if (appRoot) appRoot.setAttribute('aria-hidden','true'); }
       pwError.style.display = 'none';
       setTimeout(() => { try { pwInput.focus(); } catch(e){} }, 10);
     }
@@ -917,16 +916,7 @@
     function closeModal(){
       modalBackdrop.style.display = 'none';
       modalBackdrop.setAttribute('aria-hidden','true');
-
-      try {
-        if (appRoot) {
-          appRoot.inert = false;
-          appRoot.removeAttribute('aria-hidden');
-        }
-      } catch (e) {
-        if (appRoot) appRoot.removeAttribute('aria-hidden');
-      }
-
+      try { if (appRoot) { appRoot.inert = false; appRoot.removeAttribute('aria-hidden'); } } catch (e) { if (appRoot) appRoot.removeAttribute('aria-hidden'); }
       pwError.style.display = 'none';
       try { openUnlock.focus(); } catch (e) {}
     }
@@ -984,7 +974,7 @@
       }
     }
 
-    const CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+    const CHECK_INTERVAL_MS = 60 * 60 * 1000;
     setInterval(() => {
       try {
         renderEntriesAccordingToLock();
@@ -999,13 +989,11 @@
     window.addEventListener('DOMContentLoaded', async () => {
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
-
       try { localStorage.removeItem(LOCAL_KEY); } catch (e) {}
       setUnlockedState(false);
-
-      // register visitor (if needed) and update user count
       try { await registerVisitorIfNeeded(); } catch (e) { console.warn('visitor register failed', e); }
-
+      // start heartbeat after registration
+      try { startHeartbeat(); } catch (e) { console.warn('startHeartbeat failed', e); }
       await loadRows();
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
