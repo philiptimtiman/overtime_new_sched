@@ -57,6 +57,20 @@
     .swatch-warm .dot{background:linear-gradient(180deg,#ff7a59,#ff5a36)}
     .swatch-forest .dot{background:linear-gradient(180deg,#10b981,#059669)}
     .swatch-violet .dot{background:linear-gradient(180deg,#d946ef,#a78bfa)}
+
+    /* Black and White separate swatches */
+    .theme-swatch.swatch-black { border: 1px solid rgba(255,255,255,0.06); background: transparent; }
+    .swatch-black .dot{
+      width:24px;height:24px;border-radius:999px;background:#000000;border:0;box-shadow:0 4px 10px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.03);
+      display:block;
+    }
+
+    .theme-swatch.swatch-white { border: 1px solid rgba(0,0,0,0.08); background: transparent; }
+    .swatch-white .dot{
+      width:24px;height:24px;border-radius:999px;background:#ffffff;border:0;box-shadow:0 4px 10px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(0,0,0,0.04);
+      display:block;
+    }
+
     .theme-swatch.active{transform:scale(1.06);box-shadow:0 8px 26px rgba(0,0,0,0.32);border-color:transparent}
 
     .meta{font-size:.82rem;color:var(--muted);text-align:center}
@@ -144,6 +158,40 @@
     .count-pill.expiring { background: linear-gradient(180deg, rgba(245,158,11,0.10), rgba(245,158,11,0.04)); border-color: rgba(245,158,11,0.14); color: #fff7e6; }
 
     .counts-row .count-pill { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:72px }
+
+    /* ===== Adjustments for White theme so numbers remain visible ===== */
+    [data-theme="white"] .count-pill {
+      border-color: rgba(0,0,0,0.08);
+      background: rgba(0,0,0,0.03);
+      color: var(--text);
+    }
+    [data-theme="white"] .count-pill .count-value {
+      color: var(--text);
+    }
+    [data-theme="white"] .count-pill.upcoming {
+      background: linear-gradient(180deg, rgba(16,185,129,0.12), rgba(16,185,129,0.06));
+      border-color: rgba(16,185,129,0.18);
+      color: #04201a;
+    }
+    [data-theme="white"] .count-pill.ongoing {
+      background: linear-gradient(180deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06));
+      border-color: rgba(59,130,246,0.18);
+      color: #071433;
+    }
+    [data-theme="white"] .count-pill.expiring {
+      background: linear-gradient(180deg, rgba(245,158,11,0.12), rgba(245,158,11,0.06));
+      border-color: rgba(245,158,11,0.18);
+      color: #4a2b00;
+    }
+
+    [data-theme="white"] .date-pill {
+      border-color: rgba(0,0,0,0.06);
+      background: rgba(0,0,0,0.02);
+      color: var(--text);
+    }
+
+    [data-theme="white"] .theme-swatch.active { box-shadow: 0 8px 26px rgba(0,0,0,0.12); transform: scale(1.06); }
+
   </style>
 </head>
 <body>
@@ -152,7 +200,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.24.1</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.24.3</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -180,6 +228,10 @@
           <button class="theme-swatch swatch-warm" data-theme="warm" aria-label="Warm Sunset" title="Warm Sunset" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-forest active" data-theme="forest" aria-label="Forest Teal" title="Forest Teal" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-violet" data-theme="violet" aria-label="Violet Glow" title="Violet Glow" type="button"><span class="dot" aria-hidden="true"></span></button>
+
+          <!-- Separate Black and White swatches -->
+          <button class="theme-swatch swatch-black" data-theme="black" aria-label="Black Theme" title="Black Theme" type="button"><span class="dot" aria-hidden="true"></span></button>
+          <button class="theme-swatch swatch-white" data-theme="white" aria-label="White Theme" title="White Theme" type="button"><span class="dot" aria-hidden="true"></span></button>
         </div>
       </header>
 
@@ -189,7 +241,7 @@
             <div class="count-value">0</div>
             <div class="count-label">Upcoming</div>
           </div>
-          <div id="ongoingCount" class="count-pill ongoing" title="On going (within grace)">
+          <div id="ongoingCount" class="count-pill ongoing" title="On going (today)">
             <div class="count-value">0</div>
             <div class="count-label">On going</div>
           </div>
@@ -359,6 +411,20 @@
         '--bg-top':'#0b0b12','--bg-bottom':'#2b1536',
         '--card-bg-top':'rgba(40,18,40,0.06)','--card-bg-bottom':'rgba(36,14,36,0.03)',
         '--text':'#f3eefb','--muted':'#d6c7e9'
+      },
+      // Black theme (dark)
+      black: {
+        '--accent':'#111111','--accent-2':'#333333',
+        '--bg-top':'#000000','--bg-bottom':'#0b0b0b',
+        '--card-bg-top':'rgba(255,255,255,0.02)','--card-bg-bottom':'rgba(255,255,255,0.01)',
+        '--text':'#e6eef8','--muted':'#9fb0c6'
+      },
+      // White theme (light)
+      white: {
+        '--accent':'#0b7285','--accent-2':'#0ea5a4',
+        '--bg-top':'#ffffff','--bg-bottom':'#f7f7f7',
+        '--card-bg-top':'rgba(0,0,0,0.03)','--card-bg-bottom':'rgba(0,0,0,0.01)',
+        '--text':'#0b1220','--muted':'#6b7280'
       }
     };
 
@@ -412,6 +478,17 @@
       return isNaN(d) ? NaN : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
     }
 
+    // helper: compare two date-only strings or Date objects by local date (YYYY-MM-DD)
+    function isSameLocalDate(a, b) {
+      if (!a || !b) return false;
+      const da = (a instanceof Date) ? a : parseDateOnlyToLocalMidnight(String(a));
+      const db = (b instanceof Date) ? b : parseDateOnlyToLocalMidnight(String(b));
+      if (isNaN(da) || isNaN(db)) return false;
+      return da.getFullYear() === db.getFullYear()
+        && da.getMonth() === db.getMonth()
+        && da.getDate() === db.getDate();
+    }
+
     // compute expiry used for deletion and for determining ongoing (original 31h20m)
     function computeExpiryForOvertimeDate(dateOnly) {
       const startMidnight = parseDateOnlyToLocalMidnight(dateOnly);
@@ -441,19 +518,20 @@
       }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
     }
 
+    // ONGOING: only entries whose overtime_date is the same local date as today
     function getOngoingEntries(){
       if (!Array.isArray(window.dataCache)) window.dataCache = [];
-      const now = Date.now();
+      const now = new Date();
       return window.dataCache.filter(r => {
         if (!r || !r.overtime_date) return false;
         const start = parseDateOnlyToLocalMidnight(r.overtime_date);
-        const expiry = computeExpiryForOvertimeDate(r.overtime_date);
-        if (isNaN(start) || isNaN(expiry)) return false;
-        // ongoing = start <= now < deletion expiry (original 31h20m)
-        return start.getTime() <= now && expiry.getTime() > now;
+        if (isNaN(start)) return false;
+        // ongoing = start's local date === today's local date
+        return isSameLocalDate(start, now);
       }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
     }
 
+    // EXPIRING: entries whose deletion expiry is in the future but within the expiring window
     function getExpiringEntries(){
       if (!Array.isArray(window.dataCache)) window.dataCache = [];
       const now = Date.now();
@@ -462,7 +540,7 @@
         if (!r || !r.overtime_date) return false;
         const expiry = computeExpiryForOvertimeDate(r.overtime_date);
         if (!expiry || isNaN(expiry)) return false;
-        // expiring = expiry is in future but within the next 7h20m window
+        // expiring = expiry is in future but within the next EXPIRING_WINDOW_MS
         return expiry.getTime() > now && expiry.getTime() <= soonThreshold;
       }).sort((a,b) => computeExpiryForOvertimeDate(a.overtime_date) - computeExpiryForOvertimeDate(b.overtime_date));
     }
@@ -521,14 +599,16 @@
       try {
         if (row && row.overtime_date) {
           const now = Date.now();
-          const start = parseDateOnlyToLocalMidnight(row.overtime_date).getTime();
+          const startDateObj = parseDateOnlyToLocalMidnight(row.overtime_date);
+          const start = isNaN(startDateObj) ? NaN : startDateObj.getTime();
           const expiry = computeExpiryForOvertimeDate(row.overtime_date).getTime();
           if (!isNaN(start) && !isNaN(expiry)) {
             const isFutureUpcoming = start > now && start <= (now + 24*60*60*1000);
-            const isActiveWithinGrace = start <= now && expiry > now; // ongoing uses deletion expiry
+            // ongoing only if start's local date === today
+            const isActiveToday = isSameLocalDate(startDateObj, new Date());
             const willExpireSoon = expiry > now && expiry <= (now + EXPIRING_WINDOW_MS);
             if (isFutureUpcoming) el.classList.add('upcoming');
-            if (isActiveWithinGrace) el.classList.add('ongoing');
+            if (isActiveToday) el.classList.add('ongoing');
             if (willExpireSoon) el.classList.add('expiring');
           }
         }
