@@ -157,6 +157,10 @@
     .count-pill.ongoing  { background: linear-gradient(180deg, rgba(59,130,246,0.10), rgba(59,130,246,0.04)); border-color: rgba(59,130,246,0.14); color: #eaf4ff; }
     .count-pill.expiring { background: linear-gradient(180deg, rgba(245,158,11,0.10), rgba(245,158,11,0.04)); border-color: rgba(245,158,11,0.14); color: #fff7e6; }
 
+    /* user pill style */
+    .count-pill.user { background: linear-gradient(180deg, rgba(99,102,241,0.10), rgba(99,102,241,0.04)); border-color: rgba(99,102,241,0.14); color: #eef2ff; }
+    .count-pill.user .count-label { color: #dbeafe; font-weight:700; }
+
     .counts-row .count-pill { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:72px }
 
     /* ===== Adjustments for White theme so numbers remain visible ===== */
@@ -200,7 +204,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.24.3</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.24.1</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -248,6 +252,12 @@
           <div id="expiringCount" class="count-pill expiring" title="Expiring soon (within grace)">
             <div class="count-value">0</div>
             <div class="count-label">Expiring</div>
+          </div>
+
+          <!-- New User Count Pill -->
+          <div id="userCount" class="count-pill user" title="Unique users who opened the WebApp">
+            <div class="count-value">0</div>
+            <div class="count-label">Users</div>
           </div>
         </div>
       </div>
@@ -343,6 +353,7 @@
     const upcomingCountEl = document.getElementById('upcomingCount');
     const ongoingCountEl = document.getElementById('ongoingCount');
     const expiringCountEl = document.getElementById('expiringCount');
+    const userCountEl = document.getElementById('userCount');
 
     // expose dataCache globally for debugging
     window.dataCache = [];
@@ -562,6 +573,7 @@
           const valEl = expiringCountEl.querySelector('.count-value');
           if (valEl) valEl.textContent = String(expiring.length);
         }
+        // user count is updated separately via updateUserCount()
         return { upcoming, ongoing, expiring };
       } catch (e) {
         console.warn('updateCounts failed', e);
@@ -703,6 +715,63 @@
         statusEl.textContent = 'Error loading data';
       }
     }
+
+    // -------------------------
+    // Visitor registration + user count
+    // -------------------------
+    async function registerVisitorIfNeeded(){
+      try {
+        let vid = safeGetLocal('visitor_id');
+        if (!vid) {
+          // generate id
+          try {
+            vid = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('v-' + Date.now() + '-' + Math.random().toString(36).slice(2,9));
+          } catch (e) {
+            vid = 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2,9);
+          }
+          safeSetLocal('visitor_id', vid);
+
+          // upsert into overtime_visitors (table should exist with visitor_id as unique/primary)
+          try {
+            const { error } = await supabase.from('overtime_visitors').upsert([{ visitor_id: vid }], { onConflict: ['visitor_id'] });
+            if (error) {
+              // not fatal; log for debugging
+              console.warn('Visitor upsert error', error);
+            }
+          } catch (err) {
+            console.warn('Visitor upsert failed', err);
+          }
+        }
+      } catch (e) {
+        console.warn('registerVisitorIfNeeded failed', e);
+      } finally {
+        // always try to update the displayed user count
+        updateUserCount();
+      }
+    }
+
+    async function updateUserCount(){
+      if (!userCountEl) return;
+      try {
+        // Count rows in overtime_visitors table
+        const { data, error, count } = await supabase.from('overtime_visitors').select('visitor_id', { count: 'exact' });
+        if (error) {
+          console.warn('updateUserCount query error', error);
+          userCountEl.querySelector('.count-value').textContent = '—';
+          return;
+        }
+        // count should be available in `count`
+        const total = (typeof count === 'number') ? count : (Array.isArray(data) ? data.length : 0);
+        userCountEl.querySelector('.count-value').textContent = String(total);
+      } catch (err) {
+        console.warn('updateUserCount failed', err);
+        try { userCountEl.querySelector('.count-value').textContent = '—'; } catch(e){}
+      }
+    }
+
+    // -------------------------
+    // End visitor logic
+    // -------------------------
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -921,6 +990,7 @@
         renderEntriesAccordingToLock();
         updateCounts();
         autoDeleteExpired();
+        updateUserCount();
       } catch (e) {
         console.error('Periodic check error', e);
       }
@@ -933,6 +1003,9 @@
       try { localStorage.removeItem(LOCAL_KEY); } catch (e) {}
       setUnlockedState(false);
 
+      // register visitor (if needed) and update user count
+      try { await registerVisitorIfNeeded(); } catch (e) { console.warn('visitor register failed', e); }
+
       await loadRows();
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
@@ -940,6 +1013,7 @@
     window.__overtime_diag = function(){
       try {
         console.log('localStorage key raw:', (function(){ try { return localStorage.getItem(LOCAL_KEY); } catch(e){ return 'err'; } })());
+        console.log('visitor_id:', (function(){ try { return localStorage.getItem('visitor_id'); } catch(e){ return 'err'; } })());
         console.log('unlocked variable:', unlocked);
         console.log('lockIndicator color:', getComputedStyle(document.getElementById('lockIndicator')||{}).backgroundColor);
         console.log('lock-guard disabled count:', Array.from(document.querySelectorAll('.lock-guard')).filter(el=>el.disabled).length);
