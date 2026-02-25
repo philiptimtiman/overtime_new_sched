@@ -205,7 +205,6 @@
           <button class="theme-swatch swatch-warm" data-theme="warm" aria-label="Warm Sunset" title="Warm Sunset" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-forest active" data-theme="forest" aria-label="Forest Teal" title="Forest Teal" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-violet" data-theme="violet" aria-label="Violet Glow" title="Violet Glow" type="button"><span class="dot" aria-hidden="true"></span></button>
-
           <button class="theme-swatch swatch-black" data-theme="black" aria-label="Black Theme" title="Black Theme" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-white" data-theme="white" aria-label="White Theme" title="White Theme" type="button"><span class="dot" aria-hidden="true"></span></button>
         </div>
@@ -672,12 +671,12 @@
     }
 
     // -------------------------
-    // Visitor registration + active user heartbeat (10s)
+    // Visitor registration + active user heartbeat (2s)
     // -------------------------
     const VISITOR_LOCAL_KEY = 'visitor_id';
     let heartbeatTimerLocal = null;
     const HEARTBEAT_INTERVAL_MS = 2 * 1000; // 2s
-    const ACTIVE_WINDOW_MS = 10 * 1000; // 10s
+    const ACTIVE_WINDOW_MS = 2 * 1000; // 2s
 
     async function registerVisitorIfNeeded(){
       try {
@@ -766,17 +765,17 @@
     async function updateUserCount(){
       if (!userCountEl) return;
       try {
-        // Prefer server-side RPC if available; fallback to client-side filter
-        // Attempt RPC first (if you created count_active_visitors(window_seconds) on DB)
+        // Try RPC first (if function exists), otherwise fallback to select+filter
         try {
           const windowSeconds = Math.round(ACTIVE_WINDOW_MS / 1000);
           const { data: rpcData, error: rpcErr } = await supabase.rpc('count_active_visitors', { window_seconds: windowSeconds });
           if (!rpcErr && rpcData !== null && rpcData !== undefined) {
-            // rpcData may be a number or array depending on Postgres/Supabase response shape
             const count = (typeof rpcData === 'number') ? rpcData : (Array.isArray(rpcData) ? Number(Object.values(rpcData[0] || {})[0] || 0) : Number(rpcData || 0));
             userCountEl.querySelector('.count-value').textContent = String(count);
+            console.log('[userCount] rpc count', count);
             return;
           }
+          if (rpcErr) console.warn('[userCount] rpc error', rpcErr);
         } catch (e) {
           // ignore rpc failure and fallback
         }
@@ -800,6 +799,15 @@
         try { userCountEl.querySelector('.count-value').textContent = '—'; } catch(e){}
       }
     }
+
+    // best-effort unload ping (no guarantee)
+    window.addEventListener('beforeunload', () => {
+      try {
+        const vid = safeGetLocal(VISITOR_LOCAL_KEY);
+        if (!vid) return;
+        // best-effort only; Supabase REST may not accept sendBeacon without key
+      } catch(e){}
+    });
 
     // -------------------------
     // End visitor logic
@@ -1037,9 +1045,9 @@
       try { await registerVisitorIfNeeded(); } catch (e) { console.warn('visitor register failed', e); }
       try { startHeartbeatLocal(); } catch (e) { console.warn('startHeartbeat failed', e); }
 
-      // refresh active user count frequently during testing
+      // refresh active user count frequently during testing (2s)
       try { await updateUserCount(); } catch(e){}
-      setInterval(updateUserCount, 10 * 1000); // refresh every 10s while testing
+      setInterval(updateUserCount, 2 * 1000); // refresh every 2s while testing
 
       await loadRows();
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
