@@ -58,7 +58,6 @@
     .swatch-forest .dot{background:linear-gradient(180deg,#10b981,#059669)}
     .swatch-violet .dot{background:linear-gradient(180deg,#d946ef,#a78bfa)}
 
-    /* Black and White separate swatches */
     .theme-swatch.swatch-black { border: 1px solid rgba(255,255,255,0.06); background: transparent; }
     .swatch-black .dot{
       width:24px;height:24px;border-radius:999px;background:#000000;border:0;box-shadow:0 4px 10px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.03);
@@ -157,43 +156,17 @@
     .count-pill.ongoing  { background: linear-gradient(180deg, rgba(59,130,246,0.10), rgba(59,130,246,0.04)); border-color: rgba(59,130,246,0.14); color: #eaf4ff; }
     .count-pill.expiring { background: linear-gradient(180deg, rgba(245,158,11,0.10), rgba(245,158,11,0.04)); border-color: rgba(245,158,11,0.14); color: #fff7e6; }
 
-    /* user pill style */
     .count-pill.user { background: linear-gradient(180deg, rgba(99,102,241,0.10), rgba(99,102,241,0.04)); border-color: rgba(99,102,241,0.14); color: #eef2ff; }
     .count-pill.user .count-label { color: #dbeafe; font-weight:700; }
 
     .counts-row .count-pill { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:72px }
 
-    /* ===== Adjustments for White theme so numbers remain visible ===== */
-    [data-theme="white"] .count-pill {
-      border-color: rgba(0,0,0,0.08);
-      background: rgba(0,0,0,0.03);
-      color: var(--text);
-    }
-    [data-theme="white"] .count-pill .count-value {
-      color: var(--text);
-    }
-    [data-theme="white"] .count-pill.upcoming {
-      background: linear-gradient(180deg, rgba(16,185,129,0.12), rgba(16,185,129,0.06));
-      border-color: rgba(16,185,129,0.18);
-      color: #04201a;
-    }
-    [data-theme="white"] .count-pill.ongoing {
-      background: linear-gradient(180deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06));
-      border-color: rgba(59,130,246,0.18);
-      color: #071433;
-    }
-    [data-theme="white"] .count-pill.expiring {
-      background: linear-gradient(180deg, rgba(245,158,11,0.12), rgba(245,158,11,0.06));
-      border-color: rgba(245,158,11,0.18);
-      color: #4a2b00;
-    }
-
-    [data-theme="white"] .date-pill {
-      border-color: rgba(0,0,0,0.06);
-      background: rgba(0,0,0,0.02);
-      color: var(--text);
-    }
-
+    [data-theme="white"] .count-pill { border-color: rgba(0,0,0,0.08); background: rgba(0,0,0,0.03); color: var(--text); }
+    [data-theme="white"] .count-pill .count-value { color: var(--text); }
+    [data-theme="white"] .count-pill.upcoming { background: linear-gradient(180deg, rgba(16,185,129,0.12), rgba(16,185,129,0.06)); border-color: rgba(16,185,129,0.18); color: #04201a; }
+    [data-theme="white"] .count-pill.ongoing { background: linear-gradient(180deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06)); border-color: rgba(59,130,246,0.18); color: #071433; }
+    [data-theme="white"] .count-pill.expiring { background: linear-gradient(180deg, rgba(245,158,11,0.12), rgba(245,158,11,0.06)); border-color: rgba(245,158,11,0.18); color: #4a2b00; }
+    [data-theme="white"] .date-pill { border-color: rgba(0,0,0,0.06); background: rgba(0,0,0,0.02); color: var(--text); }
     [data-theme="white"] .theme-swatch.active { box-shadow: 0 8px 26px rgba(0,0,0,0.12); transform: scale(1.06); }
 
   </style>
@@ -232,6 +205,7 @@
           <button class="theme-swatch swatch-warm" data-theme="warm" aria-label="Warm Sunset" title="Warm Sunset" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-forest active" data-theme="forest" aria-label="Forest Teal" title="Forest Teal" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-violet" data-theme="violet" aria-label="Violet Glow" title="Violet Glow" type="button"><span class="dot" aria-hidden="true"></span></button>
+
           <button class="theme-swatch swatch-black" data-theme="black" aria-label="Black Theme" title="Black Theme" type="button"><span class="dot" aria-hidden="true"></span></button>
           <button class="theme-swatch swatch-white" data-theme="white" aria-label="White Theme" title="White Theme" type="button"><span class="dot" aria-hidden="true"></span></button>
         </div>
@@ -351,13 +325,11 @@
     const expiringCountEl = document.getElementById('expiringCount');
     const userCountEl = document.getElementById('userCount');
 
-    // expose dataCache globally for debugging
     window.dataCache = [];
     let unlocked = false;
 
-    // Deletion expiry: 31h20m (original behavior)
-    const ORIGINAL_EXPIRY_MINUTES = 1880; // 31 hours 20 minutes
-    const EXPIRING_WINDOW_MINUTES = 440;  // 7 hours 20 minutes (expiring window)
+    const ORIGINAL_EXPIRY_MINUTES = 1880;
+    const EXPIRING_WINDOW_MINUTES = 440;
     const ORIGINAL_EXPIRY_MS = ORIGINAL_EXPIRY_MINUTES * 60 * 1000;
     const EXPIRING_WINDOW_MS = EXPIRING_WINDOW_MINUTES * 60 * 1000;
 
@@ -419,14 +391,12 @@
         '--card-bg-top':'rgba(40,18,40,0.06)','--card-bg-bottom':'rgba(36,14,36,0.03)',
         '--text':'#f3eefb','--muted':'#d6c7e9'
       },
-      // Black theme (dark)
       black: {
         '--accent':'#111111','--accent-2':'#333333',
         '--bg-top':'#000000','--bg-bottom':'#0b0b0b',
         '--card-bg-top':'rgba(255,255,255,0.02)','--card-bg-bottom':'rgba(255,255,255,0.01)',
         '--text':'#e6eef8','--muted':'#9fb0c6'
       },
-      // White theme (light)
       white: {
         '--accent':'#0b7285','--accent-2':'#0ea5a4',
         '--bg-top':'#ffffff','--bg-bottom':'#f7f7f7',
@@ -485,7 +455,6 @@
       return isNaN(d) ? NaN : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
     }
 
-    // helper: compare two date-only strings or Date objects by local date (YYYY-MM-DD)
     function isSameLocalDate(a, b) {
       if (!a || !b) return false;
       const da = (a instanceof Date) ? a : parseDateOnlyToLocalMidnight(String(a));
@@ -496,14 +465,12 @@
         && da.getDate() === db.getDate();
     }
 
-    // compute expiry used for deletion and for determining ongoing (original 31h20m)
     function computeExpiryForOvertimeDate(dateOnly) {
       const startMidnight = parseDateOnlyToLocalMidnight(dateOnly);
       if (isNaN(startMidnight)) return NaN;
       return new Date(startMidnight.getTime() + ORIGINAL_EXPIRY_MS);
     }
 
-    // helper: whether an entry will expire within the next EXPIRING_WINDOW_MS
     function isExpiringSoon(dateOnly) {
       const expiry = computeExpiryForOvertimeDate(dateOnly);
       if (!expiry || isNaN(expiry)) return false;
@@ -520,12 +487,10 @@
         const start = parseDateOnlyToLocalMidnight(r.overtime_date);
         if (isNaN(start)) return false;
         const startMs = start.getTime();
-        // upcoming = starts within next 24 hours
         return startMs > now && startMs <= in24h;
       }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
     }
 
-    // ONGOING: only entries whose overtime_date is the same local date as today
     function getOngoingEntries(){
       if (!Array.isArray(window.dataCache)) window.dataCache = [];
       const now = new Date();
@@ -533,12 +498,10 @@
         if (!r || !r.overtime_date) return false;
         const start = parseDateOnlyToLocalMidnight(r.overtime_date);
         if (isNaN(start)) return false;
-        // ongoing = start's local date === today's local date
         return isSameLocalDate(start, now);
       }).sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
     }
 
-    // EXPIRING: entries whose deletion expiry is in the future but within the expiring window
     function getExpiringEntries(){
       if (!Array.isArray(window.dataCache)) window.dataCache = [];
       const now = Date.now();
@@ -547,7 +510,6 @@
         if (!r || !r.overtime_date) return false;
         const expiry = computeExpiryForOvertimeDate(r.overtime_date);
         if (!expiry || isNaN(expiry)) return false;
-        // expiring = expiry is in future but within the next EXPIRING_WINDOW_MS
         return expiry.getTime() > now && expiry.getTime() <= soonThreshold;
       }).sort((a,b) => computeExpiryForOvertimeDate(a.overtime_date) - computeExpiryForOvertimeDate(b.overtime_date));
     }
@@ -579,7 +541,6 @@
       }
     }
 
-    // createRowElement: Delete only (Edit removed earlier per request)
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -611,7 +572,6 @@
           const expiry = computeExpiryForOvertimeDate(row.overtime_date).getTime();
           if (!isNaN(start) && !isNaN(expiry)) {
             const isFutureUpcoming = start > now && start <= (now + 24*60*60*1000);
-            // ongoing only if start's local date === today
             const isActiveToday = isSameLocalDate(startDateObj, new Date());
             const willExpireSoon = expiry > now && expiry <= (now + EXPIRING_WINDOW_MS);
             if (isFutureUpcoming) el.classList.add('upcoming');
@@ -712,12 +672,12 @@
     }
 
     // -------------------------
-    // Visitor registration + active user heartbeat
+    // Visitor registration + active user heartbeat (10s)
     // -------------------------
     const VISITOR_LOCAL_KEY = 'visitor_id';
-    let heartbeatTimer = null;
-    const HEARTBEAT_INTERVAL_MS = 30 * 1000; // 30s
-    const ACTIVE_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
+    let heartbeatTimerLocal = null;
+    const HEARTBEAT_INTERVAL_MS = 10 * 1000; // 10s
+    const ACTIVE_WINDOW_MS = 10 * 1000; // 10s
 
     async function registerVisitorIfNeeded(){
       try {
@@ -769,32 +729,58 @@
       }
     }
 
-    async function sendHeartbeat() {
+    async function sendHeartbeatLocal() {
       const vid = safeGetLocal(VISITOR_LOCAL_KEY);
       if (!vid) return;
       try {
-        await supabase.from('overtime_visitors').upsert([{ visitor_id: vid, last_seen: new Date().toISOString() }], { onConflict: ['visitor_id'] });
+        const { error } = await supabase.from('overtime_visitors').upsert([{ visitor_id: vid, last_seen: new Date().toISOString() }], { onConflict: ['visitor_id'] });
+        if (error) console.warn('heartbeat upsert error', error);
+        else console.log('heartbeat ok', vid);
       } catch (e) {
         console.warn('heartbeat failed', e);
       }
     }
 
-    function startHeartbeat() {
-      if (heartbeatTimer) clearInterval(heartbeatTimer);
-      sendHeartbeat();
-      heartbeatTimer = setInterval(async () => {
-        await sendHeartbeat();
+    function startHeartbeatLocal() {
+      if (heartbeatTimerLocal) clearInterval(heartbeatTimerLocal);
+      sendHeartbeatLocal();
+      heartbeatTimerLocal = setInterval(async () => {
+        await sendHeartbeatLocal();
         await updateUserCount();
       }, HEARTBEAT_INTERVAL_MS);
     }
 
-    function stopHeartbeat() {
-      if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+    function stopHeartbeatLocal() {
+      if (heartbeatTimerLocal) { clearInterval(heartbeatTimerLocal); heartbeatTimerLocal = null; }
     }
+
+    // stop heartbeat when tab hidden to reduce false positives and writes
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopHeartbeatLocal();
+      } else {
+        startHeartbeatLocal();
+      }
+    });
 
     async function updateUserCount(){
       if (!userCountEl) return;
       try {
+        // Prefer server-side RPC if available; fallback to client-side filter
+        // Attempt RPC first (if you created count_active_visitors(window_seconds) on DB)
+        try {
+          const windowSeconds = Math.round(ACTIVE_WINDOW_MS / 1000);
+          const { data: rpcData, error: rpcErr } = await supabase.rpc('count_active_visitors', { window_seconds: windowSeconds });
+          if (!rpcErr && rpcData !== null && rpcData !== undefined) {
+            // rpcData may be a number or array depending on Postgres/Supabase response shape
+            const count = (typeof rpcData === 'number') ? rpcData : (Array.isArray(rpcData) ? Number(Object.values(rpcData[0] || {})[0] || 0) : Number(rpcData || 0));
+            userCountEl.querySelector('.count-value').textContent = String(count);
+            return;
+          }
+        } catch (e) {
+          // ignore rpc failure and fallback
+        }
+
         const { data, error } = await supabase.from('overtime_visitors').select('visitor_id,last_seen');
         if (error) {
           console.warn('[userCount] query error', error);
@@ -814,15 +800,6 @@
         try { userCountEl.querySelector('.count-value').textContent = '—'; } catch(e){}
       }
     }
-
-    // best-effort unload ping (no guarantee)
-    window.addEventListener('beforeunload', () => {
-      try {
-        const vid = safeGetLocal(VISITOR_LOCAL_KEY);
-        if (!vid) return;
-        // best-effort only; Supabase REST may not accept sendBeacon without key
-      } catch(e){}
-    });
 
     // -------------------------
     // End visitor logic
@@ -856,7 +833,6 @@
 
     resetBtn.addEventListener('click', () => { form.reset(); if (dateInput) dateInput.value = ''; });
 
-    // Delegated click handler: only handles Delete action now
     rowsEl.addEventListener('click', async (ev) => {
       const btn = ev.target.closest('[data-action]');
       if (!btn) return;
@@ -1058,9 +1034,12 @@
       try { localStorage.removeItem(LOCAL_KEY); } catch (e) {}
       setUnlockedState(false);
 
-      // register visitor (if needed) and start heartbeat
       try { await registerVisitorIfNeeded(); } catch (e) { console.warn('visitor register failed', e); }
-      try { startHeartbeat(); } catch (e) { console.warn('startHeartbeat failed', e); }
+      try { startHeartbeatLocal(); } catch (e) { console.warn('startHeartbeat failed', e); }
+
+      // refresh active user count frequently during testing
+      try { await updateUserCount(); } catch(e){}
+      setInterval(updateUserCount, 10 * 1000); // refresh every 10s while testing
 
       await loadRows();
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
