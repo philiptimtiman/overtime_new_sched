@@ -677,7 +677,7 @@
     const VISITOR_LOCAL_KEY = 'visitor_id';
     let heartbeatTimerLocal = null;
     const HEARTBEAT_INTERVAL_MS = 10 * 1000; // 10s
-    const ACTIVE_WINDOW_MS = 10 * 1000; // 10s
+    const ACTIVE_WINDOW_MS = 2 * 1000; // 2s
 
     async function registerVisitorIfNeeded(){
       try {
