@@ -163,6 +163,29 @@
       .count-value{font-size:0.95rem}
       .count-label{font-size:0.62rem}
     }
+
+    /* White theme: ensure strong contrast for count pills */
+    [data-theme="white"] .count-pill {
+      background: linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.02));
+      border-color: rgba(0,0,0,0.08);
+      color: #071433;
+    }
+
+    [data-theme="white"] .count-pill .count-value {
+      color: #071433;
+      font-weight: 800;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.6);
+    }
+
+    [data-theme="white"] .count-pill .count-label {
+      color: #374151;
+      font-weight: 700;
+      opacity: 0.95;
+    }
+
+    [data-theme="white"] .count-pill:focus-within {
+      box-shadow: 0 6px 18px rgba(7,20,51,0.08), 0 0 0 3px rgba(7,20,51,0.06);
+    }
   </style>
 </head>
 <body>
@@ -171,7 +194,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.24.1</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.25.1</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
