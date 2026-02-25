@@ -194,7 +194,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.25.1</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.25.2</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -631,12 +631,25 @@
         return;
       }
 
-      const { upcoming, ongoing } = updateCounts();
-      const combined = [...ongoing, ...upcoming].filter((v, i, a) => a.findIndex(x => String(x.id) === String(v.id)) === i);
+      // When locked: show ongoing, upcoming, AND expiring (but not fully expired)
+      const { upcoming, ongoing, expiring } = updateCounts();
+      // combine and dedupe by id, preserving order: ongoing -> upcoming -> expiring
+      const combinedSource = [...ongoing, ...upcoming, ...expiring];
+      const combined = [];
+      const seen = new Set();
+      for (const item of combinedSource) {
+        const id = String(item?.id ?? '');
+        if (!id) continue;
+        if (!seen.has(id)) {
+          seen.add(id);
+          combined.push(item);
+        }
+      }
+
       rowsEl.innerHTML = '';
       if (!combined.length) {
         emptyEl.style.display = 'block';
-        statusEl.textContent = 'No upcoming or ongoing entries';
+        statusEl.textContent = 'No upcoming, ongoing, or expiring entries';
         return;
       }
       emptyEl.style.display = 'none';
