@@ -146,29 +146,23 @@
       .live-clock{min-width:140px;font-size:0.78rem}
     }
 
+    /* Counts area + responsive pill fixes */
     .counts-card{display:flex;align-items:center;justify-content:center;gap:12px;padding:8px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
-    .counts-row{display:flex;gap:10px;align-items:center}
-    .count-pill{min-width:64px;padding:8px 10px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+    .counts-row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+    .count-pill{min-width:56px;padding:8px 10px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex:0 1 auto;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .count-label{font-size:0.68rem;color:var(--muted);font-weight:600}
     .count-value{font-size:1.05rem;font-weight:800}
 
     .count-pill.upcoming { background: linear-gradient(180deg, rgba(16,185,129,0.10), rgba(16,185,129,0.04)); border-color: rgba(16,185,129,0.14); color: #eafff5; }
     .count-pill.ongoing  { background: linear-gradient(180deg, rgba(59,130,246,0.10), rgba(59,130,246,0.04)); border-color: rgba(59,130,246,0.14); color: #eaf4ff; }
     .count-pill.expiring { background: linear-gradient(180deg, rgba(245,158,11,0.10), rgba(245,158,11,0.04)); border-color: rgba(245,158,11,0.14); color: #fff7e6; }
-
     .count-pill.user { background: linear-gradient(180deg, rgba(99,102,241,0.10), rgba(99,102,241,0.04)); border-color: rgba(99,102,241,0.14); color: #eef2ff; }
-    .count-pill.user .count-label { color: #dbeafe; font-weight:700; }
 
-    .counts-row .count-pill { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:72px }
-
-    [data-theme="white"] .count-pill { border-color: rgba(0,0,0,0.08); background: rgba(0,0,0,0.03); color: var(--text); }
-    [data-theme="white"] .count-pill .count-value { color: var(--text); }
-    [data-theme="white"] .count-pill.upcoming { background: linear-gradient(180deg, rgba(16,185,129,0.12), rgba(16,185,129,0.06)); border-color: rgba(16,185,129,0.18); color: #04201a; }
-    [data-theme="white"] .count-pill.ongoing { background: linear-gradient(180deg, rgba(59,130,246,0.12), rgba(59,130,246,0.06)); border-color: rgba(59,130,246,0.18); color: #071433; }
-    [data-theme="white"] .count-pill.expiring { background: linear-gradient(180deg, rgba(245,158,11,0.12), rgba(245,158,11,0.06)); border-color: rgba(245,158,11,0.18); color: #4a2b00; }
-    [data-theme="white"] .date-pill { border-color: rgba(0,0,0,0.06); background: rgba(0,0,0,0.02); color: var(--text); }
-    [data-theme="white"] .theme-swatch.active { box-shadow: 0 8px 26px rgba(0,0,0,0.12); transform: scale(1.06); }
-
+    @media (max-width:420px){
+      .count-pill{min-width:48px;max-width:110px;padding:6px 8px}
+      .count-value{font-size:0.95rem}
+      .count-label{font-size:0.62rem}
+    }
   </style>
 </head>
 <body>
@@ -762,6 +756,14 @@
       }
     });
 
+    // number formatter to avoid overflow in pills
+    function formatCount(n){
+      if (n === null || n === undefined) return '—';
+      if (n < 1000) return String(n);
+      if (n < 1000000) return (Math.round(n/100)/10) + 'k';
+      return (Math.round(n/100000)/10) + 'M';
+    }
+
     async function updateUserCount(){
       if (!userCountEl) return;
       try {
@@ -771,7 +773,7 @@
           const { data: rpcData, error: rpcErr } = await supabase.rpc('count_active_visitors', { window_seconds: windowSeconds });
           if (!rpcErr && rpcData !== null && rpcData !== undefined) {
             const count = (typeof rpcData === 'number') ? rpcData : (Array.isArray(rpcData) ? Number(Object.values(rpcData[0] || {})[0] || 0) : Number(rpcData || 0));
-            userCountEl.querySelector('.count-value').textContent = String(count);
+            userCountEl.querySelector('.count-value').textContent = formatCount(count);
             console.log('[userCount] rpc count', count);
             return;
           }
@@ -792,7 +794,7 @@
           const seen = new Date(r.last_seen).getTime();
           return (now - seen) <= ACTIVE_WINDOW_MS;
         }).length;
-        userCountEl.querySelector('.count-value').textContent = String(activeUsers);
+        userCountEl.querySelector('.count-value').textContent = formatCount(activeUsers);
         console.log('[userCount] active', activeUsers);
       } catch (err) {
         console.warn('[userCount] failed', err);
@@ -939,16 +941,7 @@
     function openModal(){
       modalBackdrop.style.display = 'flex';
       modalBackdrop.setAttribute('aria-hidden','false');
-
-      try {
-        if (appRoot) {
-          appRoot.inert = true;
-          appRoot.setAttribute('aria-hidden','true');
-        }
-      } catch (e) {
-        if (appRoot) appRoot.setAttribute('aria-hidden','true');
-      }
-
+      try { if (appRoot) { appRoot.inert = true; appRoot.setAttribute('aria-hidden','true'); } } catch(e){ if (appRoot) appRoot.setAttribute('aria-hidden','true'); }
       pwError.style.display = 'none';
       setTimeout(() => { try { pwInput.focus(); } catch(e){} }, 10);
     }
@@ -956,16 +949,7 @@
     function closeModal(){
       modalBackdrop.style.display = 'none';
       modalBackdrop.setAttribute('aria-hidden','true');
-
-      try {
-        if (appRoot) {
-          appRoot.inert = false;
-          appRoot.removeAttribute('aria-hidden');
-        }
-      } catch (e) {
-        if (appRoot) appRoot.removeAttribute('aria-hidden');
-      }
-
+      try { if (appRoot) { appRoot.inert = false; appRoot.removeAttribute('aria-hidden'); } } catch(e){ if (appRoot) appRoot.removeAttribute('aria-hidden'); }
       pwError.style.display = 'none';
       try { openUnlock.focus(); } catch (e) {}
     }
@@ -1045,7 +1029,6 @@
       try { await registerVisitorIfNeeded(); } catch (e) { console.warn('visitor register failed', e); }
       try { startHeartbeatLocal(); } catch (e) { console.warn('startHeartbeat failed', e); }
 
-      // refresh active user count frequently during testing (2s)
       try { await updateUserCount(); } catch(e){}
       setInterval(updateUserCount, 2 * 1000); // refresh every 2s while testing
 
