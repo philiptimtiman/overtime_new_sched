@@ -245,7 +245,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.25.9</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.26.4</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -624,11 +624,33 @@
       }
     }
 
+    // Persist reactions to server and reconcile with server response
     async function persistReactionsToServer(entryId, reactionsObj){
       try {
-        await supabase.from('overtime_reactions').upsert([{ entry_id: entryId, reactions: reactionsObj, updated_at: new Date().toISOString() }], { onConflict: ['entry_id'] });
+        const payload = { entry_id: entryId, reactions: reactionsObj, updated_at: new Date().toISOString() };
+        const { data, error } = await supabase
+          .from('overtime_reactions')
+          .upsert([payload], { onConflict: ['entry_id'] })
+          .select();
+
+        if (error) {
+          console.warn('persistReactionsToServer upsert error', error);
+          return null;
+        }
+
+        const serverRow = (data && data[0]) ? data[0] : null;
+        if (serverRow && serverRow.entry_id != null) {
+          const idx = window.dataCache.findIndex(x => String(x.id) === String(serverRow.entry_id));
+          if (idx >= 0) {
+            window.dataCache[idx].reactions = serverRow.reactions || reactionsObj;
+          }
+          renderEntriesAccordingToLock();
+          updateCounts();
+        }
+        return serverRow;
       } catch (e) {
         console.warn('persistReactionsToServer failed', e);
+        return null;
       }
     }
 
@@ -661,48 +683,59 @@
         const existing = safeGetLocal(reactedEntryKey);
 
         if (existing && existing === r.key) btn.classList.add('active');
+        if (existing && existing !== r.key) btn.setAttribute('aria-disabled','true');
 
         btn.addEventListener('click', async (ev) => {
           ev.preventDefault();
-          // enforce one reaction per user per entry
           const current = safeGetLocal(reactedEntryKey);
+
+          // No reaction yet: add this reaction
           if (!current) {
-            // no reaction yet: add this reaction
+            // optimistic update
             row.reactions[r.key] = (row.reactions[r.key] || 0) + 1;
             countSpan.textContent = String(row.reactions[r.key]);
-            try { safeSetLocal(reactedEntryKey, r.key); } catch(e){}
-            // mark active visually
             btn.classList.add('active');
-            // update cache
-            const idx = window.dataCache.findIndex(x => String(x.id) === String(row.id));
-            if (idx >= 0) window.dataCache[idx].reactions = row.reactions;
-            // persist
-            persistReactionsToServer(row.id, row.reactions);
-            // disable other reaction buttons for this entry (visual)
-            Array.from(container.querySelectorAll('.reaction-btn')).forEach(b => {
-              if (b !== btn) b.setAttribute('aria-disabled','true');
-            });
+            try { safeSetLocal(reactedEntryKey, r.key); } catch(e){}
+
+            // persist and reconcile with server
+            const serverRow = await persistReactionsToServer(row.id, row.reactions);
+            if (serverRow && serverRow.reactions) {
+              // update counts from server
+              row.reactions = serverRow.reactions;
+              Array.from(container.querySelectorAll('.reaction-btn')).forEach(b => {
+                const k = b.dataset.reaction;
+                const c = b.querySelector('.count');
+                if (c) c.textContent = String(row.reactions[k] || 0);
+                if (safeGetLocal(reactedEntryKey) === k) b.classList.add('active'); else b.classList.remove('active');
+                if (safeGetLocal(reactedEntryKey) && safeGetLocal(reactedEntryKey) !== k) b.setAttribute('aria-disabled','true');
+              });
+            }
             return;
           }
 
-          // if user already reacted with same reaction -> toggle off (allow undo)
+          // If user already reacted with same reaction -> undo
           if (current === r.key) {
-            // undo
+            // optimistic undo
             row.reactions[r.key] = Math.max(0, (row.reactions[r.key] || 1) - 1);
             countSpan.textContent = String(row.reactions[r.key]);
             try { localStorage.removeItem(reactedEntryKey); } catch(e){}
             btn.classList.remove('active');
-            // re-enable other buttons
             Array.from(container.querySelectorAll('.reaction-btn')).forEach(b => b.removeAttribute('aria-disabled'));
-            const idx = window.dataCache.findIndex(x => String(x.id) === String(row.id));
-            if (idx >= 0) window.dataCache[idx].reactions = row.reactions;
-            persistReactionsToServer(row.id, row.reactions);
+
+            // persist undo and reconcile
+            const serverRow = await persistReactionsToServer(row.id, row.reactions);
+            if (serverRow && serverRow.reactions) {
+              row.reactions = serverRow.reactions;
+              Array.from(container.querySelectorAll('.reaction-btn')).forEach(b => {
+                const k = b.dataset.reaction;
+                const c = b.querySelector('.count');
+                if (c) c.textContent = String(row.reactions[k] || 0);
+              });
+            }
             return;
           }
 
-          // if user reacted with a different reaction already, do nothing (limit enforced)
-          // optional: you could allow switching by first undoing; here we enforce explicit undo first
-          // small visual feedback: briefly pulse the existing active button
+          // If user reacted with a different reaction already, require undo first
           const activeBtn = container.querySelector('.reaction-btn.active');
           if (activeBtn) {
             activeBtn.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 220 });
@@ -711,6 +744,34 @@
 
         container.appendChild(btn);
       });
+    }
+
+    // subscribe to reactions changes so all clients update in realtime
+    function subscribeReactionsRealtime(){
+      try {
+        const channel = supabase.channel('reactions_channel')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'overtime_reactions' }, payload => {
+            try {
+              const row = payload?.new || payload?.old;
+              if (!row || row.entry_id == null) return;
+              const entryId = String(row.entry_id);
+              const idx = window.dataCache.findIndex(x => String(x.id) === entryId);
+              if (idx >= 0) {
+                if (payload.event === 'DELETE') {
+                  window.dataCache[idx].reactions = { like:0, heart:0, laugh:0, smile:0 };
+                } else {
+                  window.dataCache[idx].reactions = row.reactions || window.dataCache[idx].reactions || { like:0, heart:0, laugh:0, smile:0 };
+                }
+                renderEntriesAccordingToLock();
+                updateCounts();
+              }
+            } catch (e) { console.warn('reactions subscription handler error', e); }
+          })
+          .subscribe();
+        window.__reactions_channel = channel;
+      } catch (e) {
+        console.warn('Realtime subscription failed', e);
+      }
     }
 
     // --- End reactions helpers ---
@@ -1224,6 +1285,9 @@
       setInterval(updateUserCount, 2 * 1000); // refresh every 2s while testing
 
       await loadRows();
+      // subscribe to realtime reactions after initial load
+      try { subscribeReactionsRealtime(); } catch (e) { console.warn('subscribe failed', e); }
+
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
 
