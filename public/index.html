@@ -85,7 +85,7 @@
     .date-pill{display:inline-flex;align-items:center;justify-content:center;min-width:72px;max-width:160px;padding:6px 10px;border-radius:8px;background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));border:1px solid rgba(255,255,255,0.02);color:var(--text);box-sizing:border-box;font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;line-height:1;text-align:center}
     .date-pill time{ display:block; width:100%; text-align:center; }
 
-    .item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+    .item-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
 
     .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem;transition:background var(--theme-transition), color var(--theme-transition)}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
@@ -213,6 +213,29 @@
     [data-theme="white"] .item:hover,
     [data-theme="white"] .item:focus-within {
       box-shadow: 0 22px 48px rgba(7, 12, 20, 0.14), 0 10px 28px rgba(7, 12, 20, 0.08);
+    }
+
+    /* Reactions: minimal, no box or colored background; small emoji + count */
+    .reactions {
+      display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-right:6px;
+    }
+    .reaction-btn {
+      display:inline-flex;align-items:center;gap:6px;padding:2px 6px;border-radius:999px;border:0;background:transparent;color:var(--muted);font-weight:700;font-size:0.9rem;cursor:pointer;transition:transform 120ms ease, opacity 120ms ease;
+      line-height:1;
+    }
+    .reaction-emoji { font-size:1.05rem; line-height:1; display:inline-block; }
+    .reaction-btn .count { font-weight:700;color:var(--muted);font-size:0.85rem;min-width:18px;text-align:center;display:inline-block }
+    .reaction-btn:hover { transform:translateY(-2px); opacity:0.95; }
+    .reaction-btn.active { color:var(--text); transform:translateY(-1px); opacity:1; }
+
+    /* White theme: keep reactions subtle but readable */
+    [data-theme="white"] .reaction-btn { color:#6b7280; }
+    [data-theme="white"] .reaction-btn .count { color:#374151; font-weight:700; }
+
+    @media (max-width:420px){
+      .reactions { gap:6px; }
+      .reaction-btn { padding:2px 6px; font-size:0.85rem; gap:4px; }
+      .reaction-emoji { font-size:1rem; }
     }
   </style>
 </head>
@@ -585,6 +608,113 @@
       }
     }
 
+    // --- Reactions helpers (one reaction per user per entry) ---
+    const REACTIONS = [
+      { key: 'like', emoji: '👍', label: 'Like' },
+      { key: 'heart', emoji: '❤️', label: 'Heart' },
+      { key: 'laugh', emoji: '😂', label: 'Laugh' },
+      { key: 'smile', emoji: '😊', label: 'Smile' }
+    ];
+
+    function ensureReactionsObject(row){
+      if (!row.reactions || typeof row.reactions !== 'object') {
+        row.reactions = { like:0, heart:0, laugh:0, smile:0 };
+      } else {
+        REACTIONS.forEach(r => { if (typeof row.reactions[r.key] !== 'number') row.reactions[r.key] = 0; });
+      }
+    }
+
+    async function persistReactionsToServer(entryId, reactionsObj){
+      try {
+        await supabase.from('overtime_reactions').upsert([{ entry_id: entryId, reactions: reactionsObj, updated_at: new Date().toISOString() }], { onConflict: ['entry_id'] });
+      } catch (e) {
+        console.warn('persistReactionsToServer failed', e);
+      }
+    }
+
+    function renderReactionsForRow(actionsContainer, row){
+      ensureReactionsObject(row);
+      let container = actionsContainer.querySelector('.reactions');
+      if (!container) {
+        container = document.createElement('div');
+        container.className = 'reactions';
+        actionsContainer.insertBefore(container, actionsContainer.firstChild);
+      }
+      container.innerHTML = '';
+      REACTIONS.forEach(r => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'reaction-btn';
+        btn.dataset.reaction = r.key;
+        btn.setAttribute('aria-label', `${r.label} (${r.emoji})`);
+        const emojiSpan = document.createElement('span');
+        emojiSpan.className = 'reaction-emoji';
+        emojiSpan.textContent = r.emoji;
+        const countSpan = document.createElement('span');
+        countSpan.className = 'count';
+        countSpan.textContent = String(row.reactions[r.key] || 0);
+        btn.appendChild(emojiSpan);
+        btn.appendChild(countSpan);
+
+        // per-entry reacted key stores which reaction the user used for this entry
+        const reactedEntryKey = `reacted_entry_${row.id}`;
+        const existing = safeGetLocal(reactedEntryKey);
+
+        if (existing && existing === r.key) btn.classList.add('active');
+
+        btn.addEventListener('click', async (ev) => {
+          ev.preventDefault();
+          // enforce one reaction per user per entry
+          const current = safeGetLocal(reactedEntryKey);
+          if (!current) {
+            // no reaction yet: add this reaction
+            row.reactions[r.key] = (row.reactions[r.key] || 0) + 1;
+            countSpan.textContent = String(row.reactions[r.key]);
+            try { safeSetLocal(reactedEntryKey, r.key); } catch(e){}
+            // mark active visually
+            btn.classList.add('active');
+            // update cache
+            const idx = window.dataCache.findIndex(x => String(x.id) === String(row.id));
+            if (idx >= 0) window.dataCache[idx].reactions = row.reactions;
+            // persist
+            persistReactionsToServer(row.id, row.reactions);
+            // disable other reaction buttons for this entry (visual)
+            Array.from(container.querySelectorAll('.reaction-btn')).forEach(b => {
+              if (b !== btn) b.setAttribute('aria-disabled','true');
+            });
+            return;
+          }
+
+          // if user already reacted with same reaction -> toggle off (allow undo)
+          if (current === r.key) {
+            // undo
+            row.reactions[r.key] = Math.max(0, (row.reactions[r.key] || 1) - 1);
+            countSpan.textContent = String(row.reactions[r.key]);
+            try { localStorage.removeItem(reactedEntryKey); } catch(e){}
+            btn.classList.remove('active');
+            // re-enable other buttons
+            Array.from(container.querySelectorAll('.reaction-btn')).forEach(b => b.removeAttribute('aria-disabled'));
+            const idx = window.dataCache.findIndex(x => String(x.id) === String(row.id));
+            if (idx >= 0) window.dataCache[idx].reactions = row.reactions;
+            persistReactionsToServer(row.id, row.reactions);
+            return;
+          }
+
+          // if user reacted with a different reaction already, do nothing (limit enforced)
+          // optional: you could allow switching by first undoing; here we enforce explicit undo first
+          // small visual feedback: briefly pulse the existing active button
+          const activeBtn = container.querySelector('.reaction-btn.active');
+          if (activeBtn) {
+            activeBtn.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 220 });
+          }
+        });
+
+        container.appendChild(btn);
+      });
+    }
+
+    // --- End reactions helpers ---
+
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -624,6 +754,11 @@
           }
         }
       } catch (e) { /* ignore */ }
+
+      // render reactions inside the item-actions area so they are visible (minimal style)
+      const actionsContainer = el.querySelector('.item-actions');
+      ensureReactionsObject(row);
+      renderReactionsForRow(actionsContainer, row);
 
       return el;
     }
@@ -719,7 +854,17 @@
       try {
         const { data, error } = await supabase.from('overtime_data').select('id,name,notes,overtime_date').order('overtime_date',{ascending:true});
         if (error) throw error;
-        window.dataCache = (data || []).map(r => ({ ...r, overtime_date: normalizeStoredDate(r.overtime_date) }));
+        const rows = (data || []).map(r => ({ ...r, overtime_date: normalizeStoredDate(r.overtime_date) }));
+        // fetch reactions and merge (best-effort)
+        try {
+          const { data: rxData } = await supabase.from('overtime_reactions').select('entry_id,reactions');
+          const rxMap = {};
+          (rxData || []).forEach(x => { if (x && x.entry_id) rxMap[String(x.entry_id)] = x.reactions || {}; });
+          window.dataCache = rows.map(r => ({ ...r, reactions: rxMap[String(r.id)] || { like:0, heart:0, laugh:0, smile:0 } }));
+        } catch (e) {
+          // fallback: no reactions table or error
+          window.dataCache = rows.map(r => ({ ...r, reactions: { like:0, heart:0, laugh:0, smile:0 } }));
+        }
         renderEntriesAccordingToLock();
         updateCounts();
       } catch (err) {
@@ -746,9 +891,6 @@
             vid = 'v-' + Date.now() + '-' + Math.random().toString(36).slice(2,9);
           }
           safeSetLocal(VISITOR_LOCAL_KEY, vid);
-          console.log('[visitor] generated id', vid);
-        } else {
-          console.log('[visitor] existing id', vid);
         }
 
         try {
@@ -756,7 +898,6 @@
             .from('overtime_visitors')
             .upsert([{ visitor_id: vid, last_seen: new Date().toISOString() }], { onConflict: ['visitor_id'] });
           if (error) {
-            console.warn('[visitor] upsert returned error', error);
             try {
               const { error: insErr } = await supabase
                 .from('overtime_visitors')
@@ -765,11 +906,8 @@
             } catch (ie) {
               console.warn('[visitor] fallback insert exception', ie);
             }
-          } else {
-            console.log('[visitor] upsert ok');
           }
         } catch (upErr) {
-          console.warn('[visitor] upsert exception', upErr);
           try {
             const { error: insErr } = await supabase
               .from('overtime_visitors')
@@ -792,7 +930,6 @@
       try {
         const { error } = await supabase.from('overtime_visitors').upsert([{ visitor_id: vid, last_seen: new Date().toISOString() }], { onConflict: ['visitor_id'] });
         if (error) console.warn('heartbeat upsert error', error);
-        else console.log('heartbeat ok', vid);
       } catch (e) {
         console.warn('heartbeat failed', e);
       }
@@ -811,7 +948,6 @@
       if (heartbeatTimerLocal) { clearInterval(heartbeatTimerLocal); heartbeatTimerLocal = null; }
     }
 
-    // stop heartbeat when tab hidden to reduce false positives and writes
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         stopHeartbeatLocal();
@@ -820,7 +956,6 @@
       }
     });
 
-    // number formatter to avoid overflow in pills
     function formatCount(n){
       if (n === null || n === undefined) return '—';
       if (n < 1000) return String(n);
@@ -831,24 +966,20 @@
     async function updateUserCount(){
       if (!userCountEl) return;
       try {
-        // Try RPC first (if function exists), otherwise fallback to select+filter
         try {
           const windowSeconds = Math.round(ACTIVE_WINDOW_MS / 1000);
           const { data: rpcData, error: rpcErr } = await supabase.rpc('count_active_visitors', { window_seconds: windowSeconds });
           if (!rpcErr && rpcData !== null && rpcData !== undefined) {
             const count = (typeof rpcData === 'number') ? rpcData : (Array.isArray(rpcData) ? Number(Object.values(rpcData[0] || {})[0] || 0) : Number(rpcData || 0));
             userCountEl.querySelector('.count-value').textContent = formatCount(count);
-            console.log('[userCount] rpc count', count);
             return;
           }
-          if (rpcErr) console.warn('[userCount] rpc error', rpcErr);
         } catch (e) {
           // ignore rpc failure and fallback
         }
 
         const { data, error } = await supabase.from('overtime_visitors').select('visitor_id,last_seen');
         if (error) {
-          console.warn('[userCount] query error', error);
           userCountEl.querySelector('.count-value').textContent = '—';
           return;
         }
@@ -859,19 +990,15 @@
           return (now - seen) <= ACTIVE_WINDOW_MS;
         }).length;
         userCountEl.querySelector('.count-value').textContent = formatCount(activeUsers);
-        console.log('[userCount] active', activeUsers);
       } catch (err) {
-        console.warn('[userCount] failed', err);
         try { userCountEl.querySelector('.count-value').textContent = '—'; } catch(e){}
       }
     }
 
-    // best-effort unload ping (no guarantee)
     window.addEventListener('beforeunload', () => {
       try {
         const vid = safeGetLocal(VISITOR_LOCAL_KEY);
         if (!vid) return;
-        // best-effort only; Supabase REST may not accept sendBeacon without key
       } catch(e){}
     });
 
@@ -891,7 +1018,7 @@
       try {
         const { data, error } = await supabase.from('overtime_data').insert([{ name, notes, overtime_date }]).select();
         if (error) throw error;
-        const inserted = (data || []).map(r => ({ ...r, overtime_date: normalizeStoredDate(r.overtime_date) }));
+        const inserted = (data || []).map(r => ({ ...r, overtime_date: normalizeStoredDate(r.overtime_date), reactions: { like:0, heart:0, laugh:0, smile:0 } }));
         window.dataCache = [...window.dataCache, ...inserted];
         renderEntriesAccordingToLock();
         updateCounts();
