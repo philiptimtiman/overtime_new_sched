@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Overtime Scheduler</title>
-  <meta name="description" content="Overtime Schedule with Reactions (three-dots menu, preserved functions)" />
+  <meta name="description" content="Overtime Schedule with compact three-dots menu" />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -14,9 +14,6 @@
       --card-bg-bottom: rgba(6,30,26,0.03);
       --input-h:40px; --radius:10px; --mobile-width:360px;
       --base-font:15px; --theme-transition:220ms ease;
-      --ongoing-color: #3b82f6;
-      --upcoming-color: #10b981;
-      --expiring-color: #f59e0b;
       --menu-bg: rgba(0,0,0,0.72);
       --menu-border: rgba(255,255,255,0.06);
     }
@@ -81,7 +78,7 @@
     .date-pill{display:inline-flex;align-items:center;justify-content:center;min-width:72px;max-width:160px;padding:6px 10px;border-radius:8px;background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));border:1px solid rgba(255,255,255,0.02);color:var(--text);box-sizing:border-box;font-size:0.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;line-height:1;text-align:center}
     .date-pill time{ display:block; width:100%; text-align:center; }
 
-    .item-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end;position:relative}
+    .item-actions{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;justify-content:flex-end;position:relative}
 
     .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem;transition:background var(--theme-transition), color var(--theme-transition)}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
@@ -160,43 +157,51 @@
       .count-label{font-size:0.62rem}
     }
 
-    /* three-dots menu button */
+    /* Compact three-dots menu adjustments */
     .menu-btn {
-      display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);
+      display:inline-flex;align-items:center;justify-content:center;
+      width:28px;height:28px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);
+      background:transparent;color:var(--muted);font-size:18px;line-height:1;padding:0;
+      margin-left:4px;
     }
     .menu-btn:focus{ outline:2px solid rgba(255,255,255,0.06); outline-offset:2px; }
 
-    /* menu panel */
+    /* menu panel: overlay with transform to avoid layout shift */
     .menu-panel {
       position:absolute;
-      right:0;
-      top:44px;
-      min-width:160px;
+      right:6px;
+      top:36px;
+      min-width:120px;
       background:var(--menu-bg);
       border:1px solid var(--menu-border);
       border-radius:8px;
-      padding:8px;
+      padding:6px;
       box-shadow:0 10px 30px rgba(0,0,0,0.6);
-      z-index:40;
+      z-index:60;
       display:none;
       gap:6px;
+      transform-origin: top right;
+      transform: scale(0.96);
+      transition: transform 160ms ease, opacity 160ms ease;
+      opacity:0;
+      pointer-events:none;
     }
-    .menu-panel.open { display:flex; flex-direction:column; }
+    .menu-panel.open { display:flex; flex-direction:column; transform: scale(1); opacity:1; pointer-events:auto; }
 
     .menu-item {
       display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;color:var(--text);cursor:pointer;
-      background:transparent;border:0;text-align:left;font-weight:600;
+      background:transparent;border:0;text-align:left;font-weight:600;font-size:0.92rem;
     }
     .menu-item:hover { background:rgba(255,255,255,0.02); }
 
-    /* Reactions inside menu */
-    .menu-reactions { display:flex;gap:8px;align-items:center;flex-wrap:wrap; padding:6px 4px; }
+    /* Reactions inside menu: smaller footprint */
+    .menu-reactions { display:flex;gap:6px;align-items:center;flex-wrap:wrap; padding:4px 2px; }
     .reaction-btn {
-      display:inline-flex;align-items:center;gap:6px;padding:6px 8px;border-radius:999px;border:0;background:transparent;color:var(--muted);font-weight:700;font-size:0.95rem;cursor:pointer;transition:transform 120ms ease, opacity 120ms ease;
+      display:inline-flex;align-items:center;gap:6px;padding:4px 6px;border-radius:999px;border:0;background:transparent;color:var(--muted);font-weight:700;font-size:0.92rem;cursor:pointer;transition:transform 120ms ease, opacity 120ms ease;
       line-height:1;
     }
-    .reaction-emoji { font-size:1.05rem; line-height:1; display:inline-block; }
-    .reaction-btn .count { font-weight:700;color:var(--muted);font-size:0.85rem;min-width:18px;text-align:center;display:inline-block }
+    .reaction-emoji { font-size:0.98rem; line-height:1; display:inline-block; }
+    .reaction-btn .count { font-weight:700;color:var(--muted);font-size:0.78rem;min-width:16px;text-align:center;display:inline-block }
     .reaction-btn.active { color:var(--text); }
 
     /* Hide reactions when appRoot has .hide-reactions (used when unlocked) */
@@ -222,7 +227,7 @@
     [data-theme="white"] .meta, [data-theme="white"] .notes { color: #374151 !important; }
 
     @media (max-width:420px){
-      .menu-panel { min-width:140px; top:42px; }
+      .menu-panel { min-width:140px; top:42px; right:4px; }
       .reaction-emoji { font-size:1rem; }
     }
   </style>
@@ -233,7 +238,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub v26.2.27.2</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub v26.2.27.5</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -607,7 +612,7 @@
       }
     }
 
-    // --- Reactions helpers (one reaction per user per entry) ---
+    // --- Reactions helpers (unchanged logic) ---
     const REACTIONS = [
       { key: 'like', emoji: '👍', label: 'Like' },
       { key: 'heart', emoji: '❤️', label: 'Heart' },
@@ -695,10 +700,8 @@
       }
     }
 
-    // Render reactions into a provided container (used inside menu)
     function renderReactionsForRow(actionsContainer, row){
       ensureReactionsObject(row);
-      // prefer .menu-reactions inside actionsContainer
       let container = actionsContainer.querySelector('.menu-reactions') || actionsContainer.querySelector('.reactions');
       if (!container) {
         container = document.createElement('div');
@@ -870,17 +873,16 @@
             <div class="name" data-field="name">${escapeHtml(row.name)}</div>
             <div class="notes" data-field="notes">${escapeHtml(row.notes || '')}</div>
           </div>
-          <div class="date-pill" data-field="overtime_date" aria-hidden="${row.overtime_date ? 'false' : 'true'}">
-            <time datetime="${escapeHtml(dateAttr)}">${escapeHtml(dateDisplay)}</time>
-          </div>
-        </div>
-        <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px">
-          <div class="item-actions">
-            <button class="btn ghost lock-guard" data-action="delete" type="button">Delete</button>
-            <button class="menu-btn" aria-haspopup="true" aria-expanded="false" title="More" type="button" aria-label="Open reactions menu">⋯</button>
-            <div class="menu-panel" role="menu" aria-hidden="true">
-              <div class="menu-reactions" role="group" aria-label="Reactions area"></div>
-              <button class="menu-item" data-menu-action="details" type="button">View details</button>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="date-pill" data-field="overtime_date" aria-hidden="${row.overtime_date ? 'false' : 'true'}">
+              <time datetime="${escapeHtml(dateAttr)}">${escapeHtml(dateDisplay)}</time>
+            </div>
+            <div class="item-actions" style="position:relative">
+              <button class="btn ghost lock-guard" data-action="delete" type="button" title="Delete">Delete</button>
+              <button class="menu-btn" aria-haspopup="true" aria-expanded="false" title="More" type="button" aria-label="Open reactions menu">⋯</button>
+              <div class="menu-panel" role="menu" aria-hidden="true">
+                <div class="menu-reactions" role="group" aria-label="Reactions area"></div>
+              </div>
             </div>
           </div>
         </div>
