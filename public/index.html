@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler</title>
-  <meta name="description" content="Overtime Schedule with reaction summary beside menu" />
+  <title>Overtime Scheduler — White Theme Contrast Fix</title>
+  <meta name="description" content="Overtime Schedule with improved white theme contrast for accessibility" />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -18,6 +18,7 @@
       --menu-border: rgba(255,255,255,0.06);
     }
 
+    /* Base resets */
     *,*::before,*::after{box-sizing:border-box}
     html,body{height:100%;margin:0;padding:0;background:transparent;color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--base-font)}
     input,button,select,textarea{font-family:inherit}
@@ -226,8 +227,8 @@
       gap:6px;
       padding:4px 8px;
       border-radius:999px;
-      background:rgba(255,255,255,0.02);
-      border:1px solid rgba(255,255,255,0.03);
+      background:rgba(0,0,0,0.04);
+      border:1px solid rgba(0,0,0,0.06);
       color:var(--muted);
       font-weight:700;
       font-size:0.9rem;
@@ -242,22 +243,58 @@
     /* When unlocked, hide any inline menu (defensive) */
     .app.unlocked .menu-inline { display:none !important; }
 
-    /* Improve contrast for white theme */
+    /* Improve contrast for white theme (ACCESSIBILITY FIXES) */
+    [data-theme="white"] {
+      --text: #071422;           /* darker text for high contrast */
+      --muted: #475569;          /* darker muted color */
+      --card-bg-top: #ffffff;    /* keep cards white but with subtle border */
+      --card-bg-bottom: #fbfbfb;
+      --menu-bg: rgba(11,18,32,0.96); /* darker menu background so white text stands out */
+      --menu-border: rgba(11,18,32,0.08);
+    }
+
+    /* Specific white-theme overrides for components */
     [data-theme="white"] .card {
-      background: linear-gradient(180deg, #ffffff, #f7f7f7) !important;
+      background: linear-gradient(180deg, #ffffff, #fbfbfb) !important;
       border-color: rgba(11,18,32,0.06) !important;
       color: var(--text) !important;
+      box-shadow: 0 6px 18px rgba(11,18,32,0.04);
     }
     [data-theme="white"] .date-pill,
     [data-theme="white"] .count-pill {
-      background: linear-gradient(180deg, rgba(11,18,32,0.04), rgba(11,18,32,0.02)) !important;
+      background: linear-gradient(180deg, #f7f9fb, #ffffff) !important;
       border-color: rgba(11,18,32,0.08) !important;
       color: var(--text) !important;
     }
-    [data-theme="white"] .reaction-btn { color: #0b1220 !important; }
-    [data-theme="white"] .reaction-btn .count { color: #0b1220 !important; }
-    [data-theme="white"] .btn.ghost, [data-theme="white"] .icon-btn { border-color: rgba(11,18,32,0.08) !important; color: #0b1220 !important; }
-    [data-theme="white"] .meta, [data-theme="white"] .notes { color: #374151 !important; }
+    [data-theme="white"] .search {
+      background: #ffffff !important;
+      border-color: rgba(11,18,32,0.06) !important;
+      color: var(--text) !important;
+    }
+    [data-theme="white"] .btn.ghost, [data-theme="white"] .icon-btn {
+      border-color: rgba(11,18,32,0.08) !important;
+      color: var(--text) !important;
+      background: transparent !important;
+    }
+    [data-theme="white"] .menu-panel {
+      background: rgba(11,18,32,0.96) !important;
+      border-color: rgba(255,255,255,0.04) !important;
+      color: #fff !important;
+    }
+    [data-theme="white"] .menu-item { color: #fff !important; }
+    [data-theme="white"] .reaction-btn { color: #fff !important; }
+    [data-theme="white"] .reaction-btn .count { color: rgba(255,255,255,0.85) !important; }
+    [data-theme="white"] .reaction-summary {
+      background: rgba(11,18,32,0.06) !important;
+      border-color: rgba(11,18,32,0.08) !important;
+      color: #0b1220 !important;
+    }
+    [data-theme="white"] .meta, [data-theme="white"] .notes { color: #475569 !important; }
+
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .menu-panel, .reaction-summary, .theme-swatch { transition: none !important; animation: none !important; }
+    }
 
     @media (max-width:420px){
       .menu-panel { min-width:140px; top:42px; right:4px; }
@@ -268,11 +305,11 @@
 </head>
 <body>
   <div class="canvas">
-    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler">
+    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler" data-theme="forest">
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub v26.2.26.8</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.27.9</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -494,8 +531,8 @@
       white: {
         '--accent':'#0b7285','--accent-2':'#0ea5a4',
         '--bg-top':'#ffffff','--bg-bottom':'#f7f7f7',
-        '--card-bg-top':'rgba(0,0,0,0.03)','--card-bg-bottom':'rgba(0,0,0,0.01)',
-        '--text':'#0b1220','--muted':'#6b7280'
+        '--card-bg-top':'#ffffff','--card-bg-bottom':'#fbfbfb',
+        '--text':'#071422','--muted':'#475569'
       }
     };
 
@@ -646,7 +683,7 @@
       }
     }
 
-    // --- Reactions helpers (unchanged logic) ---
+    // Reactions helpers (kept same behavior)
     const REACTIONS = [
       { key: 'like', emoji: '👍', label: 'Like' },
       { key: 'heart', emoji: '❤️', label: 'Heart' },
@@ -737,13 +774,11 @@
     // Update the small reaction summary pill beside the menu button
     function updateReactionSummaryForRow(containerRoot, row) {
       try {
-        // find or create summary element near menu button
         let summary = containerRoot.querySelector('.reaction-summary');
         if (!summary) {
           summary = document.createElement('div');
           summary.className = 'reaction-summary';
           summary.innerHTML = `<span class="emoji"> </span><span class="count">0</span>`;
-          // place it after menu button if exists, else append to actions
           const menuBtn = containerRoot.querySelector('.menu-btn');
           if (menuBtn && menuBtn.parentNode) {
             menuBtn.parentNode.insertBefore(summary, menuBtn.nextSibling);
@@ -752,15 +787,12 @@
           }
         }
 
-        // If unlocked or hide-reactions active, hide summary
         if (unlocked || appRoot.classList.contains('hide-reactions')) {
           summary.style.display = 'none';
           return;
         }
 
         ensureReactionsObject(row);
-        // Determine which reaction to show:
-        // Priority: user's own reacted key (localStorage), else highest-count reaction (if >0), else hide
         const reactedEntryKey = `reacted_entry_${row.id}`;
         const userChoice = safeGetLocal(reactedEntryKey);
         let showEmoji = '';
@@ -771,7 +803,6 @@
           showEmoji = r ? r.emoji : '';
           showCount = row.reactions[userChoice];
         } else {
-          // find highest reaction
           let topKey = null;
           let topVal = 0;
           Object.keys(row.reactions || {}).forEach(k => {
@@ -795,14 +826,11 @@
         const countEl = summary.querySelector('.count');
         if (emojiEl) emojiEl.textContent = showEmoji;
         if (countEl) countEl.textContent = String(showCount);
-      } catch (e) {
-        // fail silently
-      }
+      } catch (e) {}
     }
 
     function renderReactionsForRow(actionsContainer, row){
       ensureReactionsObject(row);
-      // prefer .menu-reactions inside actionsContainer
       let container = actionsContainer.querySelector('.menu-reactions') || actionsContainer.querySelector('.reactions');
       if (!container) {
         container = document.createElement('div');
@@ -862,7 +890,6 @@
                 b.removeAttribute('aria-disabled');
               });
             }
-            // update summary pill
             const root = actionsContainer.closest('.item') || actionsContainer;
             updateReactionSummaryForRow(root, row);
             return;
@@ -906,7 +933,6 @@
         container.appendChild(btn);
       });
 
-      // After rendering reaction buttons, update summary pill
       const root = actionsContainer.closest('.item') || actionsContainer;
       updateReactionSummaryForRow(root, row);
     }
@@ -943,7 +969,6 @@
       }
     }
 
-    // subscribe to reactions changes so all clients update in realtime
     function subscribeReactionsRealtime(){
       try {
         const channel = supabase.channel('reactions_channel')
@@ -978,7 +1003,6 @@
       const dateDisplay = row.overtime_date ? formatDateOnlyYMD(row.overtime_date) : '—';
       const dateAttr = row.overtime_date ? (String(row.overtime_date).split('T')[0]) : '';
 
-      // Build base HTML (notes + name + date)
       el.innerHTML = `
         <div class="item-top">
           <div class="item-left">
@@ -996,7 +1020,6 @@
         </div>
       `;
 
-      // Add menu under notes when locked (so it sits below notes)
       if (!unlocked) {
         const menuInline = document.createElement('div');
         menuInline.className = 'menu-inline';
@@ -1006,11 +1029,9 @@
             <div class="menu-reactions" role="group" aria-label="Reactions area"></div>
           </div>
         `;
-        // append menuInline under item-left (below notes)
         const itemLeft = el.querySelector('.item-left');
         if (itemLeft) itemLeft.appendChild(menuInline);
       } else {
-        // When unlocked we still create a hidden menu panel near actions so code paths remain consistent
         const actions = el.querySelector('.item-actions');
         const hiddenMenu = document.createElement('div');
         hiddenMenu.style.display = 'none';
@@ -1033,21 +1054,17 @@
             if (willExpireSoon) el.classList.add('expiring');
           }
         }
-      } catch (e) { /* ignore */ }
+      } catch (e) {}
 
-      // render reactions into the menu-reactions container (if present)
       ensureReactionsObject(row);
-      // prefer menu-panel inside item-left (when locked) else fallback to item-actions
       const menuPanel = el.querySelector('.menu-panel');
       const actionsContainer = menuPanel || el.querySelector('.item-actions') || el;
       if (menuPanel) {
         renderReactionsForRow(menuPanel, row);
       } else {
-        // If no menu panel (likely unlocked), still render reactions into a hidden container to keep data consistent
         renderReactionsForRow(actionsContainer, row);
       }
 
-      // wire up menu toggle if menu exists
       const menuBtn = el.querySelector('.menu-btn');
       const panel = el.querySelector('.menu-panel');
       if (menuBtn && panel) {
@@ -1076,7 +1093,6 @@
 
     function renderEntriesAccordingToLock(){
       if (!Array.isArray(window.dataCache)) window.dataCache = [];
-      // update appRoot class for unlocked state (used by CSS to hide inline menus defensively)
       if (unlocked) appRoot.classList.add('unlocked'); else appRoot.classList.remove('unlocked');
 
       if (unlocked) {
@@ -1399,7 +1415,6 @@
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
 
-      // When unlocked, hide inline menus and reactions; when locked, show them
       if (unlocked) {
         appRoot.classList.add('hide-reactions');
         appRoot.classList.add('unlocked');
@@ -1419,7 +1434,6 @@
         }
       });
 
-      // Update all reaction summary pills visibility
       document.querySelectorAll('.item').forEach(item => {
         const id = item.dataset.id;
         const row = window.dataCache.find(r => String(r.id) === String(id));
