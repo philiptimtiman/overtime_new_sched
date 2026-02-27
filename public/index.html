@@ -1014,7 +1014,14 @@
               <time datetime="${escapeHtml(dateAttr)}">${escapeHtml(dateDisplay)}</time>
             </div>
             <div class="item-actions" style="position:relative">
-              <button class="btn ghost lock-guard" data-action="delete" type="button" title="Delete">Delete</button>
+              <!-- DELETE action replaced with kebab-style icon button (keeps data-action="delete") -->
+              <button class="menu-btn lock-guard" data-action="delete" type="button" title="Delete entry" aria-label="Delete entry">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <circle cx="12" cy="5" r="1.4" fill="currentColor"></circle>
+                  <circle cx="12" cy="12" r="1.4" fill="currentColor"></circle>
+                  <circle cx="12" cy="19" r="1.4" fill="currentColor"></circle>
+                </svg>
+              </button>
             </div>
           </div>
         </div>
