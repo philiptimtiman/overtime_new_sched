@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Fixed Form Visibility & Styles</title>
-  <meta name="description" content="Overtime Scheduler with kebab menu, reactions, inline edit, counts and correct Add Entries visibility when locked/unlocked" />
+  <title>Overtime Scheduler — White Theme Contrast Fix</title>
+  <meta name="description" content="Overtime Schedule with improved white theme contrast for accessibility" />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -16,24 +16,28 @@
       --base-font:15px; --theme-transition:220ms ease;
       --menu-bg: rgba(0,0,0,0.72);
       --menu-border: rgba(255,255,255,0.06);
-      --kebab-size:14px;
-      --kebab-hit:36px;
-      --label-font:0.85rem;
-      --input-font:0.95rem;
     }
 
     /* Base resets */
     *,*::before,*::after{box-sizing:border-box}
     html,body{height:100%;margin:0;padding:0;background:transparent;color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;-webkit-font-smoothing:antialiased;font-size:var(--base-font)}
     input,button,select,textarea{font-family:inherit}
-    button{cursor:pointer;border:0;background:transparent}
+    button{cursor:pointer}
 
     .canvas{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:transparent}
-    .app{ width:var(--mobile-width);max-width:100%; display:flex;flex-direction:column;gap:12px;align-items:stretch; background: linear-gradient(180deg,var(--bg-top),var(--bg-bottom)); border-radius:14px;padding:10px;box-shadow:0 14px 36px rgba(2,10,8,0.45);border:1px solid rgba(255,255,255,0.03); transition:background var(--theme-transition),color var(--theme-transition); }
-    .card{ background: linear-gradient(180deg,var(--card-bg-top),var(--card-bg-bottom)); border-radius:var(--radius);padding:12px;box-shadow:0 8px 20px rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.04); }
 
-    /* Ensure Add Entries card uses same card styling and spacing */
-    #formCard.card { display:flex; flex-direction:column; gap:8px; transition:opacity 180ms ease, transform 180ms ease; }
+    .app{
+      width:var(--mobile-width);max-width:100%;
+      display:flex;flex-direction:column;gap:12px;align-items:stretch;
+      background: linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
+      border-radius:14px;padding:10px;box-shadow:0 14px 36px rgba(2,10,8,0.45);border:1px solid rgba(255,255,255,0.03);
+      transition:background var(--theme-transition),color var(--theme-transition);
+    }
+
+    .card{
+      background: linear-gradient(180deg,var(--card-bg-top),var(--card-bg-bottom));
+      border-radius:var(--radius);padding:12px;box-shadow:0 8px 20px rgba(2,6,23,0.45);border:1px solid rgba(255,255,255,0.04);
+    }
 
     .header.card{display:flex;flex-direction:column;gap:8px;position:relative;padding-top:12px}
     .brand{display:flex;flex-direction:column;align-items:center;text-align:center}
@@ -53,8 +57,13 @@
     .swatch-warm .dot{background:linear-gradient(180deg,#ff7a59,#ff5a36)}
     .swatch-forest .dot{background:linear-gradient(180deg,#10b981,#059669)}
     .swatch-violet .dot{background:linear-gradient(180deg,#d946ef,#a78bfa)}
-    .swatch-black .dot{ background:#000 }
-    .swatch-white .dot{ background:#fff }
+
+    .theme-swatch.swatch-black { border: 1px solid rgba(255,255,255,0.06); background: transparent; }
+    .swatch-black .dot{ width:24px;height:24px;border-radius:999px;background:#000000;display:block; }
+
+    .theme-swatch.swatch-white { border: 1px solid rgba(0,0,0,0.08); background: transparent; }
+    .swatch-white .dot{ width:24px;height:24px;border-radius:999px;background:#ffffff;display:block; }
+
     .theme-swatch.active{transform:scale(1.06);box-shadow:0 8px 26px rgba(0,0,0,0.32);border-color:transparent}
 
     .meta{font-size:.82rem;color:var(--muted);text-align:center}
@@ -72,42 +81,64 @@
 
     .item-actions{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;justify-content:flex-end;position:relative}
 
-    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem;transition:background var(--theme-transition), color var(--theme-transition)}
+    .btn{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border:0;padding:8px 10px;border-radius:10px;font-weight:600;font-size:.95rem;transition:background var(--theme-transition), color var(--theme-transition)}
     .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)}
     .btn.danger{background:transparent;border:1px solid rgba(255,0,0,0.08);color:var(--danger)}
     .btn.full{width:100%}
-    .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:var(--kebab-hit);height:var(--kebab-hit);padding:6px;border-radius:8px;background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;}
+    .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border-radius:10px;background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);transition: background 180ms ease, color 180ms ease, transform 120ms ease, box-shadow 220ms ease;}
     .icon-btn svg{ display:block; width:18px; height:18px; }
-    .icon-btn:focus{ outline:2px solid rgba(255,255,255,0.06); outline-offset:2px }
+    .icon-btn.active{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent;box-shadow:0 8px 20px rgba(0,0,0,0.25);}
+    .icon-btn:focus{ outline:2px solid rgba(255,255,255,0.06); outline-offset:2px; }
 
-    /* small kebab icon */
-    .kebab { display:inline-flex;align-items:center;justify-content:center;width:var(--kebab-hit);height:var(--kebab-hit);border-radius:8px;background:transparent;color:var(--muted);padding:0;margin-left:4px; }
-    .kebab .kebab-icon { width:var(--kebab-size); height:var(--kebab-size); display:block; }
+    #formCard{display:flex;flex-direction:column;gap:10px}
+    #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block;transition:color var(--theme-transition)}
+    .field{display:flex;flex-direction:column;gap:8px;min-width:0}
 
-    .delete-btn { display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.04);padding:6px;margin-left:6px; }
-    .delete-btn svg{ width:16px;height:16px; }
+    .add-row{display:grid;grid-template-columns:1fr;gap:8px;align-items:start}
+    @media(min-width:520px){ .add-row{grid-template-columns:1fr 1fr} }
 
-    .menu-panel { position:absolute; right:6px; top:36px; min-width:140px; background:var(--menu-bg); border:1px solid var(--menu-border); border-radius:8px; padding:6px; box-shadow:0 10px 30px rgba(0,0,0,0.6); z-index:60; display:none; gap:6px; transform-origin: top right; transform: scale(0.96); transition: transform 160ms ease, opacity 160ms ease; opacity:0; pointer-events:none; }
-    .menu-panel.open { display:flex; flex-direction:column; transform: scale(1); opacity:1; pointer-events:auto; }
+    .date-control{display:flex;align-items:center;gap:8px;min-width:0;}
+    .date-control input[type="date"],.date-control input[type="text"],.date-control input[type="datetime-local"]{flex:1;min-width:0;height:var(--input-h);padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);text-align:center;box-sizing:border-box;}
+    .date-btn{flex:0 0 auto;width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;}
+    @media(max-width:320px){ .date-control{flex-direction:column;align-items:stretch} .date-btn{width:100%} }
 
-    .menu-item { display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;color:var(--text);cursor:pointer; background:transparent;border:0;text-align:left;font-weight:700;font-size:0.92rem; }
-    .menu-item svg { width:16px; height:16px; }
-    .menu-item:hover { background:rgba(255,255,255,0.02); }
+    input[type="text"], textarea, input[type="date"]{width:100%;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(0,0,0,0.12);color:var(--text);height:var(--input-h);box-sizing:border-box;min-width:0;font-size:var(--input-font);text-align:center;transition: background var(--theme-transition), color var(--theme-transition), border-color var(--theme-transition);}
+    input[type="text"]:focus, textarea:focus, input[type="date"]:focus { text-align:left; outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.18); }
 
-    .menu-reactions { display:flex;gap:6px;align-items:center;flex-wrap:wrap; padding:4px 2px; }
-    .reaction-btn { display:inline-flex;align-items:center;gap:6px;padding:6px;border-radius:999px;border:0;background:transparent;color:var(--muted);font-weight:700;font-size:0.92rem;cursor:pointer;transition:transform 120ms ease, opacity 120ms ease; line-height:1; }
-    .reaction-emoji { font-size:0.98rem; line-height:1; display:inline-block; }
-    .reaction-btn .count { font-weight:700;color:var(--muted);font-size:0.78rem;min-width:16px;text-align:center;display:inline-block }
-    .reaction-btn.active { color:var(--text); }
+    .date-text{padding-right:48px;cursor:pointer}
+    .native-date{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:36px;height:36px;opacity:0;border:0;padding:0;margin:0;background:transparent;z-index:3;cursor:pointer}
 
-    .reaction-summary { display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);color:var(--muted);font-weight:700;font-size:0.9rem;margin-left:6px;min-width:36px;justify-content:center;line-height:1; }
-    .reaction-summary .emoji { font-size:1rem; }
-    .reaction-summary .count { font-size:0.82rem; color:var(--muted); }
-
-    /* Inline edit input */
+    .editing .edit-input{display:block}
     .edit-input{display:none;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--text);width:100%;box-sizing:border-box;min-width:0;text-align:left;font-size:var(--input-font)}
-    .item.editing .edit-input{display:block}
-    .item.editing .name, .item.editing .notes { display:none }
+
+    .item.editing { display:flex; flex-direction:column; gap:8px; }
+    .item.editing .edit-input { width:100%; max-width:100%; }
+
+    .modal-backdrop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));z-index:99999;}
+    .modal{z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);transition:background var(--theme-transition), color var(--theme-transition)}
+
+    /* hide only guarded controls inside actions when locked */
+    .actions-hidden .item-actions .lock-guard { display: none !important; }
+
+    .form-hidden #formCard { display: none !important; }
+
+    .item.upcoming { box-shadow: 0 8px 20px rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.12); }
+    .item.upcoming .date-pill { border-color: rgba(16,185,129,0.18); background: linear-gradient(180deg, rgba(16,185,129,0.04), rgba(16,185,129,0.02)); }
+
+    .item.ongoing { box-shadow: 0 8px 20px rgba(59,130,246,0.06); border-color: rgba(59,130,246,0.12); }
+    .item.ongoing .date-pill { border-color: rgba(59,130,246,0.18); background: linear-gradient(180deg, rgba(59,130,246,0.04), rgba(59,130,246,0.02)); }
+
+    .item.expiring { box-shadow: 0 8px 20px rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.12); }
+    .item.expiring .date-pill { border-color: rgba(245,158,11,0.18); background: linear-gradient(180deg, rgba(245,158,11,0.04), rgba(245,158,11,0.02)); }
+
+    @media (max-width:420px){
+      .add-row{grid-template-columns:1fr}
+      .app{width:320px}
+      .date-text{padding-right:48px}
+      .theme-row{flex-wrap:wrap}
+      .date-pill{min-width:64px; max-width:96px; font-size:0.85rem}
+      .live-clock{min-width:140px;font-size:0.78rem}
+    }
 
     /* Counts area + responsive pill fixes */
     .counts-card{display:flex;align-items:center;justify-content:center;gap:12px;padding:8px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
@@ -127,71 +158,158 @@
       .count-label{font-size:0.62rem}
     }
 
-    /* Visibility classes (robust) */
-    .visible-when-locked { display:inline-flex; }
-    .visible-when-unlocked { display:none; }
+    /* Compact three-dots menu adjustments */
+    .menu-btn {
+      display:inline-flex;align-items:center;justify-content:center;
+      width:28px;height:28px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);
+      background:transparent;color:var(--muted);font-size:18px;line-height:1;padding:0;
+      margin-left:4px;
+    }
+    .menu-btn:focus{ outline:2px solid rgba(255,255,255,0.06); outline-offset:2px; }
 
-    .app.unlocked .visible-when-locked { display:none !important; }
-    .app.unlocked .visible-when-unlocked { display:inline-flex !important; }
+    /* menu panel: overlay with transform to avoid layout shift */
+    .menu-panel {
+      position:absolute;
+      right:6px;
+      top:36px;
+      min-width:120px;
+      background:var(--menu-bg);
+      border:1px solid var(--menu-border);
+      border-radius:8px;
+      padding:6px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.6);
+      z-index:60;
+      display:none;
+      gap:6px;
+      transform-origin: top right;
+      transform: scale(0.96);
+      transition: transform 160ms ease, opacity 160ms ease;
+      opacity:0;
+      pointer-events:none;
+    }
+    .menu-panel.open { display:flex; flex-direction:column; transform: scale(1); opacity:1; pointer-events:auto; }
 
-    .app.locked .visible-when-locked { display:inline-flex !important; }
-    .app.locked .visible-when-unlocked { display:none !important; }
+    .menu-item {
+      display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;color:var(--text);cursor:pointer;
+      background:transparent;border:0;text-align:left;font-weight:600;font-size:0.92rem;
+    }
+    .menu-item:hover { background:rgba(255,255,255,0.02); }
 
-    /* white theme contrast fixes */
+    /* Reactions inside menu: smaller footprint */
+    .menu-reactions { display:flex;gap:6px;align-items:center;flex-wrap:wrap; padding:4px 2px; }
+    .reaction-btn {
+      display:inline-flex;align-items:center;gap:6px;padding:4px 6px;border-radius:999px;border:0;background:transparent;color:var(--muted);font-weight:700;font-size:0.92rem;cursor:pointer;transition:transform 120ms ease, opacity 120ms ease;
+      line-height:1;
+    }
+    .reaction-emoji { font-size:0.98rem; line-height:1; display:inline-block; }
+    .reaction-btn .count { font-weight:700;color:var(--muted);font-size:0.78rem;min-width:16px;text-align:center;display:inline-block }
+    .reaction-btn.active { color:var(--text); }
+
+    /* Hide reactions when appRoot has .hide-reactions (used when unlocked) */
+    .hide-reactions .menu-reactions,
+    .hide-reactions .reactions { display: none !important; }
+    .hide-reactions .reaction-btn { pointer-events:none !important; opacity:0 !important; }
+
+    /* Menu inline under notes when locked */
+    .menu-inline {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      margin-top:6px;
+      position:relative;
+    }
+    .menu-inline .menu-panel { right:0; top:34px; }
+
+    /* Reaction summary pill (appears beside menu button) */
+    .reaction-summary {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 8px;
+      border-radius:999px;
+      background:rgba(0,0,0,0.04);
+      border:1px solid rgba(0,0,0,0.06);
+      color:var(--muted);
+      font-weight:700;
+      font-size:0.9rem;
+      margin-left:6px;
+      min-width:36px;
+      justify-content:center;
+      line-height:1;
+    }
+    .reaction-summary .emoji { font-size:1rem; }
+    .reaction-summary .count { font-size:0.82rem; color:var(--muted); }
+
+    /* When unlocked, hide any inline menu (defensive) */
+    .app.unlocked .menu-inline { display:none !important; }
+
+    /* Improve contrast for white theme (ACCESSIBILITY FIXES) */
     [data-theme="white"] {
-      --text: #071422;
-      --muted: #475569;
-      --card-bg-top: #ffffff;
+      --text: #071422;           /* darker text for high contrast */
+      --muted: #475569;          /* darker muted color */
+      --card-bg-top: #ffffff;    /* keep cards white but with subtle border */
       --card-bg-bottom: #fbfbfb;
-      --menu-bg: rgba(11,18,32,0.96);
+      --menu-bg: rgba(11,18,32,0.96); /* darker menu background so white text stands out */
       --menu-border: rgba(11,18,32,0.08);
     }
-    [data-theme="white"] .card { background: linear-gradient(180deg,#ffffff,#fbfbfb) !important; color:var(--text) !important; border-color: rgba(11,18,32,0.06) !important; }
-    [data-theme="white"] .menu-panel { background: rgba(11,18,32,0.96) !important; color:#fff !important; }
-    [data-theme="white"] .menu-item { color:#fff !important; }
-    [data-theme="white"] .reaction-btn { color:#fff !important; }
-    [data-theme="white"] .reaction-summary { background: rgba(11,18,32,0.06) !important; border-color: rgba(11,18,32,0.08) !important; color:#0b1220 !important; }
-    [data-theme="white"] .meta, [data-theme="white"] .notes { color:#475569 !important; }
 
+    /* Specific white-theme overrides for components */
+    [data-theme="white"] .card {
+      background: linear-gradient(180deg, #ffffff, #fbfbfb) !important;
+      border-color: rgba(11,18,32,0.06) !important;
+      color: var(--text) !important;
+      box-shadow: 0 6px 18px rgba(11,18,32,0.04);
+    }
+    [data-theme="white"] .date-pill,
+    [data-theme="white"] .count-pill {
+      background: linear-gradient(180deg, #f7f9fb, #ffffff) !important;
+      border-color: rgba(11,18,32,0.08) !important;
+      color: var(--text) !important;
+    }
+    [data-theme="white"] .search {
+      background: #ffffff !important;
+      border-color: rgba(11,18,32,0.06) !important;
+      color: var(--text) !important;
+    }
+    [data-theme="white"] .btn.ghost, [data-theme="white"] .icon-btn {
+      border-color: rgba(11,18,32,0.08) !important;
+      color: var(--text) !important;
+      background: transparent !important;
+    }
+    [data-theme="white"] .menu-panel {
+      background: rgba(11,18,32,0.96) !important;
+      border-color: rgba(255,255,255,0.04) !important;
+      color: #fff !important;
+    }
+    [data-theme="white"] .menu-item { color: #fff !important; }
+    [data-theme="white"] .reaction-btn { color: #fff !important; }
+    [data-theme="white"] .reaction-btn .count { color: rgba(255,255,255,0.85) !important; }
+    [data-theme="white"] .reaction-summary {
+      background: rgba(11,18,32,0.06) !important;
+      border-color: rgba(11,18,32,0.08) !important;
+      color: #0b1220 !important;
+    }
+    [data-theme="white"] .meta, [data-theme="white"] .notes { color: #475569 !important; }
+
+    /* Respect reduced motion */
     @media (prefers-reduced-motion: reduce) {
       .menu-panel, .reaction-summary, .theme-swatch { transition: none !important; animation: none !important; }
     }
 
     @media (max-width:420px){
-      .menu-panel { min-width:160px; top:42px; right:4px; }
+      .menu-panel { min-width:140px; top:42px; right:4px; }
       .reaction-emoji { font-size:1rem; }
       .reaction-summary { padding:4px 6px; font-size:0.86rem; }
     }
-
-    /* Permanent kebab visibility and stacking fixes (added patch) */
-    .item { position: relative; overflow: visible !important; }
-    .item-left, .item-top, .item-actions, .list { overflow: visible !important; position: relative !important; }
-    .item .item-actions { display: inline-flex; align-items: center; gap: 6px; position: relative; z-index: 2; }
-    .item .item-actions .menu-inline { display: inline-flex !important; align-items:center; gap:6px; visibility: visible !important; opacity: 1 !important; z-index: 9999 !important; pointer-events: auto !important; }
-    .item .item-actions .kebab { color: var(--muted) !important; z-index: 10000 !important; pointer-events: auto !important; }
-
-    /* Class-based hide/show (no inline styles) */
-    .menu-inline.hidden-by-unlock { display: none !important; }
-    .delete-btn { display: none; }
-    .delete-btn.visible-by-unlock { display: inline-flex !important; }
-
-    .menu-panel { z-index: 10002 !important; pointer-events: auto !important; }
-
-    /* IMPORTANT: hide form when appRoot has .form-hidden; show when not */
-    .form-hidden #formCard { display: none !important; opacity: 0; transform: translateY(-6px); pointer-events: none; }
-    /* Smooth show transition when visible */
-    #formCard { transition: opacity 180ms ease, transform 180ms ease; }
-
-    .sr-only { position:absolute !important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
   </style>
 </head>
 <body>
   <div class="canvas">
-    <div id="appRoot" class="app locked" role="application" aria-label="Overtime Scheduler" data-theme="forest">
+    <div id="appRoot" class="app" role="application" aria-label="Overtime Scheduler" data-theme="forest">
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub Updating...</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 Updating...</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -224,7 +342,6 @@
         </div>
       </header>
 
-      <!-- Counts card (always visible) -->
       <div class="counts-card card" aria-live="polite" style="margin-top:8px">
         <div class="counts-row" aria-hidden="false">
           <div id="upcomingCount" class="count-pill upcoming" title="Upcoming within 24h">
@@ -247,8 +364,7 @@
         </div>
       </div>
 
-      <!-- Form: inputs disabled when locked; entire card hidden when appRoot has .form-hidden -->
-      <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle">
+      <aside class="card" id="formCard" aria-labelledby="addOvertimeTitle" style="display:flex;flex-direction:column;gap:8px">
         <strong id="addOvertimeTitle" style="display:block;text-align:center">Add Entries</strong>
 
         <form id="addForm" autocomplete="off" novalidate>
@@ -272,11 +388,9 @@
             </div>
           </div>
 
-          <div class="form-actions" role="group" aria-label="Form actions" style="margin-top:8px;display:flex;gap:8px;justify-content:center">
-            <button id="submitBtn" class="btn visible-when-unlocked" type="submit" title="Add entry" aria-label="Add entry">Add</button>
-            <button id="resetBtn" type="button" class="btn ghost lock-guard visible-when-unlocked" title="Reset form" aria-label="Reset form">Reset</button>
-            <!-- When locked, show a disabled placeholder button to indicate locked state -->
-            <button type="button" class="btn ghost visible-when-locked" aria-hidden="true" disabled style="opacity:0.6">Locked</button>
+          <div class="form-actions" role="group" aria-label="Form actions" style="margin-top:8px">
+            <button id="submitBtn" class="btn" type="submit" title="Add entry" aria-label="Add entry">Add</button>
+            <button id="resetBtn" type="button" class="btn ghost lock-guard" title="Reset form" aria-label="Reset form">Reset</button>
           </div>
         </form>
       </aside>
@@ -293,10 +407,10 @@
     </div>
   </div>
 
-  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(2,6,6,0.6), rgba(2,6,6,0.7));position:fixed;inset:0;z-index:99999;">
-    <div class="modal" role="document" aria-labelledby="modalTitle" style="z-index:100000;position:relative;transform:translateZ(0);padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);">
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal" role="document" aria-labelledby="modalTitle">
       <h3 id="modalTitle" style="margin:0 0 8px 0">Unlock Actions</h3>
-      <p style="margin:0 0 8px;color:var(--muted);font-size:.9rem">Enter password to enable Add / Delete / Edit</p>
+      <p style="margin:0 0 8px;color:var(--muted);font-size:.9rem">Enter password to enable Add / Delete</p>
       <input id="pwInput" type="password" placeholder="Password" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);margin-bottom:8px;height:40px" />
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button id="pwCancel" class="btn ghost">Cancel</button>
@@ -312,7 +426,6 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpc3ZtZ2pneXZsdWRocXN2dmNuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2OTI1ODMsImV4cCI6MjA4NzI2ODU4M30.eodsmChKwoEiPlNz9d2Ge3lAmO3BWfdKRWVRdgk9Xl8';
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    /* Core elements */
     const appRoot = document.getElementById('appRoot');
     const rowsEl = document.getElementById('rows');
     const statusEl = document.getElementById('status');
@@ -371,9 +484,19 @@
       return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
     }
 
+    function toDateInputValue(stored){
+      if (!stored) return '';
+      const d = new Date(stored);
+      if (!isNaN(d)) {
+        const pad = (n) => String(n).padStart(2,'0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+      }
+      const m = String(stored).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m ? `${m[1]}-${m[2]}-${m[3]}` : '';
+    }
+
     function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    /* Theme map */
     const THEME_MAP = {
       forest: {
         '--accent':'#10b981','--accent-2':'#059669',
@@ -440,7 +563,6 @@
       btn.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); btn.click(); } });
     });
 
-    /* Date helpers */
     function normalizeStoredDate(val) {
       if (!val) return null;
       const s = String(val).trim();
@@ -491,7 +613,13 @@
       return new Date(startMidnight.getTime() + ORIGINAL_EXPIRY_MS);
     }
 
-    /* Counts */
+    function isExpiringSoon(dateOnly) {
+      const expiry = computeExpiryForOvertimeDate(dateOnly);
+      if (!expiry || isNaN(expiry)) return false;
+      const now = Date.now();
+      return expiry.getTime() > now && expiry.getTime() <= (now + EXPIRING_WINDOW_MS);
+    }
+
     function getUpcomingEntries(){
       if (!Array.isArray(window.dataCache)) window.dataCache = [];
       const now = Date.now();
@@ -555,7 +683,7 @@
       }
     }
 
-    /* Reactions */
+    // Reactions helpers (kept same behavior)
     const REACTIONS = [
       { key: 'like', emoji: '👍', label: 'Like' },
       { key: 'heart', emoji: '❤️', label: 'Heart' },
@@ -643,6 +771,7 @@
       }
     }
 
+    // Update the small reaction summary pill beside the menu button
     function updateReactionSummaryForRow(containerRoot, row) {
       try {
         let summary = containerRoot.querySelector('.reaction-summary');
@@ -650,9 +779,9 @@
           summary = document.createElement('div');
           summary.className = 'reaction-summary';
           summary.innerHTML = `<span class="emoji"> </span><span class="count">0</span>`;
-          const kebab = containerRoot.querySelector('.kebab');
-          if (kebab && kebab.parentNode) {
-            kebab.parentNode.insertBefore(summary, kebab.nextSibling);
+          const menuBtn = containerRoot.querySelector('.menu-btn');
+          if (menuBtn && menuBtn.parentNode) {
+            menuBtn.parentNode.insertBefore(summary, menuBtn.nextSibling);
           } else {
             containerRoot.appendChild(summary);
           }
@@ -816,7 +945,7 @@
           panel.classList.remove('open');
           panel.setAttribute('aria-hidden','true');
           const btn = panel.previousElementSibling;
-          if (btn && btn.matches('.kebab')) btn.setAttribute('aria-expanded','false');
+          if (btn && btn.matches('.menu-btn')) btn.setAttribute('aria-expanded','false');
         }
       });
     });
@@ -827,14 +956,12 @@
         p.classList.remove('open');
         p.setAttribute('aria-hidden','true');
         const b = p.previousElementSibling;
-        if (b && b.matches('.kebab')) b.setAttribute('aria-expanded','false');
+        if (b && b.matches('.menu-btn')) b.setAttribute('aria-expanded','false');
       });
       if (!isOpen) {
         panel.classList.add('open');
         panel.setAttribute('aria-hidden','false');
         menuBtn.setAttribute('aria-expanded','true');
-        const first = panel.querySelector('[data-action], .reaction-btn');
-        if (first) first.focus();
       } else {
         panel.classList.remove('open');
         panel.setAttribute('aria-hidden','true');
@@ -842,7 +969,6 @@
       }
     }
 
-    // Realtime subscription for reactions
     function subscribeReactionsRealtime(){
       try {
         const channel = supabase.channel('reactions_channel')
@@ -870,97 +996,6 @@
       }
     }
 
-    /* Inline edit helpers */
-    function enableInlineEdit(itemEl, row) {
-      itemEl.classList.add('editing');
-      const nameEl = itemEl.querySelector('[data-field="name"]');
-      const notesEl = itemEl.querySelector('[data-field="notes"]');
-      const dateEl = itemEl.querySelector('[data-field="overtime_date"] time');
-      const nameInput = document.createElement('input');
-      nameInput.type = 'text';
-      nameInput.className = 'edit-input';
-      nameInput.value = row.name || '';
-      const notesInput = document.createElement('input');
-      notesInput.type = 'text';
-      notesInput.className = 'edit-input';
-      notesInput.value = row.notes || '';
-      const dateInputLocal = document.createElement('input');
-      dateInputLocal.type = 'date';
-      dateInputLocal.className = 'edit-input';
-      dateInputLocal.value = row.overtime_date || '';
-
-      // Insert inputs after the visible elements
-      if (nameEl) nameEl.parentNode.insertBefore(nameInput, nameEl.nextSibling);
-      if (notesEl) notesEl.parentNode.insertBefore(notesInput, notesEl.nextSibling);
-      if (dateEl) dateEl.parentNode.insertBefore(dateInputLocal, dateEl.parentNode.nextSibling);
-
-      // Focus first input
-      setTimeout(()=> nameInput.focus(), 10);
-
-      // Add save/cancel controls
-      const actions = itemEl.querySelector('.item-actions');
-      let saveBtn = actions.querySelector('.save-edit-btn');
-      let cancelBtn = actions.querySelector('.cancel-edit-btn');
-      if (!saveBtn) {
-        saveBtn = document.createElement('button');
-        saveBtn.type = 'button';
-        saveBtn.className = 'btn save-edit-btn visible-when-unlocked';
-        saveBtn.textContent = 'Save';
-        actions.insertBefore(saveBtn, actions.firstChild);
-      }
-      if (!cancelBtn) {
-        cancelBtn = document.createElement('button');
-        cancelBtn.type = 'button';
-        cancelBtn.className = 'btn ghost cancel-edit-btn visible-when-unlocked';
-        cancelBtn.textContent = 'Cancel';
-        actions.insertBefore(cancelBtn, actions.firstChild);
-      }
-
-      // Wire up handlers
-      const cleanup = () => {
-        itemEl.classList.remove('editing');
-        try { nameInput.remove(); } catch(e){}
-        try { notesInput.remove(); } catch(e){}
-        try { dateInputLocal.remove(); } catch(e){}
-        try { saveBtn.remove(); } catch(e){}
-        try { cancelBtn.remove(); } catch(e){}
-        renderEntriesAccordingToLock();
-      };
-
-      cancelBtn.onclick = (ev) => { ev.preventDefault(); cleanup(); };
-
-      saveBtn.onclick = async (ev) => {
-        ev.preventDefault();
-        const newName = nameInput.value.trim();
-        const newNotes = notesInput.value.trim();
-        const newDate = toIsoDateFromInput(dateInputLocal.value) || null;
-        if (!newName) { alert('Name required'); return; }
-        try {
-          const { data, error } = await supabase.from('overtime_data').update({ name: newName, notes: newNotes, overtime_date: newDate }).eq('id', row.id).select();
-          if (error) throw error;
-          // Update local cache
-          const idx = window.dataCache.findIndex(x => String(x.id) === String(row.id));
-          if (idx >= 0) {
-            window.dataCache[idx].name = newName;
-            window.dataCache[idx].notes = newNotes;
-            window.dataCache[idx].overtime_date = normalizeStoredDate(newDate);
-          }
-          cleanup();
-          renderEntriesAccordingToLock();
-          updateCounts();
-        } catch (err) {
-          console.error('Update failed', err);
-          alert('Update failed: ' + (err.message || err));
-        }
-      };
-    }
-
-    /* Create row element with requested behavior:
-       - kebab/menu-inline is always present in DOM (so it never "disappears")
-       - when locked: kebab visible and contains reactions only (no edit/delete)
-       - when unlocked: kebab hidden via CSS and delete/edit icons shown beside date/menu
-       - supports inline edit when unlocked
-    */
     function createRowElement(row){
       const el = document.createElement('div');
       el.className = 'item';
@@ -978,53 +1013,32 @@
             <div class="date-pill" data-field="overtime_date" aria-hidden="${row.overtime_date ? 'false' : 'true'}">
               <time datetime="${escapeHtml(dateAttr)}">${escapeHtml(dateDisplay)}</time>
             </div>
-            <div class="item-actions" style="position:relative;display:inline-flex;align-items:center">
-              <button class="delete-btn" data-action="delete" aria-label="Delete entry" title="Delete entry">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
+            <div class="item-actions" style="position:relative">
+              <button class="btn ghost lock-guard" data-action="delete" type="button" title="Delete">Delete</button>
             </div>
           </div>
         </div>
       `;
 
-      // Always create menu-inline (so it exists regardless of current unlocked state)
-      const menuInline = document.createElement('div');
-      menuInline.className = 'menu-inline visible-when-locked';
-      menuInline.innerHTML = `
-        <span class="kebab" role="button" aria-haspopup="menu" aria-expanded="false" title="More actions" tabindex="0" aria-label="More actions">
-          <svg class="kebab-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="5" r="1.2" fill="currentColor"></circle>
-            <circle cx="12" cy="12" r="1.2" fill="currentColor"></circle>
-            <circle cx="12" cy="19" r="1.2" fill="currentColor"></circle>
-          </svg>
-        </span>
-        <div class="menu-panel" role="menu" aria-hidden="true">
-          <div class="menu-reactions" role="group" aria-label="Reactions area"></div>
-          <div class="menu-item" data-action="edit" role="menuitem" tabindex="0" style="display:none">Edit</div>
-          <div class="menu-item" data-action="delete" role="menuitem" tabindex="0" style="display:none">Delete</div>
-        </div>
-      `;
-
-      // Prefer placing kebab inside item-actions so it appears on the right
-      const actionsSlot = el.querySelector('.item-actions');
-      if (actionsSlot) {
-        actionsSlot.insertBefore(menuInline, actionsSlot.firstChild);
-      } else {
+      if (!unlocked) {
+        const menuInline = document.createElement('div');
+        menuInline.className = 'menu-inline';
+        menuInline.innerHTML = `
+          <button class="menu-btn" aria-haspopup="true" aria-expanded="false" title="More" type="button" aria-label="Open reactions menu">⋯</button>
+          <div class="menu-panel" role="menu" aria-hidden="true">
+            <div class="menu-reactions" role="group" aria-label="Reactions area"></div>
+          </div>
+        `;
         const itemLeft = el.querySelector('.item-left');
         if (itemLeft) itemLeft.appendChild(menuInline);
-      }
-
-      // initial visibility sync (class-based)
-      const deleteBtn = el.querySelector('.delete-btn');
-      if (unlocked) {
-        menuInline.classList.add('hidden-by-unlock');
-        if (deleteBtn) deleteBtn.classList.add('visible-by-unlock');
       } else {
-        menuInline.classList.remove('hidden-by-unlock');
-        if (deleteBtn) deleteBtn.classList.remove('visible-by-unlock');
+        const actions = el.querySelector('.item-actions');
+        const hiddenMenu = document.createElement('div');
+        hiddenMenu.style.display = 'none';
+        hiddenMenu.innerHTML = `<div class="menu-panel" role="menu" aria-hidden="true"><div class="menu-reactions" role="group" aria-label="Reactions area"></div></div>`;
+        actions.appendChild(hiddenMenu);
       }
 
-      // status classes
       try {
         if (row && row.overtime_date) {
           const now = Date.now();
@@ -1043,83 +1057,22 @@
       } catch (e) {}
 
       ensureReactionsObject(row);
-
-      // Render reactions into the menu-panel (or into item-actions if you prefer)
       const menuPanel = el.querySelector('.menu-panel');
       const actionsContainer = menuPanel || el.querySelector('.item-actions') || el;
-      renderReactionsForRow(actionsContainer, row);
+      if (menuPanel) {
+        renderReactionsForRow(menuPanel, row);
+      } else {
+        renderReactionsForRow(actionsContainer, row);
+      }
 
-      // wire up kebab toggle (if present)
-      const kebabBtn = el.querySelector('.kebab');
+      const menuBtn = el.querySelector('.menu-btn');
       const panel = el.querySelector('.menu-panel');
-      if (kebabBtn && panel) {
-        kebabBtn.addEventListener('click', (ev) => {
+      if (menuBtn && panel) {
+        menuBtn.addEventListener('click', (ev) => {
           ev.stopPropagation();
-          toggleMenuForItem(kebabBtn, panel);
-        });
-        kebabBtn.addEventListener('keydown', (ev) => {
-          if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); kebabBtn.click(); }
-          if (ev.key === 'ArrowDown') { ev.preventDefault(); toggleMenuForItem(kebabBtn, panel); }
+          toggleMenuForItem(menuBtn, panel);
         });
       }
-
-      // menu item actions (edit/delete inside panel)
-      if (panel) {
-        panel.addEventListener('click', (ev) => {
-          const mi = ev.target.closest('[data-action]');
-          if (!mi) return;
-          const action = mi.dataset.action;
-          if (action === 'edit') {
-            if (!unlocked) { openModal(); return; }
-            enableInlineEdit(el, row);
-            panel.classList.remove('open');
-          } else if (action === 'delete') {
-            if (!unlocked) { openModal(); return; }
-            if (!confirm('Delete this entry? This cannot be undone.')) return;
-            (async () => {
-              try {
-                const { error } = await supabase.from('overtime_data').delete().eq('id', row.id);
-                if (error) throw error;
-                window.dataCache = window.dataCache.filter(r => String(r.id) !== String(row.id));
-                renderEntriesAccordingToLock();
-                updateCounts();
-              } catch (err) {
-                console.error(err);
-                alert('Delete failed: ' + (err.message || err));
-              }
-            })();
-          }
-        });
-      }
-
-      // delete action handling (works whether delete is in menu or beside date)
-      el.addEventListener('click', async (ev) => {
-        const btn = ev.target.closest('[data-action]');
-        if (!btn) return;
-        const action = btn.dataset.action;
-        const id = el.dataset.id;
-        if (!id) return;
-        if (action === 'delete') {
-          if (!unlocked) { openModal(); return; }
-          if (!confirm('Delete this entry? This cannot be undone.')) return;
-          try {
-            const { error } = await supabase.from('overtime_data').delete().eq('id', id);
-            if (error) throw error;
-            window.dataCache = window.dataCache.filter(r => String(r.id) !== String(id));
-            renderEntriesAccordingToLock();
-            updateCounts();
-          } catch (err) {
-            console.error(err);
-            alert('Delete failed: ' + (err.message || err));
-          }
-        }
-      });
-
-      // double-click to edit when unlocked
-      el.addEventListener('dblclick', (ev) => {
-        if (!unlocked) return;
-        enableInlineEdit(el, row);
-      });
 
       return el;
     }
@@ -1232,7 +1185,7 @@
       }
     }
 
-    /* Visitor heartbeat and active user count */
+    // Visitor heartbeat and active user count (unchanged)
     const VISITOR_LOCAL_KEY = 'visitor_id';
     let heartbeatTimerLocal = null;
     const HEARTBEAT_INTERVAL_MS = 2 * 1000;
@@ -1349,7 +1302,6 @@
       }
     }
 
-    /* Form submit */
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!unlocked) { alert('Actions are locked. Unlock to add entries.'); return; }
@@ -1378,7 +1330,31 @@
 
     resetBtn.addEventListener('click', () => { form.reset(); if (dateInput) dateInput.value = ''; });
 
-    /* Search */
+    rowsEl.addEventListener('click', async (ev) => {
+      const btn = ev.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const item = btn.closest('.item');
+      const id = item?.dataset?.id;
+      if (!id) return;
+
+      if (action === 'delete') {
+        if (!unlocked) { alert('Actions are locked. Unlock to delete.'); return; }
+        if (!confirm('Delete this entry? This cannot be undone.')) return;
+        try {
+          const { error } = await supabase.from('overtime_data').delete().eq('id', id);
+          if (error) throw error;
+          window.dataCache = window.dataCache.filter(r => String(r.id) !== String(id));
+          renderEntriesAccordingToLock();
+          updateCounts();
+        } catch (err) {
+          console.error(err);
+          alert('Delete failed: ' + (err.message || err));
+        }
+        return;
+      }
+    });
+
     searchInput.addEventListener('input', () => {
       const q = searchInput.value.trim().toLowerCase();
       if (!q) {
@@ -1411,11 +1387,10 @@
       updateCounts();
     });
 
-    /* Guarded controls update */
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => {
         const tag = (el.tagName || '').toUpperCase();
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON') {
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
           if (!unlocked) el.setAttribute('disabled','true'); else el.removeAttribute('disabled');
         } else {
           if (!unlocked) {
@@ -1437,24 +1412,15 @@
         openUnlock.classList.toggle('active', unlocked);
       }
 
-      // Toggle classes that control visibility of form and actions
-      if (unlocked) {
-        appRoot.classList.remove('form-hidden');
-        appRoot.classList.remove('actions-hidden');
-        appRoot.classList.add('unlocked');
-        appRoot.classList.remove('locked');
-      } else {
-        appRoot.classList.add('form-hidden');
-        appRoot.classList.add('actions-hidden');
-        appRoot.classList.remove('unlocked');
-        appRoot.classList.add('locked');
-      }
+      if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
+      if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
 
-      // Hide reactions when unlocked (as per original behavior)
       if (unlocked) {
         appRoot.classList.add('hide-reactions');
+        appRoot.classList.add('unlocked');
       } else {
         appRoot.classList.remove('hide-reactions');
+        appRoot.classList.remove('unlocked');
       }
 
       const reactionContainers = document.querySelectorAll('.menu-reactions, .reactions');
@@ -1468,34 +1434,10 @@
         }
       });
 
-      // Update per-item UI by relying on CSS classes (no inline style toggles)
       document.querySelectorAll('.item').forEach(item => {
         const id = item.dataset.id;
         const row = window.dataCache.find(r => String(r.id) === String(id));
         if (row) updateReactionSummaryForRow(item, row);
-
-        // Ensure kebab/delete visibility is consistent after state change (class-based)
-        const menuInline = item.querySelector('.menu-inline');
-        const deleteBtn = item.querySelector('.delete-btn');
-        const menuPanel = item.querySelector('.menu-panel');
-        const editMenuItem = item.querySelector('.menu-item[data-action="edit"]');
-        const deleteMenuItem = item.querySelector('.menu-item[data-action="delete"]');
-
-        if (unlocked) {
-          if (menuInline) menuInline.classList.add('hidden-by-unlock');
-          if (deleteBtn) deleteBtn.classList.add('visible-by-unlock');
-          if (menuPanel) {
-            if (editMenuItem) editMenuItem.style.display = 'block';
-            if (deleteMenuItem) deleteMenuItem.style.display = 'block';
-          }
-        } else {
-          if (menuInline) menuInline.classList.remove('hidden-by-unlock');
-          if (deleteBtn) deleteBtn.classList.remove('visible-by-unlock');
-          if (menuPanel) {
-            if (editMenuItem) editMenuItem.style.display = 'none';
-            if (deleteMenuItem) deleteMenuItem.style.display = 'none';
-          }
-        }
       });
 
       renderEntriesAccordingToLock();
@@ -1508,7 +1450,6 @@
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
-    /* Modal open/close */
     function openModal(){
       modalBackdrop.style.display = 'flex';
       modalBackdrop.setAttribute('aria-hidden','false');
@@ -1529,7 +1470,6 @@
       try {
         pwError.style.display = 'block';
         pwError.textContent = 'Checking...';
-        // NOTE: This endpoint is placeholder. Replace with your auth check.
         const res = await fetch('/api/unlock', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password }) });
         const raw = await res.text();
         let parsed;
@@ -1559,7 +1499,6 @@
     pwCancel.addEventListener('click', () => closeModal());
     pwInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); pwSubmit.click(); } });
 
-    /* Live clock */
     function formatToYMDHMSFromDateObj(d){
       if (!d || isNaN(d)) return '—';
       const pad = (n) => String(n).padStart(2,'0');
@@ -1580,7 +1519,6 @@
       }
     }
 
-    /* Periodic checks */
     const CHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
     setInterval(() => {
       try {
@@ -1593,15 +1531,12 @@
       }
     }, CHECK_INTERVAL_MS);
 
-    /* Init */
     window.addEventListener('DOMContentLoaded', async () => {
       updateLiveClock();
       setInterval(updateLiveClock, 1000);
 
-      try { const saved = safeGetLocal(LOCAL_KEY); if (saved === 'true') unlocked = true; else unlocked = false; } catch(e){ unlocked = false; }
-      // Ensure form visibility matches unlocked state on load
-      if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
-      updateGuardedControls();
+      try { localStorage.removeItem(LOCAL_KEY); } catch (e) {}
+      setUnlockedState(false);
 
       try { await registerVisitorIfNeeded(); } catch (e) { console.warn('visitor register failed', e); }
       try { startHeartbeatLocal(); } catch (e) { console.warn('startHeartbeat failed', e); }
@@ -1615,7 +1550,6 @@
       try { await autoDeleteExpired(); } catch (e) { console.warn('Initial cleanup failed', e); }
     });
 
-    /* Diagnostics */
     window.__overtime_diag = function(){
       try {
         console.log('localStorage key raw:', (function(){ try { return localStorage.getItem(LOCAL_KEY); } catch(e){ return 'err'; } })());
