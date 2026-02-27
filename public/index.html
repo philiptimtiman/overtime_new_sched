@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — White Theme Contrast Fix</title>
-  <meta name="description" content="Overtime Schedule with improved white theme contrast for accessibility" />
+  <title>Overtime Scheduler</title>
+  <meta name="description" content="SLT Foreign TE Overtime Schedule" />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -265,146 +265,171 @@
     /* When unlocked, hide any inline menu (defensive) */
     .app.unlocked .menu-inline { display:none !important; }
 
-    /* Improve contrast for white theme (ACCESSIBILITY FIXES) */
-    [data-theme="white"] {
-      --text: #071422;           /* darker text for high contrast */
-      --muted: #475569;          /* darker muted color */
-      --card-bg-top: #ffffff;    /* keep cards white but with subtle border */
-      --card-bg-bottom: #fbfbfb;
-      --menu-bg: rgba(11,18,32,0.96); /* darker menu background so white text stands out */
-      --menu-border: rgba(11,18,32,0.08);
+    /* THEME-SPECIFIC CONTRAST FIXES
+       For each theme we force the item-actions and inline menu surfaces to be solid/light/dark
+       so text and controls remain readable regardless of the card background.
+    */
+
+    /* Forest (default) */
+    [data-theme="forest"] {
+      --accent:#10b981; --accent-2:#059669;
+      --bg-top:#04251f; --bg-bottom:#0b3b36;
+      --card-bg-top: rgba(8,40,34,0.06); --card-bg-bottom: rgba(6,30,26,0.03);
+      --text:#e6f7f2; --muted:#9fcfc3;
+      --menu-bg: rgba(0,0,0,0.72); --menu-border: rgba(255,255,255,0.06);
+    }
+    [data-theme="forest"] .item .item-actions,
+    [data-theme="forest"] .item .menu-panel,
+    [data-theme="forest"] .menu-inline .menu-panel {
+      background: rgba(6,30,26,0.9) !important;
+      border: 1px solid rgba(255,255,255,0.04) !important;
+      color: #e6f7f2 !important;
+      box-shadow: 0 6px 18px rgba(2,6,6,0.35) !important;
+      padding: 8px !important;
+      opacity: 1 !important;
+    }
+    [data-theme="forest"] .item .item-actions .btn,
+    [data-theme="forest"] .item .item-actions .icon-btn,
+    [data-theme="forest"] .item .delete-btn,
+    [data-theme="forest"] .item .reaction-btn {
+      color: #e6f7f2 !important;
+      border-color: rgba(255,255,255,0.06) !important;
+      background: transparent !important;
     }
 
-    /* Specific white-theme overrides for components */
+    /* Ocean */
+    [data-theme="ocean"] {
+      --accent:#4f46e5; --accent-2:#3b82f6;
+      --bg-top:#071428; --bg-bottom:#0b1f2b;
+      --card-bg-top: rgba(10,20,40,0.06); --card-bg-bottom: rgba(8,18,34,0.03);
+      --text:#e6eef8; --muted:#9fb0c6;
+      --menu-bg: rgba(2,8,20,0.9); --menu-border: rgba(255,255,255,0.06);
+    }
+    [data-theme="ocean"] .item .item-actions,
+    [data-theme="ocean"] .item .menu-panel,
+    [data-theme="ocean"] .menu-inline .menu-panel {
+      background: rgba(6,12,28,0.94) !important;
+      border: 1px solid rgba(255,255,255,0.05) !important;
+      color: var(--text) !important;
+      box-shadow: 0 6px 18px rgba(3,8,20,0.45) !important;
+      padding: 8px !important;
+      opacity: 1 !important;
+    }
+    [data-theme="ocean"] .item .item-actions .btn,
+    [data-theme="ocean"] .item .delete-btn,
+    [data-theme="ocean"] .item .reaction-btn { color: var(--text) !important; border-color: rgba(255,255,255,0.06) !important; }
+
+    /* Warm */
+    [data-theme="warm"] {
+      --accent:#ff7a59; --accent-2:#ff5a36;
+      --bg-top:#2b0b3a; --bg-bottom:#3b0f2f;
+      --card-bg-top: rgba(60,20,50,0.06); --card-bg-bottom: rgba(50,18,45,0.03);
+      --text:#f0eef6; --muted:#c9bfc9;
+      --menu-bg: rgba(20,8,18,0.92); --menu-border: rgba(255,255,255,0.06);
+    }
+    [data-theme="warm"] .item .item-actions,
+    [data-theme="warm"] .item .menu-panel,
+    [data-theme="warm"] .menu-inline .menu-panel {
+      background: rgba(28,10,20,0.94) !important;
+      border: 1px solid rgba(255,255,255,0.05) !important;
+      color: var(--text) !important;
+      box-shadow: 0 6px 18px rgba(20,8,18,0.45) !important;
+      padding: 8px !important;
+      opacity: 1 !important;
+    }
+    [data-theme="warm"] .item .item-actions .btn,
+    [data-theme="warm"] .item .delete-btn,
+    [data-theme="warm"] .item .reaction-btn { color: var(--text) !important; border-color: rgba(255,255,255,0.06) !important; }
+
+    /* Violet */
+    [data-theme="violet"] {
+      --accent:#d946ef; --accent-2:#a78bfa;
+      --bg-top:#0b0b12; --bg-bottom:#2b1536;
+      --card-bg-top: rgba(40,18,40,0.06); --card-bg-bottom: rgba(36,14,36,0.03);
+      --text:#f3eefb; --muted:#d6c7e9;
+      --menu-bg: rgba(6,6,18,0.94); --menu-border: rgba(255,255,255,0.06);
+    }
+    [data-theme="violet"] .item .item-actions,
+    [data-theme="violet"] .item .menu-panel,
+    [data-theme="violet"] .menu-inline .menu-panel {
+      background: rgba(18,10,28,0.94) !important;
+      border: 1px solid rgba(255,255,255,0.05) !important;
+      color: var(--text) !important;
+      box-shadow: 0 6px 18px rgba(12,6,20,0.45) !important;
+      padding: 8px !important;
+      opacity: 1 !important;
+    }
+    [data-theme="violet"] .item .item-actions .btn,
+    [data-theme="violet"] .item .delete-btn,
+    [data-theme="violet"] .item .reaction-btn { color: var(--text) !important; border-color: rgba(255,255,255,0.06) !important; }
+
+    /* Black (dark) */
+    [data-theme="black"] {
+      --accent:#111111; --accent-2:#333333;
+      --bg-top:#000000; --bg-bottom:#0b0b0b;
+      --card-bg-top: rgba(255,255,255,0.02); --card-bg-bottom: rgba(255,255,255,0.01);
+      --text:#e6eef8; --muted:#9fb0c6;
+      --menu-bg: rgba(0,0,0,0.96); --menu-border: rgba(255,255,255,0.04);
+    }
+    [data-theme="black"] .item .item-actions,
+    [data-theme="black"] .item .menu-panel,
+    [data-theme="black"] .menu-inline .menu-panel {
+      background: rgba(6,6,6,0.96) !important;
+      border: 1px solid rgba(255,255,255,0.04) !important;
+      color: var(--text) !important;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.6) !important;
+      padding: 8px !important;
+      opacity: 1 !important;
+    }
+    [data-theme="black"] .item .item-actions .btn,
+    [data-theme="black"] .item .delete-btn,
+    [data-theme="black"] .item .reaction-btn { color: var(--text) !important; border-color: rgba(255,255,255,0.06) !important; }
+
+    /* White (light) */
+    [data-theme="white"] {
+      --accent:'#0b7285'; --accent-2:'#0ea5a4';
+      --bg-top:'#ffffff'; --bg-bottom:'#f7f7f7';
+      --card-bg-top:'#ffffff'; --card-bg-bottom:'#fbfbfb';
+      --text:'#071422'; --muted:'#475569';
+      --menu-bg: rgba(11,18,32,0.96); --menu-border: rgba(11,18,32,0.08);
+    }
     [data-theme="white"] .card {
       background: linear-gradient(180deg, #ffffff, #fbfbfb) !important;
       border-color: rgba(11,18,32,0.06) !important;
       color: var(--text) !important;
       box-shadow: 0 6px 18px rgba(11,18,32,0.04);
     }
-    [data-theme="white"] .date-pill,
-    [data-theme="white"] .count-pill {
-      background: linear-gradient(180deg, #f7f9fb, #ffffff) !important;
-      border-color: rgba(11,18,32,0.08) !important;
-      color: var(--text) !important;
-    }
-    [data-theme="white"] .search {
-      background: #ffffff !important;
-      border-color: rgba(11,18,32,0.06) !important;
-      color: var(--text) !important;
-    }
-    [data-theme="white"] .btn.ghost, [data-theme="white"] .icon-btn {
-      border-color: rgba(11,18,32,0.08) !important;
-      color: var(--text) !important;
-      background: transparent !important;
-    }
-    /* Global floating menu-panel remains dark so overlay items are readable */
-    [data-theme="white"] .menu-panel {
-      background: rgba(11,18,32,0.96) !important;
-      border-color: rgba(255,255,255,0.04) !important;
-      color: #fff !important;
-    }
-    [data-theme="white"] .menu-item { color: #fff !important; }
-    [data-theme="white"] .reaction-btn { color: #fff !important; }
-    [data-theme="white"] .reaction-btn .count { color: rgba(255,255,255,0.85) !important; }
-    [data-theme="white"] .reaction-summary {
-      background: rgba(11,18,32,0.06) !important;
-      border-color: rgba(11,18,32,0.08) !important;
+    [data-theme="white"] .item .item-actions,
+    [data-theme="white"] .item .menu-panel,
+    [data-theme="white"] .menu-inline .menu-panel {
+      background: #f3f4f6 !important;
+      border: 1px solid rgba(11,18,32,0.06) !important;
       color: #0b1220 !important;
+      box-shadow: 0 6px 18px rgba(11,18,32,0.04) !important;
+      padding: 8px !important;
+      opacity: 1 !important;
     }
-    [data-theme="white"] .meta, [data-theme="white"] .notes { color: #475569 !important; }
+    [data-theme="white"] .item .item-actions .btn,
+    [data-theme="white"] .item .delete-btn,
+    [data-theme="white"] .item .reaction-btn { color: #0b1220 !important; border-color: rgba(11,18,32,0.08) !important; }
 
-    /*
-      Accessibility fix: ensure edit/action controls inside list items remain readable
-      when the app is using the white theme. Inline action controls (delete, menu buttons,
-      reaction buttons that appear inside each item) can otherwise inherit white-on-white.
-      The rules below target action controls inside .item to force dark text and visible borders.
-    */
+    /* Ensure item text (name/notes/date) is explicitly readable in all themes */
+    [data-theme="white"] .item .name,
+    [data-theme="white"] .item .notes,
+    [data-theme="white"] .item .date-pill,
+    [data-theme="white"] .item .date-pill time { color: #0b1220 !important; }
 
-    /* Make the item surface fully opaque on white theme so inner controls have stable contrast */
-    [data-theme="white"] .item {
-      background: linear-gradient(180deg, #ffffff, #fbfbfb) !important;
-      border-color: rgba(11,18,32,0.06) !important;
-      color: var(--text) !important;
-    }
+    [data-theme="black"] .item .name,
+    [data-theme="black"] .item .notes,
+    [data-theme="black"] .item .date-pill,
+    [data-theme="black"] .item .date-pill time { color: #e6eef8 !important; }
 
-    /* Ensure the actions container has a subtle surface so buttons don't sit on transparent background */
-    /* Use higher specificity and !important to override inline styles and other rules */
-    #appRoot[data-theme="white"] .item .item-actions {
-      background: rgba(11,18,32,0.03) !important;
-      border-radius:8px !important;
-      padding:6px !important;
-      gap:8px !important;
-      align-items:center !important;
-      border:1px solid rgba(11,18,32,0.06) !important;
-      display:flex !important;
-    }
-
-    /* Force buttons and icons inside item-actions to use dark text and visible borders */
-    #appRoot[data-theme="white"] .item .item-actions .btn,
-    #appRoot[data-theme="white"] .item .item-actions .icon-btn,
-    #appRoot[data-theme="white"] .item .item-actions .menu-btn,
-    #appRoot[data-theme="white"] .item .delete-btn,
-    #appRoot[data-theme="white"] .item .reaction-btn {
-      color: #0b1220 !important;
-      background: transparent !important;
-      border-color: rgba(11,18,32,0.08) !important;
-      box-shadow: none !important;
-    }
-
-    /* Make counts inside reaction buttons readable on white theme */
-    #appRoot[data-theme="white"] .item .reaction-btn .count {
-      color: #0b1220 !important;
-    }
-
-    /* If a menu-panel is rendered inline inside an item (not the global overlay),
-       make it light so its menu items are readable on the white card. This preserves
-       the darker overlay behavior for the global floating menu-panel. */
-    #appRoot[data-theme="white"] .item .menu-panel {
-      background: linear-gradient(180deg, #f7f9fb, #ffffff) !important;
-      border-color: rgba(11,18,32,0.06) !important;
-      color: #0b1220 !important;
-      box-shadow: none !important;
-      padding:6px !important;
-    }
-
-    /* Ensure svg icons inside item-actions inherit currentColor for consistent contrast */
-    #appRoot[data-theme="white"] .item .item-actions svg { stroke: currentColor !important; fill: none !important; }
-
-    /* Extra defensive rule: if any action control still uses transparent background, force contrast */
-    #appRoot[data-theme="white"] .item .item-actions * {
-      color: #0b1220 !important;
-    }
-
-    /* Ensure item text (name/notes/date) is explicitly dark on white theme */
-    #appRoot[data-theme="white"] .item .name,
-    #appRoot[data-theme="white"] .item .notes,
-    #appRoot[data-theme="white"] .item .date-pill,
-    #appRoot[data-theme="white"] .item .date-pill time {
-      color: #0b1220 !important;
-    }
-
-    /* Additional: ensure inline menu button (three-dots) is visible on white theme */
-    #appRoot[data-theme="white"] .item .menu-btn {
-      color: #0b1220 !important;
-      border-color: rgba(11,18,32,0.08) !important;
-      background: transparent !important;
-    }
-
-    /* Ensure delete button uses dark color on white theme */
-    #appRoot[data-theme="white"] .item .delete-btn {
-      color: #0b1220 !important;
-      border-color: rgba(11,18,32,0.08) !important;
-      background: transparent !important;
-    }
-
-    /* If inline reaction buttons are present inside an item, make them dark and readable */
-    #appRoot[data-theme="white"] .item .reactions .reaction-btn,
-    #appRoot[data-theme="white"] .item .menu-reactions .reaction-btn {
-      color: #0b1220 !important;
-      background: rgba(11,18,32,0.02) !important;
-      border: 1px solid rgba(11,18,32,0.04) !important;
-    }
+    /* Modal/backdrop adjustments for document-level theme attribute (applies to modal outside #appRoot) */
+    [data-theme="white"] .modal-backdrop { background: linear-gradient(180deg, rgba(2,6,6,0.45), rgba(2,6,6,0.55)) !important; }
+    [data-theme="white"] .modal { background: linear-gradient(180deg, #ffffff, #fbfbfb) !important; border: 1px solid rgba(11,18,32,0.06) !important; color: #0b1220 !important; }
+    [data-theme="white"] .modal input, [data-theme="white"] .modal .btn { color: #0b1220 !important; border-color: rgba(11,18,32,0.08) !important; background: transparent !important; }
+    [data-theme="black"] .modal { background: linear-gradient(180deg, rgba(6,6,6,0.96), rgba(10,10,10,0.98)) !important; color: var(--text) !important; border: 1px solid rgba(255,255,255,0.04) !important; }
+    [data-theme="black"] .modal input, [data-theme="black"] .modal .btn { color: var(--text) !important; border-color: rgba(255,255,255,0.06) !important; }
 
     /* Respect reduced motion */
     @media (prefers-reduced-motion: reduce) {
@@ -424,7 +449,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 Updating...</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.29.5</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -666,6 +691,8 @@
       const vars = THEME_MAP[theme];
       const root = document.documentElement;
       Object.keys(vars).forEach(k => root.style.setProperty(k, vars[k]));
+      // IMPORTANT: set the data-theme attribute on both documentElement and appRoot
+      try { document.documentElement.setAttribute('data-theme', theme); } catch(e){}
       if (appRoot) appRoot.setAttribute('data-theme', theme);
       swatches.forEach(btn => btn.classList.toggle('active', btn.dataset.theme === theme));
       safeSetLocal(THEME_KEY, theme);
