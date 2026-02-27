@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Overtime Scheduler</title>
-  <meta name="description" content="Overtime Schedule with compact three-dots menu (locked: menu under notes; unlocked: menu hidden)" />
+  <meta name="description" content="Overtime Schedule with reaction summary beside menu" />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -219,6 +219,26 @@
     }
     .menu-inline .menu-panel { right:0; top:34px; }
 
+    /* Reaction summary pill (appears beside menu button) */
+    .reaction-summary {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 8px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.02);
+      border:1px solid rgba(255,255,255,0.03);
+      color:var(--muted);
+      font-weight:700;
+      font-size:0.9rem;
+      margin-left:6px;
+      min-width:36px;
+      justify-content:center;
+      line-height:1;
+    }
+    .reaction-summary .emoji { font-size:1rem; }
+    .reaction-summary .count { font-size:0.82rem; color:var(--muted); }
+
     /* When unlocked, hide any inline menu (defensive) */
     .app.unlocked .menu-inline { display:none !important; }
 
@@ -242,6 +262,7 @@
     @media (max-width:420px){
       .menu-panel { min-width:140px; top:42px; right:4px; }
       .reaction-emoji { font-size:1rem; }
+      .reaction-summary { padding:4px 6px; font-size:0.86rem; }
     }
   </style>
 </head>
@@ -251,7 +272,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub v26.2.27.6</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub v26.2.26.8</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -713,6 +734,72 @@
       }
     }
 
+    // Update the small reaction summary pill beside the menu button
+    function updateReactionSummaryForRow(containerRoot, row) {
+      try {
+        // find or create summary element near menu button
+        let summary = containerRoot.querySelector('.reaction-summary');
+        if (!summary) {
+          summary = document.createElement('div');
+          summary.className = 'reaction-summary';
+          summary.innerHTML = `<span class="emoji"> </span><span class="count">0</span>`;
+          // place it after menu button if exists, else append to actions
+          const menuBtn = containerRoot.querySelector('.menu-btn');
+          if (menuBtn && menuBtn.parentNode) {
+            menuBtn.parentNode.insertBefore(summary, menuBtn.nextSibling);
+          } else {
+            containerRoot.appendChild(summary);
+          }
+        }
+
+        // If unlocked or hide-reactions active, hide summary
+        if (unlocked || appRoot.classList.contains('hide-reactions')) {
+          summary.style.display = 'none';
+          return;
+        }
+
+        ensureReactionsObject(row);
+        // Determine which reaction to show:
+        // Priority: user's own reacted key (localStorage), else highest-count reaction (if >0), else hide
+        const reactedEntryKey = `reacted_entry_${row.id}`;
+        const userChoice = safeGetLocal(reactedEntryKey);
+        let showEmoji = '';
+        let showCount = 0;
+
+        if (userChoice && row.reactions && typeof row.reactions[userChoice] === 'number' && row.reactions[userChoice] > 0) {
+          const r = REACTIONS.find(x => x.key === userChoice);
+          showEmoji = r ? r.emoji : '';
+          showCount = row.reactions[userChoice];
+        } else {
+          // find highest reaction
+          let topKey = null;
+          let topVal = 0;
+          Object.keys(row.reactions || {}).forEach(k => {
+            const v = Number(row.reactions[k] || 0);
+            if (v > topVal) { topVal = v; topKey = k; }
+          });
+          if (topKey && topVal > 0) {
+            const r = REACTIONS.find(x => x.key === topKey);
+            showEmoji = r ? r.emoji : '';
+            showCount = topVal;
+          }
+        }
+
+        if (!showEmoji || showCount <= 0) {
+          summary.style.display = 'none';
+          return;
+        }
+
+        summary.style.display = 'inline-flex';
+        const emojiEl = summary.querySelector('.emoji');
+        const countEl = summary.querySelector('.count');
+        if (emojiEl) emojiEl.textContent = showEmoji;
+        if (countEl) countEl.textContent = String(showCount);
+      } catch (e) {
+        // fail silently
+      }
+    }
+
     function renderReactionsForRow(actionsContainer, row){
       ensureReactionsObject(row);
       // prefer .menu-reactions inside actionsContainer
@@ -775,6 +862,9 @@
                 b.removeAttribute('aria-disabled');
               });
             }
+            // update summary pill
+            const root = actionsContainer.closest('.item') || actionsContainer;
+            updateReactionSummaryForRow(root, row);
             return;
           }
 
@@ -802,6 +892,8 @@
                 b.removeAttribute('aria-disabled');
               });
             }
+            const root = actionsContainer.closest('.item') || actionsContainer;
+            updateReactionSummaryForRow(root, row);
             return;
           }
 
@@ -813,6 +905,10 @@
 
         container.appendChild(btn);
       });
+
+      // After rendering reaction buttons, update summary pill
+      const root = actionsContainer.closest('.item') || actionsContainer;
+      updateReactionSummaryForRow(root, row);
     }
 
     // Close any open menus when clicking outside
@@ -913,6 +1009,13 @@
         // append menuInline under item-left (below notes)
         const itemLeft = el.querySelector('.item-left');
         if (itemLeft) itemLeft.appendChild(menuInline);
+      } else {
+        // When unlocked we still create a hidden menu panel near actions so code paths remain consistent
+        const actions = el.querySelector('.item-actions');
+        const hiddenMenu = document.createElement('div');
+        hiddenMenu.style.display = 'none';
+        hiddenMenu.innerHTML = `<div class="menu-panel" role="menu" aria-hidden="true"><div class="menu-reactions" role="group" aria-label="Reactions area"></div></div>`;
+        actions.appendChild(hiddenMenu);
       }
 
       try {
@@ -1314,6 +1417,13 @@
           rc.removeAttribute('aria-hidden');
           rc.removeAttribute('tabindex');
         }
+      });
+
+      // Update all reaction summary pills visibility
+      document.querySelectorAll('.item').forEach(item => {
+        const id = item.dataset.id;
+        const row = window.dataCache.find(r => String(r.id) === String(id));
+        if (row) updateReactionSummaryForRow(item, row);
       });
 
       renderEntriesAccordingToLock();
