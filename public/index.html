@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Overtime Scheduler</title>
-  <meta name="description" content="Overtime Schedule with compact three-dots menu" />
+  <meta name="description" content="Overtime Schedule with compact three-dots menu (locked: menu under notes; unlocked: menu hidden)" />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -209,6 +209,19 @@
     .hide-reactions .reactions { display: none !important; }
     .hide-reactions .reaction-btn { pointer-events:none !important; opacity:0 !important; }
 
+    /* Menu inline under notes when locked */
+    .menu-inline {
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      margin-top:6px;
+      position:relative;
+    }
+    .menu-inline .menu-panel { right:0; top:34px; }
+
+    /* When unlocked, hide any inline menu (defensive) */
+    .app.unlocked .menu-inline { display:none !important; }
+
     /* Improve contrast for white theme */
     [data-theme="white"] .card {
       background: linear-gradient(180deg, #ffffff, #f7f7f7) !important;
@@ -238,7 +251,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub v26.2.27.5</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub v26.2.27.6</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -702,6 +715,7 @@
 
     function renderReactionsForRow(actionsContainer, row){
       ensureReactionsObject(row);
+      // prefer .menu-reactions inside actionsContainer
       let container = actionsContainer.querySelector('.menu-reactions') || actionsContainer.querySelector('.reactions');
       if (!container) {
         container = document.createElement('div');
@@ -867,6 +881,8 @@
       el.dataset.id = row.id;
       const dateDisplay = row.overtime_date ? formatDateOnlyYMD(row.overtime_date) : '—';
       const dateAttr = row.overtime_date ? (String(row.overtime_date).split('T')[0]) : '';
+
+      // Build base HTML (notes + name + date)
       el.innerHTML = `
         <div class="item-top">
           <div class="item-left">
@@ -879,14 +895,25 @@
             </div>
             <div class="item-actions" style="position:relative">
               <button class="btn ghost lock-guard" data-action="delete" type="button" title="Delete">Delete</button>
-              <button class="menu-btn" aria-haspopup="true" aria-expanded="false" title="More" type="button" aria-label="Open reactions menu">⋯</button>
-              <div class="menu-panel" role="menu" aria-hidden="true">
-                <div class="menu-reactions" role="group" aria-label="Reactions area"></div>
-              </div>
             </div>
           </div>
         </div>
       `;
+
+      // Add menu under notes when locked (so it sits below notes)
+      if (!unlocked) {
+        const menuInline = document.createElement('div');
+        menuInline.className = 'menu-inline';
+        menuInline.innerHTML = `
+          <button class="menu-btn" aria-haspopup="true" aria-expanded="false" title="More" type="button" aria-label="Open reactions menu">⋯</button>
+          <div class="menu-panel" role="menu" aria-hidden="true">
+            <div class="menu-reactions" role="group" aria-label="Reactions area"></div>
+          </div>
+        `;
+        // append menuInline under item-left (below notes)
+        const itemLeft = el.querySelector('.item-left');
+        if (itemLeft) itemLeft.appendChild(menuInline);
+      }
 
       try {
         if (row && row.overtime_date) {
@@ -905,18 +932,25 @@
         }
       } catch (e) { /* ignore */ }
 
-      // render reactions into the menu-reactions container
-      const actionsContainer = el.querySelector('.item-actions');
+      // render reactions into the menu-reactions container (if present)
       ensureReactionsObject(row);
-      renderReactionsForRow(actionsContainer, row);
-
-      // wire up menu toggle
-      const menuBtn = el.querySelector('.menu-btn');
+      // prefer menu-panel inside item-left (when locked) else fallback to item-actions
       const menuPanel = el.querySelector('.menu-panel');
-      if (menuBtn && menuPanel) {
+      const actionsContainer = menuPanel || el.querySelector('.item-actions') || el;
+      if (menuPanel) {
+        renderReactionsForRow(menuPanel, row);
+      } else {
+        // If no menu panel (likely unlocked), still render reactions into a hidden container to keep data consistent
+        renderReactionsForRow(actionsContainer, row);
+      }
+
+      // wire up menu toggle if menu exists
+      const menuBtn = el.querySelector('.menu-btn');
+      const panel = el.querySelector('.menu-panel');
+      if (menuBtn && panel) {
         menuBtn.addEventListener('click', (ev) => {
           ev.stopPropagation();
-          toggleMenuForItem(menuBtn, menuPanel);
+          toggleMenuForItem(menuBtn, panel);
         });
       }
 
@@ -939,6 +973,9 @@
 
     function renderEntriesAccordingToLock(){
       if (!Array.isArray(window.dataCache)) window.dataCache = [];
+      // update appRoot class for unlocked state (used by CSS to hide inline menus defensively)
+      if (unlocked) appRoot.classList.add('unlocked'); else appRoot.classList.remove('unlocked');
+
       if (unlocked) {
         const sorted = window.dataCache.slice().sort((a,b) => parseDateOnlyToLocalMidnight(a.overtime_date) - parseDateOnlyToLocalMidnight(b.overtime_date));
         rowsEl.innerHTML = '';
@@ -1259,10 +1296,13 @@
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
 
+      // When unlocked, hide inline menus and reactions; when locked, show them
       if (unlocked) {
         appRoot.classList.add('hide-reactions');
+        appRoot.classList.add('unlocked');
       } else {
         appRoot.classList.remove('hide-reactions');
+        appRoot.classList.remove('unlocked');
       }
 
       const reactionContainers = document.querySelectorAll('.menu-reactions, .reactions');
