@@ -309,7 +309,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 Updating...</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 Updating....</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -1457,20 +1457,66 @@
       if (persist) safeSetLocal(LOCAL_KEY, unlocked ? 'true' : 'false');
     }
 
+    // Accessibility-safe modal open/close: move focus into modal before hiding background
+    let __previouslyFocused = null;
+
     function openModal(){
-      modalBackdrop.style.display = 'flex';
-      modalBackdrop.setAttribute('aria-hidden','false');
-      try { if (appRoot) { appRoot.inert = true; appRoot.setAttribute('aria-hidden','true'); } } catch(e){ if (appRoot) appRoot.setAttribute('aria-hidden','true'); }
-      pwError.style.display = 'none';
-      setTimeout(() => { try { pwInput.focus(); } catch(e){} }, 10);
+      try {
+        // save current focus
+        __previouslyFocused = document.activeElement;
+
+        // show backdrop visually
+        modalBackdrop.style.display = 'flex';
+        modalBackdrop.setAttribute('aria-hidden','false');
+
+        // focus the input first, then make background inert/hidden
+        setTimeout(() => {
+          try { pwInput.focus(); } catch(e){}
+          try {
+            if (appRoot) {
+              appRoot.inert = true;
+              appRoot.setAttribute('aria-hidden','true');
+            }
+          } catch (e) {
+            if (appRoot) appRoot.setAttribute('aria-hidden','true');
+          }
+          pwError.style.display = 'none';
+        }, 10);
+      } catch (e) {
+        console.warn('openModal error', e);
+      }
     }
 
     function closeModal(){
-      modalBackdrop.style.display = 'none';
-      modalBackdrop.setAttribute('aria-hidden','true');
-      try { if (appRoot) { appRoot.inert = false; appRoot.removeAttribute('aria-hidden'); } } catch(e){ if (appRoot) appRoot.removeAttribute('aria-hidden'); }
-      pwError.style.display = 'none';
-      try { openUnlock.focus(); } catch (e) {}
+      try {
+        // hide backdrop visually
+        modalBackdrop.style.display = 'none';
+        modalBackdrop.setAttribute('aria-hidden','true');
+
+        // remove inert/aria-hidden from app root BEFORE restoring focus
+        try {
+          if (appRoot) {
+            appRoot.inert = false;
+            appRoot.removeAttribute('aria-hidden');
+          }
+        } catch (e) {
+          if (appRoot) appRoot.removeAttribute('aria-hidden');
+        }
+
+        pwError.style.display = 'none';
+
+        // restore focus to previously focused element if still available
+        try {
+          if (__previouslyFocused && typeof __previouslyFocused.focus === 'function') {
+            __previouslyFocused.focus();
+          } else if (openUnlock && typeof openUnlock.focus === 'function') {
+            openUnlock.focus();
+          }
+        } catch (e) {}
+        __previouslyFocused = null;
+      } catch (e) {
+        console.warn('closeModal error', e);
+      }
     }
 
     async function submitPassword(password){
