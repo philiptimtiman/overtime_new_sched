@@ -104,7 +104,7 @@
       border:1px solid rgba(255,255,255,0.04);
       transition: background 160ms ease, color 160ms ease;
     }
-    .delete-btn svg { width:14px; height:14px; display:block; }
+    .delete-btn svg { width:14px; height:14px; display:block; stroke:currentColor; fill:none; }
     .delete-btn:focus { outline:2px solid rgba(255,255,255,0.06); outline-offset:2px; }
     .delete-btn:hover { background: rgba(255,255,255,0.02); color:var(--text); }
 
@@ -298,6 +298,7 @@
       color: var(--text) !important;
       background: transparent !important;
     }
+    /* Global floating menu-panel remains dark so overlay items are readable */
     [data-theme="white"] .menu-panel {
       background: rgba(11,18,32,0.96) !important;
       border-color: rgba(255,255,255,0.04) !important;
@@ -312,6 +313,98 @@
       color: #0b1220 !important;
     }
     [data-theme="white"] .meta, [data-theme="white"] .notes { color: #475569 !important; }
+
+    /*
+      Accessibility fix: ensure edit/action controls inside list items remain readable
+      when the app is using the white theme. Inline action controls (delete, menu buttons,
+      reaction buttons that appear inside each item) can otherwise inherit white-on-white.
+      The rules below target action controls inside .item to force dark text and visible borders.
+    */
+
+    /* Make the item surface fully opaque on white theme so inner controls have stable contrast */
+    [data-theme="white"] .item {
+      background: linear-gradient(180deg, #ffffff, #fbfbfb) !important;
+      border-color: rgba(11,18,32,0.06) !important;
+      color: var(--text) !important;
+    }
+
+    /* Ensure the actions container has a subtle surface so buttons don't sit on transparent background */
+    /* Use higher specificity and !important to override inline styles and other rules */
+    #appRoot[data-theme="white"] .item .item-actions {
+      background: rgba(11,18,32,0.03) !important;
+      border-radius:8px !important;
+      padding:6px !important;
+      gap:8px !important;
+      align-items:center !important;
+      border:1px solid rgba(11,18,32,0.06) !important;
+      display:flex !important;
+    }
+
+    /* Force buttons and icons inside item-actions to use dark text and visible borders */
+    #appRoot[data-theme="white"] .item .item-actions .btn,
+    #appRoot[data-theme="white"] .item .item-actions .icon-btn,
+    #appRoot[data-theme="white"] .item .item-actions .menu-btn,
+    #appRoot[data-theme="white"] .item .delete-btn,
+    #appRoot[data-theme="white"] .item .reaction-btn {
+      color: #0b1220 !important;
+      background: transparent !important;
+      border-color: rgba(11,18,32,0.08) !important;
+      box-shadow: none !important;
+    }
+
+    /* Make counts inside reaction buttons readable on white theme */
+    #appRoot[data-theme="white"] .item .reaction-btn .count {
+      color: #0b1220 !important;
+    }
+
+    /* If a menu-panel is rendered inline inside an item (not the global overlay),
+       make it light so its menu items are readable on the white card. This preserves
+       the darker overlay behavior for the global floating menu-panel. */
+    #appRoot[data-theme="white"] .item .menu-panel {
+      background: linear-gradient(180deg, #f7f9fb, #ffffff) !important;
+      border-color: rgba(11,18,32,0.06) !important;
+      color: #0b1220 !important;
+      box-shadow: none !important;
+      padding:6px !important;
+    }
+
+    /* Ensure svg icons inside item-actions inherit currentColor for consistent contrast */
+    #appRoot[data-theme="white"] .item .item-actions svg { stroke: currentColor !important; fill: none !important; }
+
+    /* Extra defensive rule: if any action control still uses transparent background, force contrast */
+    #appRoot[data-theme="white"] .item .item-actions * {
+      color: #0b1220 !important;
+    }
+
+    /* Ensure item text (name/notes/date) is explicitly dark on white theme */
+    #appRoot[data-theme="white"] .item .name,
+    #appRoot[data-theme="white"] .item .notes,
+    #appRoot[data-theme="white"] .item .date-pill,
+    #appRoot[data-theme="white"] .item .date-pill time {
+      color: #0b1220 !important;
+    }
+
+    /* Additional: ensure inline menu button (three-dots) is visible on white theme */
+    #appRoot[data-theme="white"] .item .menu-btn {
+      color: #0b1220 !important;
+      border-color: rgba(11,18,32,0.08) !important;
+      background: transparent !important;
+    }
+
+    /* Ensure delete button uses dark color on white theme */
+    #appRoot[data-theme="white"] .item .delete-btn {
+      color: #0b1220 !important;
+      border-color: rgba(11,18,32,0.08) !important;
+      background: transparent !important;
+    }
+
+    /* If inline reaction buttons are present inside an item, make them dark and readable */
+    #appRoot[data-theme="white"] .item .reactions .reaction-btn,
+    #appRoot[data-theme="white"] .item .menu-reactions .reaction-btn {
+      color: #0b1220 !important;
+      background: rgba(11,18,32,0.02) !important;
+      border: 1px solid rgba(11,18,32,0.04) !important;
+    }
 
     /* Respect reduced motion */
     @media (prefers-reduced-motion: reduce) {
