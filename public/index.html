@@ -90,7 +90,7 @@
     .icon-btn.active{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent;box-shadow:0 8px 20px rgba(0,0,0,0.25);}
     .icon-btn:focus{ outline:2px solid rgba(255,255,255,0.06); outline-offset:2px; }
 
-    /* delete icon button (kebab) */
+    /* delete icon button (trash) */
     .delete-btn {
       display:inline-flex;
       align-items:center;
@@ -331,7 +331,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 Updating.....</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 Updating...</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -1025,7 +1025,7 @@
       const dateDisplay = row.overtime_date ? formatDateOnlyYMD(row.overtime_date) : '—';
       const dateAttr = row.overtime_date ? (String(row.overtime_date).split('T')[0]) : '';
 
-      // Always include the delete (kebab) button in markup, visibility controlled by CSS (.app.unlocked)
+      // Always include the delete (trash) button in markup, visibility controlled by CSS (.app.unlocked)
       el.innerHTML = `
         <div class="item-top">
           <div class="item-left">
@@ -1038,10 +1038,13 @@
             </div>
             <div class="item-actions" style="position:relative">
               <button class="delete-btn lock-guard" data-action="delete" type="button" title="Delete entry" aria-label="Delete entry">
+                <!-- small trash bin icon -->
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <circle cx="12" cy="5" r="1.4" fill="currentColor"></circle>
-                  <circle cx="12" cy="12" r="1.4" fill="currentColor"></circle>
-                  <circle cx="12" cy="19" r="1.4" fill="currentColor"></circle>
+                  <path d="M3 6h18" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                  <rect x="6" y="6.5" width="12" height="13" rx="2" stroke="currentColor" stroke-width="1.4" fill="none"/>
+                  <path d="M10 11v6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M14 11v6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </button>
             </div>
