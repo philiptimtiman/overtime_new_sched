@@ -245,7 +245,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.26.4</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.26.3</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -624,6 +624,16 @@
       }
     }
 
+    // simple per-entry click debounce to avoid rapid spam
+    const reactionLocks = new Map();
+    function canClickReaction(entryId){
+      const last = reactionLocks.get(entryId) || 0;
+      const now = Date.now();
+      if (now - last < 800) return false;
+      reactionLocks.set(entryId, now);
+      return true;
+    }
+
     // Persist reactions to server and reconcile with server response
     async function persistReactionsToServer(entryId, reactionsObj){
       try {
@@ -633,20 +643,30 @@
           .upsert([payload], { onConflict: ['entry_id'] })
           .select();
 
+        console.log('persistReactionsToServer result', { entryId, payload, data, error });
+
         if (error) {
           console.warn('persistReactionsToServer upsert error', error);
           return null;
         }
 
-        const serverRow = (data && data[0]) ? data[0] : null;
-        if (serverRow && serverRow.entry_id != null) {
-          const idx = window.dataCache.findIndex(x => String(x.id) === String(serverRow.entry_id));
-          if (idx >= 0) {
-            window.dataCache[idx].reactions = serverRow.reactions || reactionsObj;
-          }
-          renderEntriesAccordingToLock();
-          updateCounts();
+        const serverRow = Array.isArray(data) ? data[0] : data;
+        if (!serverRow) return null;
+
+        const canonicalEntryId = String(serverRow.entry_id ?? serverRow.entryId ?? serverRow.id);
+
+        const localIdx = window.dataCache.findIndex(x => String(x.id) === canonicalEntryId);
+
+        if (localIdx >= 0) {
+          window.dataCache[localIdx].reactions = serverRow.reactions || window.dataCache[localIdx].reactions || { like:0, heart:0, laugh:0, smile:0 };
+        } else {
+          // If the overtime_data row is not present locally, log for now.
+          console.log('persistReactionsToServer: server returned reactions for unknown entry_id', canonicalEntryId, serverRow);
         }
+
+        renderEntriesAccordingToLock();
+        updateCounts();
+
         return serverRow;
       } catch (e) {
         console.warn('persistReactionsToServer failed', e);
@@ -687,6 +707,8 @@
 
         btn.addEventListener('click', async (ev) => {
           ev.preventDefault();
+          if (!canClickReaction(row.id)) return;
+
           const current = safeGetLocal(reactedEntryKey);
 
           // No reaction yet: add this reaction
@@ -700,7 +722,6 @@
             // persist and reconcile with server
             const serverRow = await persistReactionsToServer(row.id, row.reactions);
             if (serverRow && serverRow.reactions) {
-              // update counts from server
               row.reactions = serverRow.reactions;
               Array.from(container.querySelectorAll('.reaction-btn')).forEach(b => {
                 const k = b.dataset.reaction;
@@ -749,9 +770,11 @@
     // subscribe to reactions changes so all clients update in realtime
     function subscribeReactionsRealtime(){
       try {
+        console.log('subscribing to reactions channel');
         const channel = supabase.channel('reactions_channel')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'overtime_reactions' }, payload => {
             try {
+              console.log('reactions payload', payload);
               const row = payload?.new || payload?.old;
               if (!row || row.entry_id == null) return;
               const entryId = String(row.entry_id);
@@ -764,6 +787,9 @@
                 }
                 renderEntriesAccordingToLock();
                 updateCounts();
+              } else {
+                // If the entry isn't present locally, optionally fetch or log
+                console.log('realtime: reaction update for unknown entry_id', entryId);
               }
             } catch (e) { console.warn('reactions subscription handler error', e); }
           })
