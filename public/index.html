@@ -190,7 +190,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub v26.2.26.6</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub v26.2.26.8</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -580,6 +580,9 @@
     }
 
     // Persist reactions to server and reconcile with server response
+    // Behavior:
+    // - If all counts are zero -> DELETE row from overtime_reactions (and .select() to get deleted rows)
+    // - Otherwise -> UPSERT canonical counts
     async function persistReactionsToServer(entryId, reactionsObj){
       try {
         // normalize keys and ensure numbers
@@ -593,16 +596,18 @@
 
         if (allZero) {
           // If all counts are zero, delete the row to avoid storing empty rows
+          console.log('Attempting DELETE for entry_id', entryId, 'payload', normalized);
           const { data: delData, error: delErr } = await supabase
             .from('overtime_reactions')
             .delete()
-            .eq('entry_id', entryId);
+            .eq('entry_id', entryId)
+            .select();
 
-          console.log('persistReactionsToServer delete result', { entryId, delData, delErr });
+          console.log('DELETE result', { entryId, delData, delErr });
 
           if (delErr) {
             console.warn('persistReactionsToServer delete error', delErr);
-            return null;
+            return { success:false, action:'delete', error:delErr };
           }
 
           // Remove reactions locally if present
@@ -613,7 +618,7 @@
 
           renderEntriesAccordingToLock();
           updateCounts();
-          return { entry_id: entryId, reactions: normalized, deleted: true };
+          return { success:true, action:'delete', deleted: delData || [] };
         }
 
         // Otherwise upsert the canonical counts
@@ -627,11 +632,11 @@
 
         if (error) {
           console.warn('persistReactionsToServer upsert error', error);
-          return null;
+          return { success:false, action:'upsert', error };
         }
 
         const serverRow = Array.isArray(data) ? data[0] : data;
-        if (!serverRow) return null;
+        if (!serverRow) return { success:true, action:'upsert', row:null };
 
         const canonicalEntryId = String(serverRow.entry_id ?? serverRow.entryId ?? serverRow.id);
         const localIdx = window.dataCache.findIndex(x => String(x.id) === canonicalEntryId);
@@ -645,10 +650,10 @@
         renderEntriesAccordingToLock();
         updateCounts();
 
-        return serverRow;
+        return { success:true, action:'upsert', row:serverRow };
       } catch (e) {
         console.warn('persistReactionsToServer failed', e);
-        return null;
+        return { success:false, action:'exception', error:e };
       }
     }
 
@@ -698,15 +703,24 @@
             try { safeSetLocal(reactedEntryKey, r.key); } catch(e){}
 
             // persist and reconcile with server
-            const serverRow = await persistReactionsToServer(row.id, row.reactions);
-            if (serverRow && serverRow.reactions) {
-              row.reactions = serverRow.reactions;
+            const result = await persistReactionsToServer(row.id, row.reactions);
+            if (result && result.success && result.action === 'upsert' && result.row && result.row.reactions) {
+              row.reactions = result.row.reactions;
               Array.from(container.querySelectorAll('.reaction-btn')).forEach(b => {
                 const k = b.dataset.reaction;
                 const c = b.querySelector('.count');
                 if (c) c.textContent = String(row.reactions[k] || 0);
                 if (safeGetLocal(reactedEntryKey) === k) b.classList.add('active'); else b.classList.remove('active');
                 if (safeGetLocal(reactedEntryKey) && safeGetLocal(reactedEntryKey) !== k) b.setAttribute('aria-disabled','true');
+              });
+            } else if (result && result.action === 'delete') {
+              // server deleted row unexpectedly; reconcile
+              row.reactions = { like:0, heart:0, laugh:0, smile:0 };
+              Array.from(container.querySelectorAll('.reaction-btn')).forEach(b => {
+                const c = b.querySelector('.count');
+                if (c) c.textContent = '0';
+                b.classList.remove('active');
+                b.removeAttribute('aria-disabled');
               });
             }
             return;
@@ -722,13 +736,22 @@
             Array.from(container.querySelectorAll('.reaction-btn')).forEach(b => b.removeAttribute('aria-disabled'));
 
             // persist undo and reconcile (this will DELETE row in DB if all counts are zero)
-            const serverRow = await persistReactionsToServer(row.id, row.reactions);
-            if (serverRow && serverRow.reactions) {
-              row.reactions = serverRow.reactions;
+            const result = await persistReactionsToServer(row.id, row.reactions);
+            if (result && result.success && result.action === 'upsert' && result.row && result.row.reactions) {
+              row.reactions = result.row.reactions;
               Array.from(container.querySelectorAll('.reaction-btn')).forEach(b => {
                 const k = b.dataset.reaction;
                 const c = b.querySelector('.count');
                 if (c) c.textContent = String(row.reactions[k] || 0);
+              });
+            } else if (result && result.action === 'delete') {
+              // row deleted on server; set local counts to zero
+              row.reactions = { like:0, heart:0, laugh:0, smile:0 };
+              Array.from(container.querySelectorAll('.reaction-btn')).forEach(b => {
+                const c = b.querySelector('.count');
+                if (c) c.textContent = '0';
+                b.classList.remove('active');
+                b.removeAttribute('aria-disabled');
               });
             }
             return;
@@ -759,7 +782,6 @@
               const idx = window.dataCache.findIndex(x => String(x.id) === entryId);
               if (idx >= 0) {
                 if (payload.event === 'DELETE') {
-                  // remove reactions locally
                   window.dataCache[idx].reactions = { like:0, heart:0, laugh:0, smile:0 };
                 } else {
                   window.dataCache[idx].reactions = row.reactions || window.dataCache[idx].reactions || { like:0, heart:0, laugh:0, smile:0 };
