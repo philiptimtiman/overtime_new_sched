@@ -177,6 +177,16 @@
     .reaction-btn:hover { transform:translateY(-2px); opacity:0.95; }
     .reaction-btn.active { color:var(--text); transform:translateY(-1px); opacity:1; }
 
+    /* Hide reactions when appRoot has .hide-reactions (used when unlocked) */
+    .hide-reactions .reactions {
+      display: none !important;
+    }
+    /* Optional: prevent pointer events and reduce visual noise when hidden */
+    .hide-reactions .reaction-btn {
+      pointer-events: none !important;
+      opacity: 0 !important;
+    }
+
     @media (max-width:420px){
       .reactions { gap:6px; }
       .reaction-btn { padding:2px 6px; font-size:0.85rem; gap:4px; }
@@ -190,7 +200,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub v26.2.26.8</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub v26.2.26.9</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -1179,6 +1189,7 @@
       updateCounts();
     });
 
+    // UPDATED: toggle guarded controls and hide reactions when unlocked
     function updateGuardedControls(){
       document.querySelectorAll('.lock-guard').forEach(el => {
         const tag = (el.tagName || '').toUpperCase();
@@ -1196,6 +1207,7 @@
         }
       });
 
+      // visual lock indicator
       lockIndicator.style.background = unlocked ? '#60a5fa' : '#ef4444';
       if (openUnlock) {
         openUnlock.setAttribute('aria-pressed', unlocked ? 'true' : 'false');
@@ -1204,8 +1216,29 @@
         openUnlock.classList.toggle('active', unlocked);
       }
 
+      // existing classes for hiding guarded controls and form
       if (!unlocked) appRoot.classList.add('actions-hidden'); else appRoot.classList.remove('actions-hidden');
       if (!unlocked) appRoot.classList.add('form-hidden'); else appRoot.classList.remove('form-hidden');
+
+      // NEW: hide reactions when unlocked
+      // When unlocked === true -> add 'hide-reactions' to hide reaction UI
+      if (unlocked) {
+        appRoot.classList.add('hide-reactions');
+      } else {
+        appRoot.classList.remove('hide-reactions');
+      }
+
+      // Accessibility: mark reaction containers as hidden for screen readers when reactions are hidden
+      const reactionContainers = document.querySelectorAll('.reactions');
+      reactionContainers.forEach(rc => {
+        if (unlocked) {
+          rc.setAttribute('aria-hidden', 'true');
+          rc.setAttribute('tabindex', '-1');
+        } else {
+          rc.removeAttribute('aria-hidden');
+          rc.removeAttribute('tabindex');
+        }
+      });
 
       renderEntriesAccordingToLock();
       updateCounts();
