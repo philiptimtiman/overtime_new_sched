@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Overtime Scheduler</title>
-  <meta name="description" content="Overtime Schedule for SLT Foreign TE" />
+  <meta name="description" content="Overtime Schedule with Reactions" />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -164,57 +164,6 @@
       .count-label{font-size:0.62rem}
     }
 
-    /* White theme: ensure strong contrast for count pills */
-    [data-theme="white"] .count-pill {
-      background: linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.02));
-      border-color: rgba(0,0,0,0.08);
-      color: #071433;
-    }
-
-    [data-theme="white"] .count-pill .count-value {
-      color: #071433;
-      font-weight: 800;
-      text-shadow: 0 1px 0 rgba(255,255,255,0.6);
-    }
-
-    [data-theme="white"] .count-pill .count-label {
-      color: #374151;
-      font-weight: 700;
-      opacity: 0.95;
-    }
-
-    [data-theme="white"] .count-pill:focus-within {
-      box-shadow: 0 6px 18px rgba(7,20,51,0.08), 0 0 0 3px rgba(7,20,51,0.06);
-    }
-
-    /* Stronger, theme-aware shadows for entry cards */
-    .item {
-      box-shadow: 0 18px 40px rgba(2, 6, 23, 0.45), 0 6px 18px rgba(2, 6, 23, 0.18);
-      transition: box-shadow 220ms ease, transform 160ms ease;
-    }
-
-    /* Slight lift on hover/focus for affordance */
-    .item:hover,
-    .item:focus-within {
-      transform: translateY(-4px);
-      box-shadow: 0 28px 60px rgba(2, 6, 23, 0.55), 0 10px 28px rgba(2, 6, 23, 0.22);
-    }
-
-    /* Stronger outline for keyboard focus (accessibility) */
-    .item:focus-within {
-      outline: 3px solid rgba(16,185,129,0.08);
-      outline-offset: 4px;
-    }
-
-    /* Lighter shadow variants for white theme so contrast remains natural */
-    [data-theme="white"] .item {
-      box-shadow: 0 14px 36px rgba(7, 12, 20, 0.10), 0 6px 18px rgba(7, 12, 20, 0.06);
-    }
-    [data-theme="white"] .item:hover,
-    [data-theme="white"] .item:focus-within {
-      box-shadow: 0 22px 48px rgba(7, 12, 20, 0.14), 0 10px 28px rgba(7, 12, 20, 0.08);
-    }
-
     /* Reactions: minimal, no box or colored background; small emoji + count */
     .reactions {
       display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-right:6px;
@@ -227,10 +176,6 @@
     .reaction-btn .count { font-weight:700;color:var(--muted);font-size:0.85rem;min-width:18px;text-align:center;display:inline-block }
     .reaction-btn:hover { transform:translateY(-2px); opacity:0.95; }
     .reaction-btn.active { color:var(--text); transform:translateY(-1px); opacity:1; }
-
-    /* White theme: keep reactions subtle but readable */
-    [data-theme="white"] .reaction-btn { color:#6b7280; }
-    [data-theme="white"] .reaction-btn .count { color:#374151; font-weight:700; }
 
     @media (max-width:420px){
       .reactions { gap:6px; }
@@ -245,7 +190,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.26.3</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub v26.2.26.6</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -637,13 +582,48 @@
     // Persist reactions to server and reconcile with server response
     async function persistReactionsToServer(entryId, reactionsObj){
       try {
-        const payload = { entry_id: entryId, reactions: reactionsObj, updated_at: new Date().toISOString() };
+        // normalize keys and ensure numbers
+        const normalized = { like:0, heart:0, laugh:0, smile:0 };
+        ['like','heart','laugh','smile'].forEach(k => {
+          const v = reactionsObj && typeof reactionsObj[k] === 'number' ? reactionsObj[k] : 0;
+          normalized[k] = Math.max(0, Math.floor(v));
+        });
+
+        const allZero = Object.values(normalized).every(v => v === 0);
+
+        if (allZero) {
+          // If all counts are zero, delete the row to avoid storing empty rows
+          const { data: delData, error: delErr } = await supabase
+            .from('overtime_reactions')
+            .delete()
+            .eq('entry_id', entryId);
+
+          console.log('persistReactionsToServer delete result', { entryId, delData, delErr });
+
+          if (delErr) {
+            console.warn('persistReactionsToServer delete error', delErr);
+            return null;
+          }
+
+          // Remove reactions locally if present
+          const localIdx = window.dataCache.findIndex(x => String(x.id) === String(entryId));
+          if (localIdx >= 0) {
+            window.dataCache[localIdx].reactions = { like:0, heart:0, laugh:0, smile:0 };
+          }
+
+          renderEntriesAccordingToLock();
+          updateCounts();
+          return { entry_id: entryId, reactions: normalized, deleted: true };
+        }
+
+        // Otherwise upsert the canonical counts
+        const payload = { entry_id: entryId, reactions: normalized, updated_at: new Date().toISOString() };
         const { data, error } = await supabase
           .from('overtime_reactions')
           .upsert([payload], { onConflict: ['entry_id'] })
           .select();
 
-        console.log('persistReactionsToServer result', { entryId, payload, data, error });
+        console.log('persistReactionsToServer upsert result', { entryId, payload, data, error });
 
         if (error) {
           console.warn('persistReactionsToServer upsert error', error);
@@ -654,13 +634,11 @@
         if (!serverRow) return null;
 
         const canonicalEntryId = String(serverRow.entry_id ?? serverRow.entryId ?? serverRow.id);
-
         const localIdx = window.dataCache.findIndex(x => String(x.id) === canonicalEntryId);
 
         if (localIdx >= 0) {
           window.dataCache[localIdx].reactions = serverRow.reactions || window.dataCache[localIdx].reactions || { like:0, heart:0, laugh:0, smile:0 };
         } else {
-          // If the overtime_data row is not present locally, log for now.
           console.log('persistReactionsToServer: server returned reactions for unknown entry_id', canonicalEntryId, serverRow);
         }
 
@@ -743,7 +721,7 @@
             btn.classList.remove('active');
             Array.from(container.querySelectorAll('.reaction-btn')).forEach(b => b.removeAttribute('aria-disabled'));
 
-            // persist undo and reconcile
+            // persist undo and reconcile (this will DELETE row in DB if all counts are zero)
             const serverRow = await persistReactionsToServer(row.id, row.reactions);
             if (serverRow && serverRow.reactions) {
               row.reactions = serverRow.reactions;
@@ -781,6 +759,7 @@
               const idx = window.dataCache.findIndex(x => String(x.id) === entryId);
               if (idx >= 0) {
                 if (payload.event === 'DELETE') {
+                  // remove reactions locally
                   window.dataCache[idx].reactions = { like:0, heart:0, laugh:0, smile:0 };
                 } else {
                   window.dataCache[idx].reactions = row.reactions || window.dataCache[idx].reactions || { like:0, heart:0, laugh:0, smile:0 };
