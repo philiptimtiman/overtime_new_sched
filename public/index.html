@@ -90,6 +90,28 @@
     .icon-btn.active{background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent;box-shadow:0 8px 20px rgba(0,0,0,0.25);}
     .icon-btn:focus{ outline:2px solid rgba(255,255,255,0.06); outline-offset:2px; }
 
+    /* delete icon button (kebab) */
+    .delete-btn {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:34px;
+      height:34px;
+      padding:0;
+      border-radius:8px;
+      background:transparent;
+      color:var(--muted);
+      border:1px solid rgba(255,255,255,0.04);
+      transition: background 160ms ease, color 160ms ease;
+    }
+    .delete-btn svg { width:14px; height:14px; display:block; }
+    .delete-btn:focus { outline:2px solid rgba(255,255,255,0.06); outline-offset:2px; }
+    .delete-btn:hover { background: rgba(255,255,255,0.02); color:var(--text); }
+
+    /* hide delete button when not unlocked; show when unlocked */
+    .app:not(.unlocked) .delete-btn { display:none !important; }
+    .app.unlocked .delete-btn { display:inline-flex !important; }
+
     #formCard{display:flex;flex-direction:column;gap:10px}
     #formCard label{font-size:var(--label-font);color:var(--muted);margin:0 0 8px 0;text-align:center;display:block;transition:color var(--theme-transition)}
     .field{display:flex;flex-direction:column;gap:8px;min-width:0}
@@ -309,7 +331,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 Updating....</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 Updating.....</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
@@ -1003,6 +1025,7 @@
       const dateDisplay = row.overtime_date ? formatDateOnlyYMD(row.overtime_date) : '—';
       const dateAttr = row.overtime_date ? (String(row.overtime_date).split('T')[0]) : '';
 
+      // Always include the delete (kebab) button in markup, visibility controlled by CSS (.app.unlocked)
       el.innerHTML = `
         <div class="item-top">
           <div class="item-left">
@@ -1014,8 +1037,7 @@
               <time datetime="${escapeHtml(dateAttr)}">${escapeHtml(dateDisplay)}</time>
             </div>
             <div class="item-actions" style="position:relative">
-              <!-- DELETE action replaced with kebab-style icon button (keeps data-action="delete") -->
-              <button class="menu-btn lock-guard" data-action="delete" type="button" title="Delete entry" aria-label="Delete entry">
+              <button class="delete-btn lock-guard" data-action="delete" type="button" title="Delete entry" aria-label="Delete entry">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                   <circle cx="12" cy="5" r="1.4" fill="currentColor"></circle>
                   <circle cx="12" cy="12" r="1.4" fill="currentColor"></circle>
@@ -1027,6 +1049,7 @@
         </div>
       `;
 
+      // Only append the inline three-dots reactions menu when locked (kept for backward compatibility)
       if (!unlocked) {
         const menuInline = document.createElement('div');
         menuInline.className = 'menu-inline';
@@ -1039,6 +1062,7 @@
         const itemLeft = el.querySelector('.item-left');
         if (itemLeft) itemLeft.appendChild(menuInline);
       } else {
+        // When unlocked, keep a hidden menu-panel inside actions so renderReactionsForRow can attach safely
         const actions = el.querySelector('.item-actions');
         const hiddenMenu = document.createElement('div');
         hiddenMenu.style.display = 'none';
@@ -1072,7 +1096,8 @@
         renderReactionsForRow(actionsContainer, row);
       }
 
-      const menuBtn = el.querySelector('.menu-btn');
+      // Attach toggle only to the three-dots menu button (not the delete button)
+      const menuBtn = el.querySelector('.menu-inline .menu-btn');
       const panel = el.querySelector('.menu-panel');
       if (menuBtn && panel) {
         menuBtn.addEventListener('click', (ev) => {
