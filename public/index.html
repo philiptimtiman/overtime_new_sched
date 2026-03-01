@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Overtime Scheduler — Full App</title>
-  <meta name="description" content="Overtime Schedule with improved action-card contrast and icon-only trash button" />
+  <title>Overtime Scheduler</title>
+  <meta name="description" content="SLT Foreign TE Overtime Schedule" />
   <style>
     :root{
       --accent:#10b981; --accent-2:#059669;
@@ -277,6 +277,29 @@
       --card-bg-top:'#ffffff'; --card-bg-bottom:'#fbfbfb';
       --text:'#071422'; --muted:'#475569';
       --menu-bg: rgba(11,18,32,0.96); --menu-border: rgba(11,18,32,0.08);
+	  
+	/* Add this inside your existing theme-specific CSS block for [data-theme="white"] */
+[data-theme="white"] .count-pill,
+[data-theme="white"] .count-pill .count-value,
+[data-theme="white"] .count-pill .count-label {
+  color: #0b1220 !important;        /* dark text for high contrast on white gradient */
+}
+
+/* Make sure the pill background stays light but distinct from text */
+[data-theme="white"] .count-pill {
+  background: linear-gradient(180deg, #f8fafc, #f3f4f6) !important;
+  border-color: rgba(11,18,32,0.06) !important;
+}
+
+/* If you use colored pills (upcoming/ongoing/expiring/user), ensure label contrast too */
+[data-theme="white"] .count-pill.upcoming { color: #064e3b !important; }
+[data-theme="white"] .count-pill.ongoing  { color: #1e3a8a !important; }
+[data-theme="white"] .count-pill.expiring { color: #7c2d12 !important; }
+[data-theme="white"] .count-pill.user    { color: #3730a3 !important; }
+
+/* Optional: increase font-weight for readability on light backgrounds */
+[data-theme="white"] .count-pill .count-value { font-weight:800 !important; }
+[data-theme="white"] .count-pill .count-label { font-weight:700 !important; font-size:0.72rem; }
     }
     [data-theme="white"] .card { background: linear-gradient(180deg, #ffffff, #fbfbfb) !important; border-color: rgba(11,18,32,0.06) !important; color: var(--text) !important; box-shadow: 0 6px 18px rgba(11,18,32,0.04); }
     [data-theme="white"] .item .item-actions, [data-theme="white"] .menu-panel { background: #f3f4f6 !important; border: 1px solid rgba(11,18,32,0.06) !important; color: #0b1220 !important; box-shadow: 0 6px 18px rgba(11,18,32,0.04) !important; }
@@ -300,7 +323,7 @@
       <header class="card header" aria-labelledby="appTitle">
         <div class="brand">
           <h1 id="appTitle" style="margin:0">OVERTIME & LEAVE SCHEDULE</h1>
-          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.29.6</p>
+          <p class="meta" style="margin-top:6px">&#169;2026 BoxTechHub&#8482 v26.2.30.0</p>
           <p class="meta" style="margin-top:6px">philiptimtiman@gmail.com</p>
         </div>
 
